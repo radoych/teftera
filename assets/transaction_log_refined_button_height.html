@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aura Finance - History</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#ffffff",
+                        "on-surface-variant": "#c1c6d6",
+                        "surface-container-highest": "#353436",
+                        "on-primary-fixed-variant": "#004493",
+                        "surface-bright": "#39393a",
+                        "background": "#131314",
+                        "on-surface": "#e5e2e3",
+                        "on-secondary-fixed-variant": "#114784",
+                        "surface-dim": "#131314",
+                        "surface-container-low": "#1c1b1c",
+                        "on-secondary-fixed": "#001b3c",
+                        "inverse-primary": "#005bc0",
+                        "primary": "#adc7ff",
+                        "surface-container": "#201f20",
+                        "secondary": "#a8c8ff",
+                        "inverse-surface": "#e5e2e3",
+                        "on-tertiary-fixed-variant": "#264b5e",
+                        "tertiary-container": "#587b90",
+                        "surface": "#131314",
+                        "surface-tint": "#adc7ff",
+                        "outline-variant": "#414754",
+                        "on-primary-container": "#ffffff",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-container-lowest": "#0e0e0f",
+                        "primary-container": "#1a73e8",
+                        "secondary-container": "#114784",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "on-tertiary": "#0a3447",
+                        "on-secondary-container": "#8cb6fb",
+                        "on-primary": "#002e68",
+                        "on-primary-fixed": "#001a41",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#a7cbe3",
+                        "tertiary": "#a7cbe3",
+                        "on-secondary": "#003061",
+                        "inverse-on-surface": "#313031",
+                        "on-background": "#e5e2e3",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#a8c8ff",
+                        "surface-container-high": "#2a2a2b",
+                        "on-tertiary-fixed": "#001e2c",
+                        "tertiary-fixed": "#c3e7ff",
+                        "primary-fixed-dim": "#adc7ff",
+                        "outline": "#8b909f",
+                        "cyber-lime": "#ccff00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "2rem",
+                        "grid-columns": "4",
+                        "touch-target": "3rem",
+                        "stack-gap": "1rem",
+                        "container-margin": "1.25rem"
+                    },
+                    "fontFamily": {
+                        "title-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #131314;
+            color: #e5e2e3;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-card {
+            background: rgba(30, 31, 32, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .transaction-row:active {
+            background-color: rgba(255, 255, 255, 0.05);
+            transition: background-color 0.2s ease;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden min-h-screen">
+<!-- Top AppBar Integration -->
+<!-- Main Content -->
+<main class="pb-40 px-container-margin mt-8">
+<!-- Filter Bar -->
+<!-- Transaction List -->
+<div class="space-y-1">
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-widest mb-4 opacity-60">Today, Oct 24</p>
+<!-- Row 1: Regular -->
+<div class="transaction-row flex items-center justify-between py-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]">shopping_bag</span>
+</div>
+<div>
+<h3 class="font-title-md text-title-md text-on-surface">Apple Store</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Electronics • 10:24 AM</p>
+</div>
+</div>
+<span class="font-title-md text-title-md text-on-surface">-$1,299.00</span>
+</div>
+<!-- Row 2: Flagged Anomaly -->
+<div class="transaction-row flex items-center justify-between py-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center relative">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">restaurant</span>
+<div class="absolute -top-1 -right-1 w-3 h-3 bg-cyber-lime rounded-full border-2 border-background"></div>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-title-md text-title-md text-on-surface">L'Artisan Bistro</h3>
+<span class="px-1.5 py-0.5 rounded-sm bg-cyber-lime/10 text-cyber-lime text-[10px] font-bold uppercase tracking-tighter">Flagged</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Dining • 09:12 AM</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-title-md text-title-md text-cyber-lime">-$84.50</span>
+<p class="text-[10px] text-cyber-lime/60 font-medium">Unusual Location</p>
+</div>
+</div>
+<!-- Row 3: Regular -->
+<div class="transaction-row flex items-center justify-between py-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]">commute</span>
+</div>
+<div>
+<h3 class="font-title-md text-title-md text-on-surface">Uber Technologies</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Transport • 08:45 AM</p>
+</div>
+</div>
+<span class="font-title-md text-title-md text-on-surface">-$24.12</span>
+</div>
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-widest mt-8 mb-4 opacity-60">Yesterday, Oct 23</p>
+<!-- Row 4: Credit -->
+<div class="transaction-row flex items-center justify-between py-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-[20px]">account_balance_wallet</span>
+</div>
+<div>
+<h3 class="font-title-md text-title-md text-on-surface">Aura Salary Deposit</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Income • 01:00 PM</p>
+</div>
+</div>
+<span class="font-title-md text-title-md text-primary">+$8,400.00</span>
+</div>
+<!-- Row 5: Subscription -->
+<div class="transaction-row flex items-center justify-between py-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">subscriptions</span>
+</div>
+<div>
+<h3 class="font-title-md text-title-md text-on-surface">Figma Pro Plan</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Work • 11:30 AM</p>
+</div>
+</div>
+<span class="font-title-md text-title-md text-on-surface">-$15.00</span>
+</div>
+<!-- Row 6: Flagged -->
+<div class="transaction-row flex items-center justify-between py-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center relative">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">payments</span>
+<div class="absolute -top-1 -right-1 w-3 h-3 bg-cyber-lime rounded-full border-2 border-background"></div>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-title-md text-title-md text-on-surface">Unknown Merchant</h3>
+<span class="px-1.5 py-0.5 rounded-sm bg-cyber-lime/10 text-cyber-lime text-[10px] font-bold uppercase tracking-tighter">Flagged</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Uncategorized • 10:15 AM</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-title-md text-title-md text-cyber-lime">-$1.00</span>
+<p class="text-[10px] text-cyber-lime/60 font-medium">Verify Small Auth</p>
+</div>
+</div>
+<!-- Row 7: Regular -->
+<div class="transaction-row flex items-center justify-between py-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">local_grocery_store</span>
+</div>
+<div>
+<h3 class="font-title-md text-title-md text-on-surface">Whole Foods</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Groceries • 09:00 AM</p>
+</div>
+</div>
+<span class="font-title-md text-title-md text-on-surface">-$62.40</span>
+</div>
+</div>
+</main>
+<!-- Floating Action Buttons -->
+<div class="fixed left-0 w-full flex justify-center gap-4 z-40 px-container-margin bottom-24">
+<button class="flex items-center gap-2 bg-primary-container text-on-primary-container px-6 rounded-full shadow-2xl hover:opacity-90 transition-all active:scale-95 h-10"><span class="material-symbols-outlined">tune</span><span class="font-label-sm text-label-sm font-semibold uppercase">Filters</span></button>
+<button class="flex items-center gap-2 bg-surface-container-high border border-white/10 px-6 rounded-full text-on-surface shadow-2xl hover:bg-surface-variant transition-all active:scale-95 h-10"><span class="material-symbols-outlined">search</span><span class="font-label-sm text-label-sm font-semibold uppercase">Search</span></button>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] rounded-full backdrop-blur-xl bg-surface-container/70 dark:bg-surface-container/70 border border-white/10 shadow-lg flex justify-around items-center h-16 z-50 transition-all duration-300 ease-out">
+<a class="text-on-surface-variant p-3 hover:bg-surface-variant/50 rounded-full transition-all" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<!-- Active History Tab (Based on JSON instructions) -->
+<a class="bg-primary-container text-on-primary-container rounded-full px-5 py-3 scale-110 flex items-center gap-2 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="font-label-sm text-label-sm font-semibold">History</span>
+</a>
+<a class="text-on-surface-variant p-3 hover:bg-surface-variant/50 rounded-full transition-all" href="#">
+<span class="material-symbols-outlined">insert_chart</span>
+</a>
+<a class="text-on-surface-variant p-3 hover:bg-surface-variant/50 rounded-full transition-all" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</nav>
+<!-- Visual Atmosphere Background -->
+<div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+<div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-secondary/5 blur-[120px]"></div>
+</div>
+<script>
+        // Simple micro-interaction for rows
+        document.querySelectorAll('.transaction-row').forEach(row => {
+            row.addEventListener('click', () => {
+                // Future implementation: Expand row or navigate to details
+                console.log('Transaction clicked');
+            });
+        });
+    </script>
+</body></html>

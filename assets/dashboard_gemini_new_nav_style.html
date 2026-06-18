@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aura Finance - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#004493",
+                    "on-tertiary-fixed-variant": "#264b5e",
+                    "surface-dim": "#131314",
+                    "on-secondary-fixed": "#001b3c",
+                    "secondary": "#a8c8ff",
+                    "on-secondary": "#003061",
+                    "on-background": "#e5e2e3",
+                    "secondary-fixed-dim": "#a8c8ff",
+                    "primary-fixed": "#d8e2ff",
+                    "tertiary-fixed-dim": "#a7cbe3",
+                    "background": "#131314",
+                    "primary-fixed-dim": "#adc7ff",
+                    "outline-variant": "#414754",
+                    "on-tertiary-fixed": "#001e2c",
+                    "surface-bright": "#39393a",
+                    "surface-container": "#201f20",
+                    "surface-container-highest": "#353436",
+                    "primary": "#adc7ff",
+                    "on-primary-container": "#ffffff",
+                    "surface-variant": "#353436",
+                    "inverse-primary": "#005bc0",
+                    "inverse-on-surface": "#313031",
+                    "primary-container": "#1a73e8",
+                    "outline": "#8b909f",
+                    "surface-container-high": "#2a2a2b",
+                    "on-surface-variant": "#c1c6d6",
+                    "surface": "#131314",
+                    "on-error-container": "#ffdad6",
+                    "secondary-container": "#114784",
+                    "surface-container-low": "#1c1b1c",
+                    "on-error": "#690005",
+                    "surface-container-lowest": "#0e0e0f",
+                    "inverse-surface": "#e5e2e3",
+                    "tertiary": "#a7cbe3",
+                    "error-container": "#93000a",
+                    "surface-tint": "#adc7ff",
+                    "on-tertiary": "#0a3447",
+                    "tertiary-fixed": "#c3e7ff",
+                    "on-surface": "#e5e2e3",
+                    "on-secondary-container": "#8cb6fb",
+                    "secondary-fixed": "#d5e3ff",
+                    "on-tertiary-container": "#ffffff",
+                    "error": "#ffb4ab",
+                    "on-secondary-fixed-variant": "#114784",
+                    "tertiary-container": "#587b90",
+                    "on-primary": "#002e68",
+                    "on-primary-fixed": "#001a41"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-margin": "1.25rem",
+                    "grid-columns": "4",
+                    "section-gap": "2rem",
+                    "stack-gap": "1rem",
+                    "touch-target": "3rem"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "title-md": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                    "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #131314;
+            color: #e5e2e3;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-card {
+            background: rgba(30, 31, 32, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-pill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-40 bg-surface flex justify-between items-center px-container-margin h-16">
+<div class="flex items-center gap-3">
+<div class="font-headline-lg-mobile text-headline-lg-mobile text-primary dark:text-primary tracking-tight font-bold">
+                Aura Finance
+            </div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:opacity-80 transition-opacity">settings</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+<img alt="Profile Avatar" data-alt="A professional and clean portrait of a young adult with a friendly expression. The lighting is soft and studio-quality, emphasizing clarity and modern professionalism. The background is a solid, neutral charcoal grey to maintain the minimalist dark theme of the Aura Finance application. The individual has short hair and a subtle, welcoming smile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzF6SHBbsakKhG1JM14EdLXDq6Qz0aN3h02JC5iS1A6Ep5xoWn7ngUcQ0mdHfNXt7E4qqrPVKSCEoQTVDrK7XqQb64wcrC0ZNb78GjbalWopAc9o8KA66ZFJl4jEFFPp6S4CekqGLmykCDrhzqGymTJDMcMO_Zbw3i5jfhvXE-1y6ZzHkD5_21K52CB3jTW_mcTB7FVqYdXFsiwdja3N4hvpogDlXL6x0gAFqUpemTG0MryeUn1Pohf3qvAzEpSx84l8oZQZAANHPc"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-24 px-container-margin flex flex-col max-w-2xl mx-auto w-full pb-64">
+<!-- Hero Spending Section -->
+<section class="flex flex-col items-center justify-center text-center py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+<h1 class="font-display-lg text-display-lg text-on-primary-container font-bold tracking-tighter scale-110 scale-125 scale-[1.5] scale-[2.0]">
+                $142.50
+            </h1>
+</section>
+<!-- Quick Actions -->
+<!-- Recent Entries Section -->
+<section class="flex flex-col gap-4 px-8">
+<div class="flex flex-col gap-3"><!-- Entry 1 -->
+<div class="flex items-center justify-between p-4 hover:bg-surface-container-high transition-colors border-b border-white/10 py-3 px-0">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">local_cafe</span>
+</div>
+<div>
+<p class="font-title-md text-title-md text-on-surface font-semibold">Starbucks</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-70">Beverages • 08:42 AM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-title-md text-title-md text-on-surface font-bold">$4.50</p>
+</div>
+</div>
+<!-- Entry 2 -->
+<div class="flex items-center justify-between p-4 hover:bg-surface-container-high transition-colors border-b border-white/10 py-3 px-0">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">shopping_basket</span>
+</div>
+<div>
+<p class="font-title-md text-title-md text-on-surface font-semibold">Grocery Market</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-70">Food &amp; Dining • Yesterday</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-title-md text-title-md text-on-surface font-bold">$65.00</p>
+</div>
+</div>
+<!-- Entry 3 -->
+<div class="flex items-center justify-between p-4 hover:bg-surface-container-high transition-colors border-b border-white/10 py-3 px-0">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">directions_car</span>
+</div>
+<div>
+<p class="font-title-md text-title-md text-on-surface font-semibold">Shell Station</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-70">Transport • Jan 24</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-title-md text-title-md text-on-surface font-bold">$73.00</p>
+</div>
+</div></div><div class="flex justify-center pt-4">
+<button class="text-label-sm font-semibold text-primary hover:opacity-80 transition-opacity flex items-center gap-1">
+        View all
+        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Dynamic Insights Card (Bento Style) -->
+<section class="fixed left-1/2 -translate-x-1/2 w-[90%] max-w-md grid grid-cols-2 gap-4 z-40 bottom-24">
+<button class="flex items-center justify-center gap-2 h-11 rounded-lg bg-primary-container text-on-primary-container font-title-md text-title-md hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary-container/20"><span class="material-symbols-outlined">photo_camera</span> Scan</button>
+<button class="flex items-center justify-center gap-2 h-11 rounded-lg glass-card text-on-surface font-title-md text-title-md hover:bg-surface-variant/50 active:scale-95 transition-all"><span class="material-symbols-outlined">add</span> Manual</button>
+</section>
+</main>
+<!-- Bottom Nav Bar (Floating Pill) -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full bg-surface-container-lowest border border-white/10 shadow-lg flex justify-around items-center h-16 z-50 px-4">
+<a class="flex flex-col items-center justify-center gap-1 group" href="#"><div class="bg-surface-container-high text-on-surface rounded-full px-4 py-2 flex items-center gap-2 transition-all duration-300 ease-out"><span class="material-symbols-outlined active-pill">home</span><span class="font-label-sm font-semibold">Home</span></div></a>
+<a class="flex items-center justify-center p-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-full transition-all duration-300" href="#"><span class="material-symbols-outlined">history</span></a>
+<a class="flex items-center justify-center p-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-full transition-all duration-300" href="#"><span class="material-symbols-outlined">insert_chart</span></a>
+<a class="flex items-center justify-center p-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-full transition-all duration-300" href="#"><span class="material-symbols-outlined">person</span></a>
+</nav>
+<!-- Micro-interaction script -->
+<script>
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('click', (e) => {
+                // Haptic feedback simulation
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(5);
+                }
+            });
+        });
+
+        // Add subtle entry animation for list items
+        const entries = document.querySelectorAll('.glass-card');
+        entries.forEach((entry, index) => {
+            entry.style.opacity = '0';
+            entry.style.transform = 'translateY(10px)';
+            setTimeout(() => {
+                entry.style.transition = 'all 0.5s ease-out';
+                entry.style.opacity = '1';
+                entry.style.transform = 'translateY(0)';
+            }, 100 * index + 300);
+        });
+    </script>
+</body></html>

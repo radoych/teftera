@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manual Entry - Kinetic Precision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#abd600",
+                        "surface-variant": "#343538",
+                        "surface": "#121316",
+                        "background": "#121316",
+                        "surface-container-low": "#1a1c1f",
+                        "on-secondary-fixed": "#161e00",
+                        "surface-container-lowest": "#0d0e11",
+                        "surface-container-highest": "#343538",
+                        "on-surface-variant": "#c4c6d0",
+                        "tertiary-container": "#ecc16f",
+                        "primary-fixed-dim": "#adc7ff",
+                        "outline-variant": "#44474f",
+                        "inverse-primary": "#445e8f",
+                        "on-secondary-container": "#556d00",
+                        "tertiary-fixed-dim": "#ebc06e",
+                        "on-tertiary-fixed-variant": "#5d4200",
+                        "surface-bright": "#38393c",
+                        "on-surface": "#e3e2e6",
+                        "on-error": "#690005",
+                        "surface-dim": "#121316",
+                        "primary-fixed": "#d7e2ff",
+                        "outline": "#8e909a",
+                        "surface-container-high": "#292a2d",
+                        "secondary-container": "#c3f400",
+                        "tertiary-fixed": "#ffdea5",
+                        "primary": "#d8e3ff",
+                        "on-tertiary-container": "#6c4e02",
+                        "error-container": "#93000a",
+                        "on-primary-fixed": "#001a40",
+                        "on-primary": "#112f5e",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#adc7ff",
+                        "on-background": "#e3e2e6",
+                        "error": "#ffb4ab",
+                        "tertiary": "#ffdfa7",
+                        "on-tertiary": "#412d00",
+                        "secondary-fixed": "#c3f400",
+                        "primary-container": "#adc7ff",
+                        "inverse-on-surface": "#2f3034",
+                        "on-primary-fixed-variant": "#2b4676",
+                        "surface-container": "#1e2023",
+                        "on-primary-container": "#385283",
+                        "on-tertiary-fixed": "#261900",
+                        "on-secondary": "#283500",
+                        "secondary": "#ffffff",
+                        "on-secondary-fixed-variant": "#3c4d00",
+                        "inverse-surface": "#e3e2e6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin": "32px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "xxl": "64px",
+                        "unit": "4px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "gutter": "24px",
+                        "xl": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "data-mono": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "headline-lg": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-md": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "data-mono": ["14px", {"lineHeight": "1", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #121316;
+            color: #e3e2e6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        .soft-glow {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(173, 199, 255, 0.08) 0%, rgba(18, 19, 22, 0) 70%);
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(40px);
+        }
+        .hairline {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .custom-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background-color: #adc7ff;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        input::placeholder {
+            color: rgba(196, 198, 208, 0.3);
+        }
+        input:focus {
+            outline: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md min-h-screen relative">
+<!-- Atmospheric Glows -->
+<div class="soft-glow -top-20 -left-20"></div>
+<div class="soft-glow bottom-20 -right-20"></div>
+<div class="max-w-md mx-auto min-h-screen flex flex-col relative z-10">
+<!-- TopAppBar (Based on Shared Components JSON structure) -->
+<header class="w-full top-0 sticky bg-background flex justify-between items-center px-6 py-4 z-50">
+<button aria-label="Go back" class="flex items-center justify-center p-2 -ml-2 text-on-surface hover:opacity-80 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-semibold text-on-background">Manual Entry</h1>
+<button class="font-label-md text-label-md text-primary-fixed-dim hover:opacity-80 transition-opacity active:scale-95 transition-transform px-2 py-1">
+                DONE
+            </button>
+</header>
+<main class="flex-grow">
+<!-- Amount Input Section -->
+<section class="mt-12 mb-16 flex flex-col items-center justify-center px-6">
+<div class="flex items-center justify-center group">
+<span class="font-headline-xl text-[64px] text-on-surface opacity-30 select-none">$</span>
+<div class="relative">
+<input autofocus="" class="bg-transparent border-none text-center font-headline-xl text-[64px] p-0 w-auto min-w-[120px] focus:ring-0 text-on-surface" maxlength="10" placeholder="0.00" type="text"/>
+<span class="custom-cursor absolute right-[-4px] top-1/2 -translate-y-1/2"></span>
+</div>
+</div>
+</section>
+<!-- Form Section -->
+<section class="space-y-0">
+<!-- Merchant -->
+<div class="hairline px-6 py-5 group flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest opacity-60">Merchant</label>
+<input class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface w-full" placeholder="e.g. Starbucks" type="text"/>
+</div>
+<!-- Category -->
+<div class="hairline px-6 py-5 group flex justify-between items-center cursor-pointer hover:bg-surface-container-low/20 transition-colors">
+<div class="flex flex-col gap-1 w-full">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest opacity-60">Category</label>
+<div class="font-body-lg text-body-lg text-on-surface-variant/40">Select Category</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+<!-- Date -->
+<div class="hairline px-6 py-5 group flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest opacity-60">Date</label>
+<input class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface w-full" placeholder="Today" type="text"/>
+</div>
+<!-- Account -->
+<div class="hairline px-6 py-5 group flex justify-between items-center cursor-pointer hover:bg-surface-container-low/20 transition-colors">
+<div class="flex flex-col gap-1 w-full">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest opacity-60">Account</label>
+<div class="font-body-lg text-body-lg text-on-surface">Personal Account</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+<!-- Note -->
+<div class="hairline px-6 py-5 group flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest opacity-60">Note</label>
+<input class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface w-full" placeholder="Optional note" type="text"/>
+</div>
+</section>
+<!-- Technical Detail Decoration -->
+<section class="mt-12 px-6 pb-20 opacity-20">
+<div class="flex justify-between items-end border-t border-white/5 pt-4">
+<div class="flex flex-col gap-1">
+<span class="font-label-md text-[10px] uppercase tracking-[0.2em]">Transaction ID</span>
+<span class="font-data-mono text-[11px]">TX-9482-KINETIC</span>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="font-label-md text-[10px] uppercase tracking-[0.2em]">Precision Index</span>
+<span class="font-data-mono text-[11px]">99.982%</span>
+</div>
+</div>
+</section>
+</main>
+<!-- No Bottom Navigation Bar per requirements -->
+</div>
+<!-- Interaction Script -->
+<script>
+        // Simple micro-interaction for amount input scaling
+        const amountInput = document.querySelector('input[type="text"][placeholder="0.00"]');
+        const cursor = document.querySelector('.custom-cursor');
+        
+        amountInput.addEventListener('input', (e) => {
+            const length = e.target.value.length;
+            if (length > 6) {
+                e.target.style.fontSize = '48px';
+            } else {
+                e.target.style.fontSize = '64px';
+            }
+            
+            // Adjust cursor position based on text width
+            // Since we use a standard input, we can't easily measure text width in pure CSS,
+            // but for a "manual entry" feel, the fixed right position works well enough.
+        });
+
+        // Toggle focus state visual cues
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('bg-white/5');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('bg-white/5');
+            });
+        });
+    </script>
+</body></html>

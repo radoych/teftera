@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Confirm Receipt - Kinetic Precision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#c4c6d0",
+                    "surface-variant": "#343538",
+                    "primary": "#d8e3ff",
+                    "on-primary-fixed-variant": "#2b4676",
+                    "tertiary": "#ffdfa7",
+                    "secondary-fixed-dim": "#abd600",
+                    "primary-fixed": "#d7e2ff",
+                    "on-tertiary-container": "#6c4e02",
+                    "inverse-on-surface": "#2f3034",
+                    "on-background": "#e3e2e6",
+                    "outline-variant": "#44474f",
+                    "secondary-container": "#c3f400",
+                    "on-secondary": "#283500",
+                    "surface-container-lowest": "#0d0e11",
+                    "on-error-container": "#ffdad6",
+                    "primary-fixed-dim": "#adc7ff",
+                    "surface-dim": "#121316",
+                    "surface-container": "#1e2023",
+                    "surface-bright": "#38393c",
+                    "on-surface": "#e3e2e6",
+                    "on-primary-container": "#385283",
+                    "on-tertiary-fixed-variant": "#5d4200",
+                    "surface-tint": "#adc7ff",
+                    "tertiary-fixed": "#ffdea5",
+                    "surface-container-low": "#1a1c1f",
+                    "tertiary-fixed-dim": "#ebc06e",
+                    "on-primary": "#112f5e",
+                    "tertiary-container": "#ecc16f",
+                    "secondary-fixed": "#c3f400",
+                    "on-tertiary": "#412d00",
+                    "on-secondary-fixed-variant": "#3c4d00",
+                    "surface-container-high": "#292a2d",
+                    "on-secondary-container": "#556d00",
+                    "on-tertiary-fixed": "#261900",
+                    "on-primary-fixed": "#001a40",
+                    "primary-container": "#adc7ff",
+                    "outline": "#8e909a",
+                    "inverse-primary": "#445e8f",
+                    "error": "#ffb4ab",
+                    "surface-container-highest": "#343538",
+                    "surface": "#121316",
+                    "on-error": "#690005",
+                    "on-secondary-fixed": "#161e00",
+                    "inverse-surface": "#e3e2e6",
+                    "background": "#121316",
+                    "secondary": "#ffffff",
+                    "error-container": "#93000a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xxl": "64px",
+                    "md": "16px",
+                    "sm": "8px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "xl": "40px",
+                    "margin": "32px",
+                    "unit": "4px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "data-mono": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-xl": ["Plus Jakarta Sans"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "data-mono": ["14px", {"lineHeight": "1", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-xl": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "headline-md": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "headline-lg": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #121316;
+            color: #e3e2e6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hairline-b { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .hairline-r { border-right: 1px solid rgba(255, 255, 255, 0.05); }
+        input::placeholder { color: #8e909a; opacity: 0.5; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<!-- Top Bar -->
+<header class="w-full top-0 sticky bg-background z-50 flex justify-between items-center px-margin py-4"><div class="w-6"></div>
+<h1 class="font-headline-md text-headline-md text-on-surface">Confirm Receipt</h1>
+<button class="active:scale-95 transition-transform"><span class="material-symbols-outlined text-on-surface">close</span></button></header>
+<!-- Content Canvas -->
+<main class="flex-1 px-margin pb-32">
+<!-- Thumbnail Section -->
+<section class="mt-md mb-xl flex justify-center">
+<div class="relative group cursor-pointer">
+<img alt="Receipt thumbnail" class="w-20 h-28 object-cover rounded-xl grayscale opacity-60 group-hover:opacity-100 transition-opacity duration-300" data-alt="A close-up, sharp macro photograph of a crumpled white paper receipt lying on a dark, slate-grey industrial surface. The lighting is dramatic and moody, with a cool blue cast that matches a high-performance financial app aesthetic. Text on the receipt is partially visible but blurred, emphasizing the texture of the thermal paper and the minimalist dark-mode environment. The overall composition is technical and precise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0oxQJu-orjIHnKuZwnlkM4ZZ96Axa2UIfnikiXV5hm3a0g6x9On8kZHxXzVhtbX98KnDf0c8JyY7tYckF1jlVBBqgRWKtDLOXaoYoun_4Wafid4i11IdkZwfrxc-ueyUfpQtShIxBLJ0_xK1KLmRUehRCHoExNMq4SflmgFRQ9xDpz-IVNEcT_pqWy5ckJ4BlUN5borVrpqZVaxKkh8GWjBzj6FadhxTFECkOgVxjF4LnviNNvf2y3nUov0ZA6OCVc5ZyG-1KYVix"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-white/40 group-hover:text-white transition-colors">unfold_more</span>
+</div>
+</div>
+</section>
+<!-- Merchant Section -->
+<section class="mb-xl">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-unit uppercase tracking-widest">Merchant</label>
+<input class="w-full bg-transparent border-none p-0 font-headline-lg-mobile text-headline-lg-mobile text-on-surface focus:ring-0 placeholder:opacity-30" placeholder="Tap to enter merchant" type="text" value="Starbucks"/>
+<div class="hairline-b mt-xs w-full"></div>
+</section>
+<!-- Total Section -->
+<section class="mb-xl">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-unit uppercase tracking-widest">Total</label>
+<div class="flex items-baseline">
+<span class="font-headline-xl text-headline-xl text-primary-fixed-dim mr-1">€</span>
+<input class="w-full bg-transparent border-none p-0 font-headline-xl text-headline-xl text-on-surface focus:ring-0" type="text" value="14.20"/>
+</div>
+<div class="hairline-b mt-xs w-full"></div>
+</section>
+<!-- Metadata Section -->
+<section class="flex hairline-b mb-xl">
+<div class="flex-1 py-md hairline-r">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs uppercase tracking-widest">Date</label>
+<input class="w-full bg-transparent border-none p-0 font-body-lg text-body-lg text-on-surface focus:ring-0" type="text" value="Nov 24, 2023"/>
+</div>
+<div class="flex-1 py-md pl-gutter">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs uppercase tracking-widest">Category</label>
+<input class="w-full bg-transparent border-none p-0 font-body-lg text-body-lg text-on-surface focus:ring-0" type="text" value="Dining"/>
+</div>
+</section>
+<!-- Items Section -->
+<section>
+<div class="flex justify-between items-center mb-md">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Items</label>
+</div>
+<div class="space-y-0">
+<!-- Item Row -->
+<div class="flex items-center justify-between py-md hairline-b hover:bg-surface-container-low transition-colors group">
+<div class="flex-1 flex flex-col">
+<input class="bg-transparent border-none p-0 font-body-lg text-body-lg text-on-surface focus:ring-0" type="text" value="Caramel Macchiato"/>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center">
+<span class="text-on-surface-variant text-label-md mr-1">€</span>
+<input class="w-16 text-right bg-transparent border-none p-0 font-data-mono text-data-mono text-on-surface focus:ring-0" type="text" value="5.40"/>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-error text-sm">delete</span>
+</button>
+</div>
+</div>
+<!-- Item Row -->
+<div class="flex items-center justify-between py-md hairline-b hover:bg-surface-container-low transition-colors group">
+<div class="flex-1 flex flex-col">
+<input class="bg-transparent border-none p-0 font-body-lg text-body-lg text-on-surface focus:ring-0" type="text" value="Blueberry Muffin"/>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center">
+<span class="text-on-surface-variant text-label-md mr-1">€</span>
+<input class="w-16 text-right bg-transparent border-none p-0 font-data-mono text-data-mono text-on-surface focus:ring-0" type="text" value="3.80"/>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-error text-sm">delete</span>
+</button>
+</div>
+</div>
+<!-- Add Item Ghost Row -->
+<button class="w-full flex items-center py-md hover:bg-surface-container-low transition-colors group">
+<span class="material-symbols-outlined text-primary-fixed-dim mr-md text-md">add</span>
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-primary-fixed-dim transition-colors">Add item</span>
+</button>
+</div>
+</section>
+</main>
+<!-- Bottom Actions -->
+<footer class="fixed bottom-0 left-0 right-0 p-margin bg-gradient-to-t from-background via-background to-transparent pt-xl">
+<div class="flex gap-md justify-center">
+<button class="flex-1 h-12 flex items-center justify-center rounded-full border border-primary-fixed-dim text-primary-fixed-dim font-label-md text-label-md tracking-wider active:scale-95 transition-transform">
+                RETAKE
+            </button>
+<button class="flex-1 h-12 flex items-center justify-center rounded-full bg-primary-fixed-dim text-on-primary font-label-md text-label-md tracking-wider shadow-xl active:scale-95 transition-transform">
+                SAVE
+            </button>
+</div>
+</footer>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('opacity-100');
+            });
+            input.addEventListener('blur', () => {
+                // Return to normal
+            });
+        });
+
+        // Simple item deletion logic
+        document.querySelectorAll('.material-symbols-outlined.text-error').forEach(btn => {
+            btn.parentElement.addEventListener('click', (e) => {
+                const row = e.target.closest('.hairline-b');
+                if (row) {
+                    row.style.height = row.offsetHeight + 'px';
+                    row.style.overflow = 'hidden';
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '0';
+                    row.style.height = '0px';
+                    row.style.paddingTop = '0px';
+                    row.style.paddingBottom = '0px';
+                    setTimeout(() => row.remove(), 300);
+                }
+            });
+        });
+    </script>
+</body></html>

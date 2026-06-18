@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#ffffff",
+                    "on-primary-container": "#385283",
+                    "inverse-primary": "#445e8f",
+                    "outline-variant": "#44474f",
+                    "surface-tint": "#adc7ff",
+                    "on-tertiary-container": "#6c4e02",
+                    "surface-container-low": "#1a1c1f",
+                    "on-secondary-container": "#556d00",
+                    "on-primary-fixed-variant": "#2b4676",
+                    "tertiary-fixed-dim": "#ebc06e",
+                    "surface-bright": "#38393c",
+                    "secondary-container": "#c3f400",
+                    "surface": "#121316",
+                    "error": "#ffb4ab",
+                    "primary-container": "#adc7ff",
+                    "on-tertiary-fixed": "#261900",
+                    "inverse-on-surface": "#2f3034",
+                    "outline": "#8e909a",
+                    "surface-container-highest": "#343538",
+                    "surface-dim": "#121316",
+                    "on-tertiary": "#412d00",
+                    "on-secondary-fixed": "#161e00",
+                    "surface-variant": "#343538",
+                    "on-secondary": "#283500",
+                    "on-background": "#e3e2e6",
+                    "on-error": "#690005",
+                    "error-container": "#93000a",
+                    "tertiary-fixed": "#ffdea5",
+                    "surface-container-high": "#292a2d",
+                    "surface-container-lowest": "#0d0e11",
+                    "on-primary": "#112f5e",
+                    "on-error-container": "#ffdad6",
+                    "background": "#121316",
+                    "on-surface-variant": "#c4c6d0",
+                    "on-surface": "#e3e2e6",
+                    "on-secondary-fixed-variant": "#3c4d00",
+                    "tertiary": "#ffdfa7",
+                    "primary-fixed-dim": "#adc7ff",
+                    "primary-fixed": "#d7e2ff",
+                    "secondary-fixed-dim": "#abd600",
+                    "tertiary-container": "#ecc16f",
+                    "secondary-fixed": "#c3f400",
+                    "on-primary-fixed": "#001a40",
+                    "surface-container": "#1e2023",
+                    "primary": "#d8e3ff",
+                    "on-tertiary-fixed-variant": "#5d4200",
+                    "inverse-surface": "#e3e2e6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "xl": "40px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "xs": "4px",
+                    "unit": "4px",
+                    "margin": "32px",
+                    "xxl": "64px",
+                    "lg": "24px",
+                    "touch-target": "48px"
+            },
+            "fontFamily": {
+                    "data-mono": ["Inter"],
+                    "headline-xl": ["Plus Jakarta Sans"],
+                    "label-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "data-mono": ["14px", {"lineHeight": "1", "fontWeight": "600"}],
+                    "headline-xl": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .viewfinder-mask {
+            clip-path: polygon(0% 0%, 0% 100%, 15% 100%, 15% 15%, 85% 15%, 85% 75%, 15% 75%, 15% 100%, 100% 100%, 100% 0%);
+        }
+        .bracket {
+            width: 24px;
+            height: 24px;
+            border-color: rgba(255, 255, 255, 0.8);
+            position: absolute;
+        }
+        .shutter-inner {
+            box-shadow: 0 0 0 4px #adc7ff;
+        }
+        body {
+            background-color: #000;
+            overflow: hidden;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-black text-on-surface select-none">
+<!-- Live Camera Viewport -->
+<div class="fixed inset-0 z-0 overflow-hidden">
+<img alt="Live camera view" class="w-full h-full object-cover grayscale-[0.2] brightness-75" data-alt="A top-down realistic live camera view of a long white paper receipt resting on a dark, rustic wooden table with a rich grain. The lighting is cinematic and moody, simulating a professional financial app's scanning interface. Soft shadows and high-definition details focus on the textures of the wood and the slightly crinkled paper, maintaining a technical and minimalist aesthetic in dark mode with cool blue undertones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcbjCS78sKN-MoFfl6mb83zFiHfftEOA2fVUAjDdcZHt4s_h9QTslD-066x2fBjKcQCJT5ygncf6SKmL1pe6Lf22g-_HuAB0gT46KEeikIWX16mdskzzPt5hoQp3cjJX6bMOUpKIpGMZTfqdNqsOlu1xDmzPOjkOwavJsL6C6a711oZFRjPp_lUrwAGDC2DYeMm4F_fiqjO391wTxmhILBpVnKUBnIxX6vYw0wgtTB11AUK8ebGr_fD9k1CsCyd1v3m2_YRDqPr96-"/>
+<!-- Viewfinder Overlay (Dimmed Edges) -->
+<div class="absolute inset-0 bg-black/50 viewfinder-mask"></div>
+<!-- Scanning Guides -->
+<div class="absolute inset-0 flex items-center justify-center p-gutter">
+<div class="relative w-full max-w-[320px] aspect-[2/3.5] flex flex-col items-center justify-center">
+<!-- Corner Brackets -->
+<div class="bracket top-0 left-0 border-t-2 border-l-2 rounded-tl-lg"></div>
+<div class="bracket top-0 right-0 border-t-2 border-r-2 rounded-tr-lg"></div>
+<div class="bracket bottom-0 left-0 border-b-2 border-l-2 rounded-bl-lg"></div>
+<div class="bracket bottom-0 right-0 border-b-2 border-r-2 rounded-br-lg"></div>
+<!-- Active Scanning Line Animation -->
+<div class="absolute top-0 left-0 w-full h-[2px] bg-primary-container/40 blur-sm animate-[scan_3s_ease-in-out_infinite]"></div>
+<div class="absolute top-0 left-0 w-full h-[1px] bg-primary-container animate-[scan_3s_ease-in-out_infinite]"></div>
+</div>
+</div>
+</div>
+<!-- UI Layer -->
+<div class="relative z-10 h-screen w-full flex flex-col justify-between">
+<!-- Top Bar -->
+<header class="px-gutter pt-xl flex items-start">
+<button class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-highest/40 backdrop-blur-md active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-on-surface" data-icon="close">close</span>
+</button>
+</header>
+<!-- Bottom Controls -->
+<footer class="flex flex-col items-center pb-xxl px-gutter">
+<!-- Hint Text -->
+<div class="mb-xl text-center">
+<p class="font-body-md text-body-md text-white tracking-wide opacity-90">
+                    Align receipt within frame
+                </p>
+</div>
+<!-- Main Controls Cluster -->
+<div class="w-full flex items-center justify-between max-w-sm">
+<!-- Flash Toggle -->
+<button class="w-12 h-12 flex items-center justify-center rounded-full border border-white/20 bg-white/5 active:bg-white/20 transition-colors" id="flash-toggle">
+<span class="material-symbols-outlined text-white" data-icon="bolt">bolt</span>
+</button>
+<!-- Capture Button -->
+<button class="group relative flex items-center justify-center w-20 h-20 active:scale-95 transition-transform duration-150" id="capture-btn">
+<div class="absolute inset-0 rounded-full border-4 border-primary-container opacity-100 group-active:scale-110 transition-transform"></div>
+<div class="w-[60px] h-[60px] rounded-full bg-white shadow-[0_0_20px_rgba(173,199,255,0.4)]"></div>
+</button>
+<!-- Gallery Access -->
+<button class="w-12 h-12 flex items-center justify-center rounded-full border border-white/20 bg-white/5 active:bg-white/20 transition-colors overflow-hidden">
+<span class="material-symbols-outlined text-white" data-icon="photo_library">photo_library</span>
+</button>
+</div>
+</footer>
+</div>
+<style>
+        @keyframes scan {
+            0%, 100% { transform: translateY(0); opacity: 0.2; }
+            50% { transform: translateY(500%); opacity: 1; }
+        }
+    </style>
+<script>
+        // Micro-interactions
+        const captureBtn = document.getElementById('capture-btn');
+        const flashToggle = document.getElementById('flash-toggle');
+
+        captureBtn.addEventListener('click', () => {
+            // Trigger a quick flash overlay effect
+            const flash = document.createElement('div');
+            flash.className = 'fixed inset-0 z-[100] bg-white opacity-100 transition-opacity duration-300';
+            document.body.appendChild(flash);
+            
+            setTimeout(() => {
+                flash.style.opacity = '0';
+                setTimeout(() => flash.remove(), 300);
+            }, 50);
+
+            // Haptic feedback simulation
+            if (window.navigator.vibrate) {
+                window.navigator.vibrate(20);
+            }
+        });
+
+        let flashActive = false;
+        flashToggle.addEventListener('click', () => {
+            flashActive = !flashActive;
+            const icon = flashToggle.querySelector('.material-symbols-outlined');
+            if (flashActive) {
+                flashToggle.classList.add('bg-primary-container', 'text-on-primary-container');
+                flashToggle.classList.remove('bg-white/5', 'text-white');
+                icon.style.fontVariationSettings = "'FILL' 1";
+            } else {
+                flashToggle.classList.remove('bg-primary-container', 'text-on-primary-container');
+                flashToggle.classList.add('bg-white/5', 'text-white');
+                icon.style.fontVariationSettings = "'FILL' 0";
+            }
+        });
+
+        // Prevent default double-tap zoom
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+    </script>
+</body></html>
