@@ -28,7 +28,24 @@ const DEMO_GROUPS: TransactionDayGroup[] = [
 
 export default function HistoryScreen() {
   return (
-    <Screen withTabBar>
+    <Screen
+      withTabBar
+      floatingAboveTabBar={
+        <View className="flex-row justify-center gap-md">
+          <Pressable className="h-10 flex-row items-center gap-2 rounded-full bg-primary-container px-6 active:opacity-80">
+            <MaterialIcons name="tune" size={18} color="#112f5e" />
+            <Text className="font-inter-semibold text-label-md uppercase text-on-primary">
+              Филтри
+            </Text>
+          </Pressable>
+          <Pressable className="h-10 flex-row items-center gap-2 rounded-full border border-white/10 bg-surface-container-high px-6 active:opacity-80">
+            <MaterialIcons name="search" size={18} color="#e3e2e6" />
+            <Text className="font-inter-semibold text-label-md uppercase text-on-surface">
+              Търси
+            </Text>
+          </Pressable>
+        </View>
+      }>
       <View className="h-16 flex-row items-center">
         <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
           История
@@ -47,24 +64,6 @@ export default function HistoryScreen() {
           ))}
         </View>
       ))}
-
-      {/* Floating filter / search pills */}
-      <View
-        pointerEvents="box-none"
-        className="absolute inset-x-0 bottom-28 flex-row justify-center gap-md">
-        <Pressable className="h-10 flex-row items-center gap-2 rounded-full bg-primary-container px-6 active:opacity-80">
-          <MaterialIcons name="tune" size={18} color="#112f5e" />
-          <Text className="font-inter-semibold text-label-md uppercase text-on-primary">
-            Филтри
-          </Text>
-        </Pressable>
-        <Pressable className="h-10 flex-row items-center gap-2 rounded-full border border-white/10 bg-surface-container-high px-6 active:opacity-80">
-          <MaterialIcons name="search" size={18} color="#e3e2e6" />
-          <Text className="font-inter-semibold text-label-md uppercase text-on-surface">
-            Търси
-          </Text>
-        </Pressable>
-      </View>
     </Screen>
   );
 }

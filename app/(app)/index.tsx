@@ -30,7 +30,28 @@ export default function DashboardScreen() {
   const total = DEMO_ENTRIES.reduce((sum, e) => sum + e.amountCents, 0);
 
   return (
-    <Screen withTabBar>
+    <Screen
+      withTabBar
+      floatingAboveTabBar={
+        <View className="flex-row justify-center gap-md">
+          <Pressable
+            onPress={() => router.navigate('/scanner')}
+            className="h-10 flex-row items-center gap-2 rounded-full bg-primary-container px-6 active:opacity-80">
+            <MaterialIcons name="photo-camera" size={18} color="#112f5e" />
+            <Text className="font-inter-semibold text-label-md uppercase text-on-primary">
+              Сканирай
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.navigate('/manual-entry')}
+            className="h-10 flex-row items-center gap-2 rounded-full border border-white/10 bg-surface-container-high px-6 active:opacity-80">
+            <MaterialIcons name="add" size={18} color="#e3e2e6" />
+            <Text className="font-inter-semibold text-label-md uppercase text-on-surface">
+              Ръчно
+            </Text>
+          </Pressable>
+        </View>
+      }>
       {/* Top app bar */}
       <View className="h-16 flex-row items-center justify-between">
         <View>
@@ -100,22 +121,6 @@ export default function DashboardScreen() {
             {i < DEMO_ENTRIES.length - 1 ? <HairlineDivider /> : null}
           </View>
         ))}
-      </View>
-
-      {/* Quick actions */}
-      <View className="mt-xl flex-row gap-md">
-        <Pressable
-          onPress={() => router.navigate('/scanner')}
-          className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full bg-primary-container active:opacity-80">
-          <MaterialIcons name="photo-camera" size={20} color="#112f5e" />
-          <Text className="font-jakarta-semibold text-headline-md text-on-primary">Сканирай</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => router.navigate('/manual-entry')}
-          className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full border border-white/10 active:opacity-80">
-          <MaterialIcons name="add" size={20} color="#e3e2e6" />
-          <Text className="font-jakarta-semibold text-headline-md text-on-surface">Ръчно</Text>
-        </Pressable>
       </View>
     </Screen>
   );
