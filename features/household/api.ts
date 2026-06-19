@@ -51,6 +51,7 @@ export async function createHousehold(
   });
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error('create_household RPC returned no data');
   return { householdId: row.id, inviteCode: row.invite_code };
 }
 
@@ -65,6 +66,7 @@ export async function joinHouseholdByCode(
   });
   if (error) throw error;
   const householdId = Array.isArray(data) ? data[0] : data;
+  if (!householdId) throw new Error('join_household_by_code RPC returned no data');
   return { householdId: householdId as string };
 }
 
