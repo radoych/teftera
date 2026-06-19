@@ -27,17 +27,19 @@ export function TransactionRow({ tx, onPress, showDivider = true }: TransactionR
     <View>
       <Pressable
         onPress={onPress}
-        className="flex-row items-center justify-between py-md active:bg-white/5">
-        <View className="flex-row items-center gap-md">
+        className="flex-row items-center justify-between gap-3 py-md active:bg-white/5">
+        <View className="flex-1 flex-row items-center gap-md">
           <View className="relative h-10 w-10 items-center justify-center rounded-full bg-surface-container-high">
             <MaterialIcons name={tx.icon} size={20} color={tx.iconColor} />
             {tx.isFlagged ? (
               <View className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-secondary-fixed" />
             ) : null}
           </View>
-          <View>
+          <View className="flex-1">
             <View className="flex-row items-center gap-2">
-              <Text className="font-jakarta-semibold text-headline-md text-on-surface">
+              <Text
+                numberOfLines={1}
+                className="shrink font-jakarta-semibold text-headline-md text-on-surface">
                 {tx.merchant}
               </Text>
               {tx.isFlagged ? (
@@ -48,12 +50,14 @@ export function TransactionRow({ tx, onPress, showDivider = true }: TransactionR
                 </View>
               ) : null}
             </View>
-            <Text className="font-inter text-body-md text-on-surface-variant opacity-70">
+            <Text
+              numberOfLines={1}
+              className="font-inter text-body-md text-on-surface-variant opacity-70">
               {tx.meta}
             </Text>
           </View>
         </View>
-        <View className="items-end">
+        <View className="shrink-0 items-end">
           <Text className={`font-inter-semibold text-headline-md ${amountColor}`}>
             {sign}
             {formatCurrency(tx.amountCents)}

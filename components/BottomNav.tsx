@@ -37,8 +37,22 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
       <BlurView
         intensity={40}
         tint="dark"
-        className="h-16 flex-row items-center justify-around overflow-hidden rounded-full border border-white/10 bg-surface-container/70 px-4"
-        style={{ width: '90%', maxWidth: 420 }}>
+        // NativeWind className is NOT applied to third-party components like
+        // BlurView, so the bar's layout + shape must be set via inline style.
+        style={{
+          width: '90%',
+          maxWidth: 420,
+          height: 64,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          paddingHorizontal: 16,
+          borderRadius: 9999,
+          borderWidth: 1,
+          borderColor: 'rgba(255,255,255,0.1)',
+          backgroundColor: 'rgba(30,32,35,0.7)', // surface-container @ 70%
+          overflow: 'hidden',
+        }}>
         {state.routes.map((route, index) => {
           const tab = TABS[route.name];
           if (!tab) return null;
