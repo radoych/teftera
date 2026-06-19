@@ -17,6 +17,8 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useAuthStore } from '@/features/auth/store';
+import { useAuthBootstrap, useProtectedRoute } from '@/features/auth/bootstrap';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,11 +33,15 @@ export default function RootLayout() {
     Inter_600SemiBold,
   });
 
+  const status = useAuthStore((s) => s.status);
+  useAuthBootstrap();
+  useProtectedRoute();
+
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if ((fontsLoaded || fontError) && status !== 'loading') {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, status]);
 
   if (!fontsLoaded && !fontError) {
     return null;
