@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
@@ -33,24 +34,22 @@ export default function DashboardScreen() {
     <Screen
       withTabBar
       floatingAboveTabBar={
-        <View className="flex-row justify-center gap-md">
-          <Pressable
-            onPress={() => router.navigate('/scanner')}
-            className="h-10 flex-row items-center gap-2 rounded-full bg-primary-container px-6 active:opacity-80">
-            <MaterialIcons name="photo-camera" size={18} color="#112f5e" />
-            <Text className="font-inter-semibold text-label-md uppercase text-on-primary">
-              Сканирай
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => router.navigate('/manual-entry')}
-            className="h-10 flex-row items-center gap-2 rounded-full border border-white/10 bg-surface-container-high px-6 active:opacity-80">
-            <MaterialIcons name="add" size={18} color="#e3e2e6" />
-            <Text className="font-inter-semibold text-label-md uppercase text-on-surface">
-              Ръчно
-            </Text>
-          </Pressable>
-        </View>
+        <FloatingActionBar
+          actions={[
+            {
+              label: 'Сканирай',
+              icon: 'photo-camera',
+              variant: 'filled',
+              onPress: () => router.navigate('/scanner'),
+            },
+            {
+              label: 'Ръчно',
+              icon: 'add',
+              variant: 'ghost',
+              onPress: () => router.navigate('/manual-entry'),
+            },
+          ]}
+        />
       }>
       {/* Top app bar */}
       <View className="h-16 flex-row items-center justify-between">

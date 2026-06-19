@@ -1,5 +1,5 @@
-import { MaterialIcons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { TransactionRow } from '@/features/transactions/components/TransactionRow';
@@ -31,20 +31,12 @@ export default function HistoryScreen() {
     <Screen
       withTabBar
       floatingAboveTabBar={
-        <View className="flex-row justify-center gap-md">
-          <Pressable className="h-10 flex-row items-center gap-2 rounded-full bg-primary-container px-6 active:opacity-80">
-            <MaterialIcons name="tune" size={18} color="#112f5e" />
-            <Text className="font-inter-semibold text-label-md uppercase text-on-primary">
-              Филтри
-            </Text>
-          </Pressable>
-          <Pressable className="h-10 flex-row items-center gap-2 rounded-full border border-white/10 bg-surface-container-high px-6 active:opacity-80">
-            <MaterialIcons name="search" size={18} color="#e3e2e6" />
-            <Text className="font-inter-semibold text-label-md uppercase text-on-surface">
-              Търси
-            </Text>
-          </Pressable>
-        </View>
+        <FloatingActionBar
+          actions={[
+            { label: 'Филтри', icon: 'tune', variant: 'filled' },
+            { label: 'Търси', icon: 'search', variant: 'ghost' },
+          ]}
+        />
       }>
       <View className="h-16 flex-row items-center">
         <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">

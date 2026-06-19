@@ -11,9 +11,9 @@ interface ScreenProps {
   withTabBar?: boolean;
   contentClassName?: string;
   /**
-   * Content pinned just above the floating tab bar — rendered OUTSIDE the
-   * ScrollView so it stays fixed while the body scrolls (e.g. Filters/Search
-   * or Scan/Manual action pills). Implies a tab bar is present.
+   * Content pinned above the floating tab bar — rendered OUTSIDE the ScrollView
+   * so it stays fixed while the body scrolls. Intended for `<FloatingActionBar>`,
+   * which self-positions; Screen just provides the mount point + clearance.
    */
   floatingAboveTabBar?: ReactNode;
 }
@@ -60,14 +60,7 @@ export function Screen({
         )}
       </SafeAreaView>
 
-      {floatingAboveTabBar ? (
-        <View
-          pointerEvents="box-none"
-          style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 88 }}
-          className="items-center px-md">
-          {floatingAboveTabBar}
-        </View>
-      ) : null}
+      {floatingAboveTabBar}
     </View>
   );
 }
