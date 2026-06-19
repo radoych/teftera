@@ -38,14 +38,14 @@ npm run format
 # run tests
 npm test
 
-# supabase: new migration
-supabase migration new <name>
+# supabase: new migration (CLI installed as a devDependency)
+npx supabase migration new <name>
 
 # supabase: push migrations to remote
-supabase db push
+npx supabase db push
 
 # supabase: run locally
-supabase start
+npx supabase start
 
 # eas: build for internal testing
 eas build --profile preview --platform all

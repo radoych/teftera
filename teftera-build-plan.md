@@ -47,14 +47,16 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 ---
 
 ### Day 4 — Auth + Household Flow
-- [ ] Sign in / sign up wired to Supabase Auth (email/password)
-- [ ] Google OAuth configured in Supabase + Google Cloud Console
-- [ ] Auth state persists across app restarts (AsyncStorage session)
-- [ ] Household setup (create): creates `households` row + `household_members` row
-- [ ] Household setup (join): validates `invite_code`, creates `household_members` row
-- [ ] "Skip for now" creates a solo household (household always exists)
-- [ ] Redirect flow: new user → household setup → dashboard; returning user → dashboard
-- [ ] Profile screen shows real user name, email, and household members
+- [x] Sign in / sign up wired to Supabase Auth (email/password)
+- [ ] Google OAuth configured in Supabase + Google Cloud Console — **deferred** to a follow-up slice (see `docs/superpowers/specs/2026-06-19-auth-household-flow-design.md`)
+- [x] Auth state persists across app restarts (AsyncStorage session)
+- [x] Household setup (create): creates `households` row + `household_members` row (via `create_household` RPC)
+- [x] Household setup (join): validates `invite_code`, creates `household_members` row (via `join_household_by_code` RPC)
+- [x] "Skip for now" creates a solo household (household always exists)
+- [x] Redirect flow: new user → household setup → dashboard; returning user → dashboard
+- [x] Profile screen shows real user name, email, and household members
+
+> Implemented + reviewed on branch `feat/auth-household-flow`. Final on-device two-account checkpoint is the human's verification step.
 
 **Checkpoint:** Sign up → create household → land on dashboard (static). Sign out → sign back in → dashboard again.
 
