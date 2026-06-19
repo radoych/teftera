@@ -27,7 +27,9 @@ export function useAuthBootstrap(): void {
         setHousehold(household.householdId, household.displayName);
         setStatus('ready');
       } else {
-        setHousehold(null, null);
+        const metadataName =
+          (session.user.user_metadata?.display_name as string | undefined) ?? null;
+        setHousehold(null, metadataName);
         setStatus('needs-household');
       }
     }

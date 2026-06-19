@@ -68,6 +68,7 @@ export default function SignInScreen() {
             <Text className="font-inter text-body-md text-on-surface-variant">Регистрация</Text>
           </Pressable>
           <Pressable
+            disabled
             accessibilityLabel="Вход с Google"
             className="mx-1 h-12 w-12 items-center justify-center rounded-full bg-surface-container-highest opacity-40">
             <GoogleGlyph size={20} />

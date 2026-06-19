@@ -3,7 +3,6 @@ import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 import { AuthShell } from '@/components/AuthShell';
-import { HairlineDivider } from '@/components/HairlineDivider';
 import { PillButton } from '@/components/PillButton';
 import { SectionLabel } from '@/components/SectionLabel';
 import { mapAuthError } from '@/features/auth/errors';
@@ -91,6 +90,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
       enterHousehold(householdId, displayName);
     } catch (e) {
       setError(mapAuthError(e));
+    } finally {
       setLoading(false);
     }
   };

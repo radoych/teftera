@@ -26,13 +26,14 @@ export default function ProfileScreen() {
   const [inviteCode, setInviteCode] = useState('');
 
   const email = session?.user.email ?? '';
-  const initials = displayName
-    .split(' ')
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials =
+    displayName
+      .split(' ')
+      .map((p) => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || '?';
 
   useEffect(() => {
     if (!householdId) return;
@@ -78,13 +79,14 @@ export default function ProfileScreen() {
       <View className="mt-xl">
         <SectionLabel className="mb-md">Домакинство</SectionLabel>
         {members.map((m) => {
-          const memberInitials = m.displayName
-            .split(' ')
-            .map((p) => p[0])
-            .filter(Boolean)
-            .slice(0, 2)
-            .join('')
-            .toUpperCase();
+          const memberInitials =
+            m.displayName
+              .split(' ')
+              .map((p) => p[0])
+              .filter(Boolean)
+              .slice(0, 2)
+              .join('')
+              .toUpperCase() || '?';
           const memberName = m.displayName || 'Без име';
           const roleLabel = m.role === 'owner' ? 'Собственик' : 'Член';
           return (

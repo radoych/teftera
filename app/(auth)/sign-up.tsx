@@ -66,7 +66,7 @@ export default function SignUpScreen() {
 
         <View className="gap-md">
           <PillButton label="Регистрация" onPress={onRegister} loading={loading} block />
-          <Pressable className="h-12 flex-row items-center justify-center gap-3 rounded-full border border-white/10 opacity-40">
+          <Pressable disabled className="h-12 flex-row items-center justify-center gap-3 rounded-full border border-white/10 opacity-40">
             <GoogleGlyph size={20} />
             <Text className="font-jakarta-semibold text-headline-md text-on-surface">
               Продължи с Google
