@@ -5,14 +5,32 @@ import { AuthShell } from '@/components/AuthShell';
 import { FlatInput } from '@/components/FlatInput';
 import { GoogleGlyph } from '@/components/GoogleGlyph';
 import { PillButton } from '@/components/PillButton';
+import { signUpWithPassword } from '@/features/auth/api';
 
 export default function SignUpScreen() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Auth wired in Step 4. For now, registering goes to household setup.
-  const onRegister = () => router.replace('/(auth)/household-setup');
+  const onRegister = async () => {
+    setError(null);
+    if (!name.trim()) {
+      setError('Въведи името си.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Паролите не съвпадат.');
+      return;
+    }
+    setLoading(true);
+    const { error: err } = await signUpWithPassword(email.trim(), password, name.trim());
+    setLoading(false);
+    if (err) setError(err);
+    // On success, useProtectedRoute routes to household-setup (needs-household).
+  };
 
   return (
     <AuthShell>
@@ -27,6 +45,7 @@ export default function SignUpScreen() {
         </View>
 
         <View className="gap-lg">
+          <FlatInput value={name} onChangeText={setName} placeholder="Име" autoCapitalize="words" />
           <FlatInput
             value={email}
             onChangeText={setEmail}
@@ -35,23 +54,19 @@ export default function SignUpScreen() {
             autoCapitalize="none"
             autoComplete="email"
           />
-          <FlatInput
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Парола"
-            secureTextEntry
-          />
+          <FlatInput value={password} onChangeText={setPassword} placeholder="Парола" secureTextEntry />
           <FlatInput
             value={confirm}
             onChangeText={setConfirm}
             placeholder="Потвърди парола"
             secureTextEntry
           />
+          {error ? <Text className="font-inter text-body-md text-error">{error}</Text> : null}
         </View>
 
         <View className="gap-md">
-          <PillButton label="Регистрация" onPress={onRegister} block />
-          <Pressable className="h-12 flex-row items-center justify-center gap-3 rounded-full border border-white/10 active:opacity-80">
+          <PillButton label="Регистрация" onPress={onRegister} loading={loading} block />
+          <Pressable className="h-12 flex-row items-center justify-center gap-3 rounded-full border border-white/10 opacity-40">
             <GoogleGlyph size={20} />
             <Text className="font-jakarta-semibold text-headline-md text-on-surface">
               Продължи с Google
