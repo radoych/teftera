@@ -200,8 +200,8 @@ label-md:           Inter,             12px, lh 1.0, ls 0.05em,  fw 500
 ### Visual Patterns
 - **Flat design** — no elevated cards. Sections separated by hairline dividers: `borderBottomWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.05)'`
 - **Background glows** — faint radial blue glow top-right + subtle lime glow bottom-left, `position: absolute, zIndex: -1`
-- **Bottom nav** — floating pill, `surface-container-lowest` bg, `border: rgba(255,255,255,0.1)`, `BlurView`, 4 tabs: Home · History · Insights · Profile
-- **Active nav tab** — filled `surface-container-high` pill around icon + label text
+- **Bottom nav** — floating pill, `surface-container/70` bg, `border: rgba(255,255,255,0.1)`, `BlurView`, 4 tabs: Home · History · Insights · Profile
+- **Active nav tab** — filled `primary-container` pill (icon `on-primary` + label), slightly enlarged (`scale: 1.1`), matching the transaction-log mockup and the floating Filters/Search pills
 - **Floating pill buttons** — outlined ghost pills above nav bar, icon + uppercase label
 - **Section labels** — uppercase, label-md, on-surface-variant at 50% opacity
 - **Pill buttons** → `borderRadius: 9999` in RN StyleSheet (not the Tailwind `full` token which is only 12px)

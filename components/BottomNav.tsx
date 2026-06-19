@@ -21,9 +21,10 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
 
 /**
  * Floating frosted pill navigation. Used as the custom tabBar for the (app)
- * group. Active tab shows a filled surface-container-high pill with icon + label;
- * inactive tabs show just the icon. BlurView provides the frosted effect
- * (backdrop-filter does not work on Android RN).
+ * group. Active tab shows a filled primary-container pill (icon + label),
+ * slightly enlarged, matching the transaction-log mockup; inactive tabs show
+ * just the icon. BlurView provides the frosted effect (backdrop-filter does
+ * not work on Android RN).
  */
 export function BottomNav({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -36,7 +37,7 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
       <BlurView
         intensity={40}
         tint="dark"
-        className="h-16 flex-row items-center justify-around overflow-hidden rounded-full border border-white/10 bg-surface-container-lowest/80 px-4"
+        className="h-16 flex-row items-center justify-around overflow-hidden rounded-full border border-white/10 bg-surface-container/70 px-4"
         style={{ width: '90%', maxWidth: 420 }}>
         {state.routes.map((route, index) => {
           const tab = TABS[route.name];
@@ -62,9 +63,11 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
               onPress={onPress}
               className="items-center justify-center">
               {focused ? (
-                <View className="flex-row items-center gap-2 rounded-full bg-surface-container-high px-4 py-2">
-                  <MaterialIcons name={tab.icon} size={22} color="#e3e2e6" />
-                  <Text className="font-inter-semibold text-label-md text-on-surface">
+                <View
+                  style={{ transform: [{ scale: 1.1 }] }}
+                  className="flex-row items-center gap-2 rounded-full bg-primary-container px-5 py-3">
+                  <MaterialIcons name={tab.icon} size={22} color="#112f5e" />
+                  <Text className="font-inter-semibold text-label-md text-on-primary">
                     {tab.label}
                   </Text>
                 </View>
