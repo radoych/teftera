@@ -37,16 +37,16 @@ export default function DashboardScreen() {
         <FloatingActionBar
           actions={[
             {
-              label: 'Сканирай',
-              icon: 'photo-camera',
-              variant: 'filled',
-              onPress: () => router.navigate('/scanner'),
-            },
-            {
               label: 'Ръчно',
               icon: 'add',
               variant: 'ghost',
               onPress: () => router.navigate('/manual-entry'),
+            },
+            {
+              label: 'Сканирай',
+              icon: 'photo-camera',
+              variant: 'filled',
+              onPress: () => router.navigate('/scanner'),
             },
           ]}
         />

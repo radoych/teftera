@@ -35,7 +35,7 @@ export function FloatingActionBar({ actions }: { actions: FloatingAction[] }) {
       // Sits 12px above the nav pill (nav: bottom insets.bottom+12, height 64).
       style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 88 }}
       className="items-center px-md">
-      <View className="flex-row justify-center gap-md">
+      <View style={{ transform: [{ scale: 1.1 }] }} className="flex-row justify-center gap-md">
         {actions.map((action) => {
           const v = VARIANTS[action.variant ?? 'ghost'];
           return (

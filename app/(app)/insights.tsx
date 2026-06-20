@@ -39,8 +39,8 @@ export default function InsightsScreen() {
       floatingAboveTabBar={
         <FloatingActionBar
           actions={[
-            { label: 'Сравни', icon: 'compare-arrows', variant: 'filled' },
             { label: 'Филтри', icon: 'filter-list', variant: 'ghost' },
+            { label: 'Сравни', icon: 'compare-arrows', variant: 'filled' },
           ]}
         />
       }>

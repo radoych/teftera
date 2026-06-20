@@ -33,8 +33,8 @@ export default function HistoryScreen() {
       floatingAboveTabBar={
         <FloatingActionBar
           actions={[
-            { label: 'Търси', icon: 'search', variant: 'filled' },
             { label: 'Филтри', icon: 'tune', variant: 'ghost' },
+            { label: 'Търси', icon: 'search', variant: 'filled' },
           ]}
         />
       }>
