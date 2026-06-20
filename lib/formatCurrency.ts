@@ -23,7 +23,11 @@ const SYMBOLS: Record<SupportedCurrency, string> = {
  * Format integer minor units (cents/stotinki) as a localized currency string.
  * Locale is bg-BG; default currency EUR.
  *
- * @param minorUnits integer amount in cents (e.g. 14250 → 142,50 €)
+ * @param minorUnits integer amount in cents (e.g. 14250 → €142,50)
+ *
+ * The symbol is placed BEFORE the number (like `$`), not after. bg-BG's
+ * `currency` style would suffix it, so we format the number with the `decimal`
+ * style (keeping bg-BG grouping + comma decimal) and prepend the symbol.
  */
 export function formatCurrency(
   minorUnits: number,
@@ -34,20 +38,22 @@ export function formatCurrency(
   }
 
   const major = minorUnits / 100;
+  const sign = major < 0 ? '-' : '';
+  const abs = Math.abs(major);
 
+  let number: string;
   try {
-    return new Intl.NumberFormat('bg-BG', {
-      style: 'currency',
-      currency,
+    number = new Intl.NumberFormat('bg-BG', {
+      style: 'decimal',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(major);
+    }).format(abs);
   } catch {
     // Fallback if the runtime lacks full Intl (older Hermes builds).
-    const sign = major < 0 ? '-' : '';
-    const abs = Math.abs(major).toFixed(2).replace('.', ',');
-    return `${sign}${abs} ${SYMBOLS[currency]}`;
+    number = abs.toFixed(2).replace('.', ',');
   }
+
+  return `${sign}${SYMBOLS[currency]}${number}`;
 }
 
 /**

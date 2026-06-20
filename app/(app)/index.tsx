@@ -54,15 +54,17 @@ export default function DashboardScreen() {
       {/* Top app bar */}
       <View className="mb-xl mt-md">
         <Text className="font-jakarta-bold text-headline-xl text-primary">Teftera</Text>
-        <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
-          тефтера
-        </Text>
       </View>
 
       {/* Hero spending */}
       <View className="items-center py-xl">
-        <SectionLabel>Похарчено този месец</SectionLabel>
-        <Text className="mt-sm font-jakarta-semibold text-headline-xl text-on-surface">
+        <SectionLabel>Месец</SectionLabel>
+        <Text
+          className="mt-sm font-jakarta-semibold text-on-surface"
+          style={{ fontSize: 80, lineHeight: 88 }}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.5}>
           {formatCurrency(total)}
         </Text>
       </View>
