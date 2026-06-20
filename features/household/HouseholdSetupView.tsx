@@ -188,7 +188,15 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
                     autoCapitalize="characters"
                     autoCorrect={false}
                     maxLength={9}
-                    className="border-b border-white/10 py-4 text-center font-inter-semibold text-[22px] uppercase tracking-[0.2em] text-on-surface"
+                    className="border-b border-white/10 font-inter-semibold text-on-surface"
+                    style={{
+                      height: 56,
+                      fontSize: 22,
+                      letterSpacing: 4,
+                      textAlign: 'center',
+                      textAlignVertical: 'center',
+                      textTransform: 'uppercase',
+                    }}
                   />
                 </View>
                 <PillButton
@@ -210,7 +218,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
 
             <View className="flex-1" />
 
-            <Pressable onPress={onSkip} disabled={loading} className="mt-xxl items-center">
+            <Pressable onPress={onSkip} disabled={loading} className="mb-xl mt-xxl items-center">
               {loading ? (
                 <ActivityIndicator color="#c4c6d0" />
               ) : (
