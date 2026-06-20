@@ -218,7 +218,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
 
             <View className="flex-1" />
 
-            <Pressable onPress={onSkip} disabled={loading} className="mt-xxl items-center">
+            <Pressable onPress={onSkip} disabled={loading} className="mb-xl mt-xxl items-center">
               {loading ? (
                 <ActivityIndicator color="#c4c6d0" />
               ) : (
