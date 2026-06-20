@@ -1,15 +1,13 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
-
-const MEMBERS = [
-  { initials: 'РД', name: 'Ти', role: 'Собственик' },
-  { initials: 'СД', name: 'Сара', role: 'Член' },
-];
+import { signOut } from '@/features/auth/api';
+import { useAuthStore } from '@/features/auth/store';
+import { getMembers, getMyHousehold, type HouseholdMember } from '@/features/household/api';
+import { formatInviteCode } from '@/features/household/inviteCode';
 
 function Pill({ label }: { label: string }) {
   return (
@@ -21,6 +19,33 @@ function Pill({ label }: { label: string }) {
 }
 
 export default function ProfileScreen() {
+  const session = useAuthStore((s) => s.session);
+  const householdId = useAuthStore((s) => s.householdId);
+  const displayName = useAuthStore((s) => s.displayName) ?? '';
+  const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const [inviteCode, setInviteCode] = useState('');
+
+  const email = session?.user.email ?? '';
+  const initials =
+    displayName
+      .split(' ')
+      .map((p) => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || '?';
+
+  useEffect(() => {
+    if (!householdId) return;
+    getMembers(householdId).then(setMembers);
+    getMyHousehold().then((h) => setInviteCode(h?.inviteCode ?? ''));
+  }, [householdId]);
+
+  const onSignOut = async () => {
+    await signOut();
+    // useProtectedRoute redirects to sign-in once the session clears.
+  };
+
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [anomalyAlerts, setAnomalyAlerts] = useState(false);
 
@@ -34,14 +59,14 @@ export default function ProfileScreen() {
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-md">
           <View className="h-16 w-16 items-center justify-center rounded-full bg-primary-container">
-            <Text className="font-jakarta-semibold text-headline-md text-on-primary">РД</Text>
+            <Text className="font-jakarta-semibold text-headline-md text-on-primary">{initials}</Text>
           </View>
           <View>
             <Text className="font-jakarta-semibold text-headline-md text-on-surface">
-              Радо Джечев
+              {displayName}
             </Text>
             <Text className="font-inter text-body-md text-on-surface-variant opacity-70">
-              rado.jechev@gmail.com
+              {email}
             </Text>
           </View>
         </View>
@@ -53,28 +78,45 @@ export default function ProfileScreen() {
       {/* Household */}
       <View className="mt-xl">
         <SectionLabel className="mb-md">Домакинство</SectionLabel>
-        {MEMBERS.map((m) => (
-          <View key={m.name}>
-            <View className="flex-row items-center gap-md py-md">
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container">
-                <Text className="font-inter-semibold text-body-md text-on-surface-variant">
-                  {m.initials}
-                </Text>
+        {members.map((m) => {
+          const memberInitials =
+            m.displayName
+              .split(' ')
+              .map((p) => p[0])
+              .filter(Boolean)
+              .slice(0, 2)
+              .join('')
+              .toUpperCase() || '?';
+          const memberName = m.displayName || 'Без име';
+          const roleLabel = m.role === 'owner' ? 'Собственик' : 'Член';
+          return (
+            <View key={m.userId}>
+              <View className="flex-row items-center gap-md py-md">
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container">
+                  <Text className="font-inter-semibold text-body-md text-on-surface-variant">
+                    {memberInitials}
+                  </Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="font-inter text-body-lg text-on-surface">{memberName}</Text>
+                  <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
+                    {roleLabel}
+                  </Text>
+                </View>
               </View>
-              <View className="flex-1">
-                <Text className="font-inter text-body-lg text-on-surface">{m.name}</Text>
-                <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
-                  {m.role}
-                </Text>
-              </View>
+              <HairlineDivider />
             </View>
-            <HairlineDivider />
-          </View>
-        ))}
+          );
+        })}
         <Pressable className="flex-row items-center gap-3 py-5 active:opacity-70">
           <MaterialIcons name="person-add" size={20} color="#adc7ff" />
           <Text className="font-inter text-body-md text-primary-container">Покани член</Text>
         </Pressable>
+        {inviteCode ? (
+          <Text className="mt-2 font-inter-semibold text-body-lg tracking-widest text-primary">
+            {formatInviteCode(inviteCode)}
+          </Text>
+        ) : null}
       </View>
 
       {/* Preferences */}
@@ -152,7 +194,7 @@ export default function ProfileScreen() {
           <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
         </Pressable>
         <Pressable
-          onPress={() => router.replace('/(auth)/sign-in')}
+          onPress={onSignOut}
           className="flex-row items-center gap-3 py-5 active:opacity-70">
           <MaterialIcons name="logout" size={22} color="#ffb4ab" />
           <Text className="font-inter text-body-lg text-error">Изход</Text>

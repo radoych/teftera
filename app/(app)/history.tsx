@@ -1,5 +1,5 @@
-import { MaterialIcons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { TransactionRow } from '@/features/transactions/components/TransactionRow';
@@ -28,12 +28,19 @@ const DEMO_GROUPS: TransactionDayGroup[] = [
 
 export default function HistoryScreen() {
   return (
-    <Screen withTabBar>
-      <View className="h-16 flex-row items-center">
-        <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-          История
-        </Text>
-      </View>
+    <Screen
+      withTabBar
+      floatingAboveTabBar={
+        <FloatingActionBar
+          actions={[
+            { label: 'Филтри', icon: 'tune', variant: 'ghost' },
+            { label: 'Търси', icon: 'search', variant: 'filled' },
+          ]}
+        />
+      }>
+      <Text className="mb-xl mt-md font-jakarta-semibold text-headline-xl text-on-surface">
+        История
+      </Text>
 
       {DEMO_GROUPS.map((group) => (
         <View key={group.label} className="mt-lg">
@@ -47,24 +54,6 @@ export default function HistoryScreen() {
           ))}
         </View>
       ))}
-
-      {/* Floating filter / search pills */}
-      <View
-        pointerEvents="box-none"
-        className="absolute inset-x-0 bottom-28 flex-row justify-center gap-md">
-        <Pressable className="h-10 flex-row items-center gap-2 rounded-full bg-primary-container px-6 active:opacity-80">
-          <MaterialIcons name="tune" size={18} color="#112f5e" />
-          <Text className="font-inter-semibold text-label-md uppercase text-on-primary">
-            Филтри
-          </Text>
-        </Pressable>
-        <Pressable className="h-10 flex-row items-center gap-2 rounded-full border border-white/10 bg-surface-container-high px-6 active:opacity-80">
-          <MaterialIcons name="search" size={18} color="#e3e2e6" />
-          <Text className="font-inter-semibold text-label-md uppercase text-on-surface">
-            Търси
-          </Text>
-        </Pressable>
-      </View>
     </Screen>
   );
 }
