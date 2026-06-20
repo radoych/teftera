@@ -52,23 +52,11 @@ export default function DashboardScreen() {
         />
       }>
       {/* Top app bar */}
-      <View className="h-16 flex-row items-center justify-between">
-        <View>
-          <Text className="font-jakarta-bold text-headline-lg-mobile text-primary">
-            Teftera
-          </Text>
-          <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
-            тефтера
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-4">
-          <Pressable onPress={() => router.navigate('/(app)/profile')} hitSlop={8}>
-            <MaterialIcons name="settings" size={24} color="#c4c6d0" />
-          </Pressable>
-          <View className="h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-surface-container-high">
-            <MaterialIcons name="person" size={20} color="#c4c6d0" />
-          </View>
-        </View>
+      <View className="mb-xl mt-md">
+        <Text className="font-jakarta-bold text-headline-xl text-primary">Teftera</Text>
+        <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
+          тефтера
+        </Text>
       </View>
 
       {/* Hero spending */}

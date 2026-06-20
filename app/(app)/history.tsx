@@ -33,16 +33,14 @@ export default function HistoryScreen() {
       floatingAboveTabBar={
         <FloatingActionBar
           actions={[
-            { label: 'Филтри', icon: 'tune', variant: 'filled' },
-            { label: 'Търси', icon: 'search', variant: 'ghost' },
+            { label: 'Търси', icon: 'search', variant: 'filled' },
+            { label: 'Филтри', icon: 'tune', variant: 'ghost' },
           ]}
         />
       }>
-      <View className="h-16 flex-row items-center">
-        <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-          История
-        </Text>
-      </View>
+      <Text className="mb-xl mt-md font-jakarta-semibold text-headline-xl text-on-surface">
+        История
+      </Text>
 
       {DEMO_GROUPS.map((group) => (
         <View key={group.label} className="mt-lg">

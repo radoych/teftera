@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
@@ -33,12 +34,19 @@ const ANOMALIES = [
 
 export default function InsightsScreen() {
   return (
-    <Screen withTabBar>
-      <View className="h-16 flex-row items-center">
-        <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-          Анализи
-        </Text>
-      </View>
+    <Screen
+      withTabBar
+      floatingAboveTabBar={
+        <FloatingActionBar
+          actions={[
+            { label: 'Сравни', icon: 'compare-arrows', variant: 'filled' },
+            { label: 'Филтри', icon: 'filter-list', variant: 'ghost' },
+          ]}
+        />
+      }>
+      <Text className="mb-xl mt-md font-jakarta-semibold text-headline-xl text-on-surface">
+        Анализи
+      </Text>
 
       {/* Hero total */}
       <View className="mt-md gap-xs">
@@ -165,20 +173,6 @@ export default function InsightsScreen() {
             </Text>
           </View>
         ))}
-      </View>
-
-      {/* Floating actions */}
-      <View
-        pointerEvents="box-none"
-        className="absolute inset-x-0 bottom-28 flex-row justify-center gap-md">
-        <Pressable className="h-10 flex-row items-center gap-2 rounded-full border border-on-surface px-6 active:opacity-80">
-          <MaterialIcons name="filter-list" size={16} color="#e3e2e6" />
-          <Text className="font-inter-semibold text-label-md uppercase text-on-surface">Филтри</Text>
-        </Pressable>
-        <Pressable className="h-10 flex-row items-center gap-2 rounded-full border border-on-surface px-6 active:opacity-80">
-          <MaterialIcons name="compare-arrows" size={16} color="#e3e2e6" />
-          <Text className="font-inter-semibold text-label-md uppercase text-on-surface">Сравни</Text>
-        </Pressable>
       </View>
     </Screen>
   );
