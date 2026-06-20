@@ -183,11 +183,12 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
                   <TextInput
                     value={code}
                     onChangeText={(t) => setCode(t.toUpperCase())}
-                    placeholder="напр. 9F4K-7X2B"
+                    placeholder="9F4K-7X2B"
                     placeholderTextColor="rgba(196,198,208,0.3)"
                     autoCapitalize="characters"
+                    autoCorrect={false}
                     maxLength={9}
-                    className="border-b border-white/10 py-4 font-inter-semibold text-[32px] uppercase tracking-widest text-on-surface"
+                    className="border-b border-white/10 py-4 text-center font-inter-semibold text-[22px] uppercase tracking-[0.2em] text-on-surface"
                   />
                 </View>
                 <PillButton
