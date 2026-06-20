@@ -91,6 +91,7 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 - [ ] Spending by category: query + group by category for current month
 - [ ] Recent transactions: last 5, with correct category icons
 - [ ] Monthly total + comparison to last month (% change)
+- [ ] Day / Month toggle on the home hero: switch the big total between today's spend and the current month (the hero label currently reads just „Месец")
 - [ ] "Scan" and "Manual" floating action buttons navigate to correct screens
 - [ ] Per-person vs household toggle (filter by `user_id` vs all household members)
 - [ ] Pull-to-refresh

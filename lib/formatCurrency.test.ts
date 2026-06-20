@@ -7,20 +7,18 @@ import {
 } from './formatCurrency';
 
 describe('formatCurrency', () => {
-  it('formats euro-cents with a euro symbol and bg-BG decimal comma', () => {
+  it('formats euro-cents with the euro symbol FIRST and a bg-BG decimal comma', () => {
     const out = formatCurrency(14250);
-    expect(out).toContain('€');
-    expect(out).toContain('142,50');
+    expect(out).toBe('€142,50');
     expect(out).not.toContain('$');
   });
 
-  it('formats zero', () => {
-    expect(formatCurrency(0)).toContain('0,00');
+  it('formats zero with a leading symbol', () => {
+    expect(formatCurrency(0)).toBe('€0,00');
   });
 
-  it('formats negative amounts', () => {
-    expect(formatCurrency(-500)).toContain('5,00');
-    expect(formatCurrency(-500)).toContain('-');
+  it('formats negative amounts as -€…', () => {
+    expect(formatCurrency(-500)).toBe('-€5,00');
   });
 
   it('never renders USD/$', () => {
