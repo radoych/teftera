@@ -53,3 +53,19 @@ export function guessCategory(merchant: string): string {
   }
   return 'Other';
 }
+
+/**
+ * Map a merchant to a household category id by name. Uses `guessCategory`
+ * for the rule match, then looks the resulting name up in the household's
+ * seeded categories. Falls back to the household's `Other` category, then null.
+ */
+export function resolveCategoryId(
+  merchant: string,
+  categories: ReadonlyArray<{ id: string; name: string }>,
+): string | null {
+  const guessed = guessCategory(merchant);
+  const match = categories.find((c) => c.name === guessed);
+  if (match) return match.id;
+  const other = categories.find((c) => c.name === 'Other');
+  return other ? other.id : null;
+}
