@@ -1,34 +1,25 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
-import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
+import { TransactionRow } from '@/features/transactions/components/TransactionRow';
+import { monthTotalCents, toTransactionView } from '@/features/transactions/groupByDay';
+import { useTransactionsStore } from '@/features/transactions/store';
 import { formatCurrency } from '@/lib/formatCurrency';
-import type { ComponentProps } from 'react';
-
-type IconName = ComponentProps<typeof MaterialIcons>['name'];
-
-interface DemoEntry {
-  id: string;
-  merchant: string;
-  meta: string;
-  amountCents: number;
-  icon: IconName;
-  color: string;
-  flagged?: boolean;
-}
-
-// Static demo data — replaced with live Supabase data in Step 5.
-const DEMO_ENTRIES: DemoEntry[] = [
-  { id: '1', merchant: 'Starbucks', meta: 'Beverages • 08:42', amountCents: 450, icon: 'local-cafe', color: '#d8e3ff' },
-  { id: '2', merchant: 'Grocery Market', meta: 'Groceries • Вчера', amountCents: 6500, icon: 'shopping-basket', color: '#ffdfa7' },
-  { id: '3', merchant: 'Shell Station', meta: 'Transport • 24 яну', amountCents: 7300, icon: 'directions-car', color: '#adc7ff', flagged: true },
-];
 
 export default function DashboardScreen() {
-  const total = DEMO_ENTRIES.reduce((sum, e) => sum + e.amountCents, 0);
+  const transactions = useTransactionsStore((s) => s.transactions);
+  const categories = useTransactionsStore((s) => s.categories);
+  const loaded = useTransactionsStore((s) => s.loaded);
+
+  const total = useMemo(() => monthTotalCents(transactions), [transactions]);
+  const recent = useMemo(() => {
+    const byId = new Map(categories.map((c) => [c.id, c]));
+    return transactions.slice(0, 5).map((tx) => toTransactionView(tx, byId));
+  }, [transactions, categories]);
 
   return (
     <Screen
@@ -59,14 +50,20 @@ export default function DashboardScreen() {
       {/* Hero spending */}
       <View className="items-center py-xl">
         <SectionLabel>Месец</SectionLabel>
-        <Text
-          className="mt-sm font-jakarta-semibold text-on-surface"
-          style={{ fontSize: 80, lineHeight: 88 }}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.5}>
-          {formatCurrency(total)}
-        </Text>
+        {loaded ? (
+          <Text
+            className="mt-sm font-jakarta-semibold text-on-surface"
+            style={{ fontSize: 80, lineHeight: 88 }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.5}>
+            {formatCurrency(total)}
+          </Text>
+        ) : (
+          <View className="mt-lg h-20 justify-center">
+            <ActivityIndicator color="#adc7ff" />
+          </View>
+        )}
       </View>
 
       {/* Recent entries */}
@@ -80,37 +77,15 @@ export default function DashboardScreen() {
         </Pressable>
       </View>
 
-      <View>
-        {DEMO_ENTRIES.map((entry, i) => (
-          <View key={entry.id}>
-            <View className="flex-row items-center justify-between py-md">
-              <View className="flex-row items-center gap-md">
-                <View className="h-12 w-12 items-center justify-center rounded-full bg-surface-container-highest">
-                  <MaterialIcons name={entry.icon} size={22} color={entry.color} />
-                </View>
-                <View>
-                  <View className="flex-row items-center gap-2">
-                    {entry.flagged ? (
-                      <View className="h-2 w-2 rounded-full bg-secondary-fixed" />
-                    ) : null}
-                    <Text className="font-jakarta-semibold text-headline-md text-on-surface">
-                      {entry.merchant}
-                    </Text>
-                  </View>
-                  <Text className="font-inter text-body-md text-on-surface-variant opacity-70">
-                    {entry.meta}
-                  </Text>
-                </View>
-              </View>
-              <Text
-                className={`font-inter-semibold text-headline-md ${entry.flagged ? 'text-secondary-fixed' : 'text-on-surface'}`}>
-                {formatCurrency(entry.amountCents)}
-              </Text>
-            </View>
-            {i < DEMO_ENTRIES.length - 1 ? <HairlineDivider /> : null}
-          </View>
-        ))}
-      </View>
+      {loaded && recent.length === 0 ? (
+        <Text className="py-md font-inter text-body-md text-on-surface-variant opacity-60">
+          Все още няма транзакции.
+        </Text>
+      ) : (
+        recent.map((tx, i) => (
+          <TransactionRow key={tx.id} tx={tx} showDivider={i < recent.length - 1} />
+        ))
+      )}
     </Screen>
   );
 }
