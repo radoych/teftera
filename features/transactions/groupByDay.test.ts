@@ -64,9 +64,9 @@ describe('groupTransactionsByDay', () => {
       NOW,
     );
     expect(groups).toHaveLength(2);
-    expect(groups[0].label).toBe('Днес');
-    expect(groups[0].items.map((i) => i.id)).toEqual(['today', 'today2']);
-    expect(groups[1].label).toBe('Вчера');
+    expect(groups[0]!.label).toBe('Днес');
+    expect(groups[0]!.items.map((i) => i.id)).toEqual(['today', 'today2']);
+    expect(groups[1]!.label).toBe('Вчера');
   });
 
   it('returns an empty array for no transactions', () => {

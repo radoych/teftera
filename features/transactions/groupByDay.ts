@@ -47,15 +47,15 @@ export function groupTransactionsByDay(
   }).map((x) => x.tx);
 
   const groups: TransactionDayGroup[] = [];
-  const indexByDate = new Map<string, number>();
+  const groupByDate = new Map<string, TransactionDayGroup>();
   for (const tx of sorted) {
-    let idx = indexByDate.get(tx.date);
-    if (idx === undefined) {
-      idx = groups.length;
-      indexByDate.set(tx.date, idx);
-      groups.push({ label: relativeDay(tx.date, now), items: [] });
+    let group = groupByDate.get(tx.date);
+    if (!group) {
+      group = { label: relativeDay(tx.date, now), items: [] };
+      groupByDate.set(tx.date, group);
+      groups.push(group);
     }
-    groups[idx].items.push(toTransactionView(tx, byId, now));
+    group.items.push(toTransactionView(tx, byId, now));
   }
   return groups;
 }
