@@ -67,6 +67,7 @@ export default function RootLayout() {
           name="manual-entry"
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen name="transaction/[id]" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </GestureHandlerRootView>
   );

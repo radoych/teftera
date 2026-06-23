@@ -51,3 +51,32 @@ export async function createTransaction(input: NewTransaction): Promise<void> {
   });
   if (error) throw error;
 }
+
+export interface TransactionPatch {
+  amountCents: number;
+  merchant: string;
+  categoryId: string | null;
+  date: string; // YYYY-MM-DD
+  note: string | null;
+}
+
+/** Update an existing transaction's editable fields. RLS scopes by household. */
+export async function updateTransaction(id: string, patch: TransactionPatch): Promise<void> {
+  const { error } = await supabase
+    .from('transactions')
+    .update({
+      amount_eur: patch.amountCents,
+      merchant: patch.merchant,
+      category_id: patch.categoryId,
+      date: patch.date,
+      note: patch.note,
+    })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+/** Delete a transaction by id. RLS scopes by household. */
+export async function deleteTransaction(id: string): Promise<void> {
+  const { error } = await supabase.from('transactions').delete().eq('id', id);
+  if (error) throw error;
+}
