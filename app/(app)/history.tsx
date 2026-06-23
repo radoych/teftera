@@ -1,32 +1,23 @@
-import { Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { TransactionRow } from '@/features/transactions/components/TransactionRow';
-import type { TransactionDayGroup } from '@/features/transactions/types';
-
-// Static demo data — replaced with live, day-grouped Supabase data in Step 5.
-const DEMO_GROUPS: TransactionDayGroup[] = [
-  {
-    label: 'Днес, 24 окт',
-    items: [
-      { id: '1', merchant: 'Apple Store', meta: 'Electronics • 10:24', amountCents: 129900, icon: 'shopping-bag', iconColor: '#d8e3ff', isFlagged: false },
-      { id: '2', merchant: "L'Artisan Bistro", meta: 'Dining • 09:12', amountCents: 8450, icon: 'restaurant', iconColor: '#c4c6d0', isFlagged: true, flagReason: 'Необичайно място' },
-      { id: '3', merchant: 'Uber', meta: 'Transport • 08:45', amountCents: 2412, icon: 'directions-car', iconColor: '#d8e3ff', isFlagged: false },
-    ],
-  },
-  {
-    label: 'Вчера, 23 окт',
-    items: [
-      { id: '4', merchant: 'Заплата', meta: 'Income • 13:00', amountCents: 840000, icon: 'account-balance-wallet', iconColor: '#ffdfa7', isFlagged: false, isIncome: true },
-      { id: '5', merchant: 'Figma Pro', meta: 'Work • 11:30', amountCents: 1500, icon: 'subscriptions', iconColor: '#c4c6d0', isFlagged: false },
-      { id: '6', merchant: 'Непознат търговец', meta: 'Uncategorized • 10:15', amountCents: 100, icon: 'payments', iconColor: '#c4c6d0', isFlagged: true, flagReason: 'Провери малка сума' },
-      { id: '7', merchant: 'Whole Foods', meta: 'Groceries • 09:00', amountCents: 6240, icon: 'local-grocery-store', iconColor: '#c4c6d0', isFlagged: false },
-    ],
-  },
-];
+import { groupTransactionsByDay } from '@/features/transactions/groupByDay';
+import { useTransactionsStore } from '@/features/transactions/store';
 
 export default function HistoryScreen() {
+  const transactions = useTransactionsStore((s) => s.transactions);
+  const categories = useTransactionsStore((s) => s.categories);
+  const loading = useTransactionsStore((s) => s.loading);
+  const loaded = useTransactionsStore((s) => s.loaded);
+
+  const groups = useMemo(
+    () => groupTransactionsByDay(transactions, categories),
+    [transactions, categories],
+  );
+
   return (
     <Screen
       withTabBar
@@ -42,18 +33,26 @@ export default function HistoryScreen() {
         История
       </Text>
 
-      {DEMO_GROUPS.map((group) => (
-        <View key={group.label} className="mt-lg">
-          <SectionLabel className="mb-sm">{group.label}</SectionLabel>
-          {group.items.map((tx, i) => (
-            <TransactionRow
-              key={tx.id}
-              tx={tx}
-              showDivider={i < group.items.length - 1}
-            />
-          ))}
+      {loading && !loaded ? (
+        <View className="mt-xxl items-center">
+          <ActivityIndicator color="#adc7ff" />
         </View>
-      ))}
+      ) : groups.length === 0 ? (
+        <View className="mt-xxl items-center px-6">
+          <Text className="text-center font-inter text-body-lg text-on-surface-variant opacity-60">
+            {'Все още няма транзакции. Добави първата с „Ръчно" или „Сканирай".'}
+          </Text>
+        </View>
+      ) : (
+        groups.map((group) => (
+          <View key={group.label} className="mt-lg">
+            <SectionLabel className="mb-sm">{group.label}</SectionLabel>
+            {group.items.map((tx, i) => (
+              <TransactionRow key={tx.id} tx={tx} showDivider={i < group.items.length - 1} />
+            ))}
+          </View>
+        ))
+      )}
     </Screen>
   );
 }

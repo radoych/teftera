@@ -1,8 +1,11 @@
 import { Tabs } from 'expo-router';
 import { BottomNav } from '@/components/BottomNav';
+import { useTransactionsSync } from '@/features/transactions/sync';
 
 /** Main app tab navigator with the floating frosted pill nav. */
 export default function AppTabsLayout() {
+  useTransactionsSync();
+
   return (
     <Tabs
       tabBar={(props) => <BottomNav {...props} />}

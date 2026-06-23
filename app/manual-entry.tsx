@@ -1,10 +1,17 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { HairlineDivider } from '@/components/HairlineDivider';
+import { useAuthStore } from '@/features/auth/store';
+import { createTransaction } from '@/features/transactions/api';
+import { refreshTransactions } from '@/features/transactions/sync';
+import { parseManualEntry } from '@/features/transactions/schema';
+import { useTransactionsStore } from '@/features/transactions/store';
+import { guessCategory, resolveCategoryId } from '@/lib/categories';
+import { toISODate } from '@/lib/dates';
 
 function FieldRow({
   label,
@@ -46,9 +53,44 @@ export default function ManualEntryScreen() {
   const [amount, setAmount] = useState('');
   const [merchant, setMerchant] = useState('');
   const [note, setNote] = useState('');
+  const [errors, setErrors] = useState<{ amount?: string; merchant?: string }>({});
+  const [saving, setSaving] = useState(false);
 
-  // Saving to Supabase is wired in Step 5. For now, DONE returns to the app.
-  const onDone = () => router.back();
+  const onDone = async () => {
+    if (saving) return;
+    const parsed = parseManualEntry({ amount, merchant, note, date: toISODate() });
+    if (!parsed.success) {
+      setErrors({ amount: parsed.errors.amount, merchant: parsed.errors.merchant });
+      return;
+    }
+    setErrors({});
+
+    const { householdId, session } = useAuthStore.getState();
+    if (!householdId) {
+      Alert.alert('Грешка', 'Няма активно домакинство.');
+      return;
+    }
+    const categories = useTransactionsStore.getState().categories;
+    const categoryId = resolveCategoryId(parsed.data.merchant, categories);
+
+    setSaving(true);
+    try {
+      await createTransaction({
+        householdId,
+        userId: session?.user.id ?? null,
+        amountCents: parsed.data.amountCents,
+        merchant: parsed.data.merchant,
+        categoryId,
+        date: parsed.data.date,
+        note: parsed.data.note,
+      });
+      await refreshTransactions(householdId);
+      router.back();
+    } catch {
+      setSaving(false);
+      Alert.alert('Грешка', 'Неуспешно записване. Опитай отново.');
+    }
+  };
 
   return (
     <View className="flex-1 bg-background">
@@ -62,8 +104,12 @@ export default function ManualEntryScreen() {
           <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
             Ръчно въвеждане
           </Text>
-          <Pressable onPress={onDone} hitSlop={8} className="px-2 py-1">
-            <Text className="font-inter-medium text-label-md text-primary-container">ГОТОВО</Text>
+          <Pressable onPress={onDone} hitSlop={8} disabled={saving} className="px-2 py-1">
+            {saving ? (
+              <ActivityIndicator color="#adc7ff" />
+            ) : (
+              <Text className="font-inter-medium text-label-md text-primary-container">ГОТОВО</Text>
+            )}
           </Pressable>
         </View>
 
@@ -81,6 +127,11 @@ export default function ManualEntryScreen() {
               className="min-w-[120px] text-center font-jakarta-semibold text-[64px] text-on-surface"
             />
           </View>
+          {errors.amount ? (
+            <Text className="-mt-12 mb-6 text-center font-inter text-body-md text-error">
+              {errors.amount}
+            </Text>
+          ) : null}
 
           {/* Form */}
           <FieldRow label="Търговец">
@@ -91,15 +142,18 @@ export default function ManualEntryScreen() {
               placeholderTextColor="rgba(196,198,208,0.3)"
               className="font-inter text-body-lg text-on-surface"
             />
+            {errors.merchant ? (
+              <Text className="font-inter text-body-md text-error">{errors.merchant}</Text>
+            ) : null}
           </FieldRow>
 
-          <FieldRow label="Категория" chevron onPress={() => {}}>
-            <Text className="font-inter text-body-lg text-on-surface-variant opacity-40">
-              Избери категория
+          <FieldRow label="Категория">
+            <Text className="font-inter text-body-lg text-on-surface">
+              {merchant.trim() ? guessCategory(merchant) : 'Автоматично'}
             </Text>
           </FieldRow>
 
-          <FieldRow label="Дата" chevron onPress={() => {}}>
+          <FieldRow label="Дата">
             <Text className="font-inter text-body-lg text-on-surface">Днес</Text>
           </FieldRow>
 

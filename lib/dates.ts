@@ -49,3 +49,16 @@ function parseISODate(iso: string): Date {
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
+
+/** True only for a syntactically and calendar-valid YYYY-MM-DD string. */
+export function isValidISODate(iso: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return false;
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+  const date = new Date(y, m - 1, d);
+  return (
+    date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d
+  );
+}
