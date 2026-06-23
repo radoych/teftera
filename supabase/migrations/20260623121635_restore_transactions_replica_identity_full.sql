@@ -1,0 +1,11 @@
+-- Restore full replica identity on transactions so realtime DELETE (and UPDATE)
+-- events carry the old row's household_id. Without this, the postgres_changes
+-- subscription filter `household_id=eq.<id>` cannot match DELETE events (the old
+-- row only exposes the primary key under default replica identity), so deletes
+-- never propagate to other household members' devices.
+--
+-- This reverses the trim made in 20260623072533_realtime_transactions: that
+-- "cleanup" was wrong — the refetch-on-change handler ignores the payload, but
+-- the subscription FILTER still needs household_id from the row, which DELETE
+-- only exposes under `replica identity full`.
+alter table public.transactions replica identity full;
