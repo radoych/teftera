@@ -31,9 +31,14 @@ export function FloatingActionBar({ actions }: { actions: FloatingAction[] }) {
 
   return (
     <View
-      pointerEvents="box-none"
       // Sits 12px above the nav pill (nav: bottom insets.bottom+12, height 64).
-      style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 88 }}
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: insets.bottom + 88,
+        pointerEvents: 'box-none',
+      }}
       className="items-center px-md">
       <View style={{ transform: [{ scale: 1.1 }] }} className="flex-row justify-center gap-md">
         {actions.map((action) => {
