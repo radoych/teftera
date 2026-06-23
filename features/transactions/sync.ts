@@ -5,6 +5,15 @@ import { useAuthStore } from '@/features/auth/store';
 import { listCategories, listTransactions } from './api';
 import { useTransactionsStore } from './store';
 
+/** Fetch the household's categories + transactions and write them into the store. */
+export async function refreshTransactions(householdId: string): Promise<void> {
+  const [categories, transactions] = await Promise.all([
+    listCategories(householdId),
+    listTransactions(householdId),
+  ]);
+  useTransactionsStore.getState().setData(transactions, categories);
+}
+
 /**
  * Load the household's transactions + categories into the store and keep them
  * live. On any change to the household's transactions, refetch the list (we
@@ -25,11 +34,7 @@ export function useTransactionsSync(): void {
 
     async function load() {
       try {
-        const [categories, transactions] = await Promise.all([
-          listCategories(householdId!),
-          listTransactions(householdId!),
-        ]);
-        if (active) store.setData(transactions, categories);
+        await refreshTransactions(householdId!);
       } catch (err) {
         if (__DEV__) console.warn('[transactions] load failed', err);
         if (active) store.setLoading(false);

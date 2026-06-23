@@ -15,7 +15,7 @@ interface TransactionsState {
 export const useTransactionsStore = create<TransactionsState>((set) => ({
   transactions: [],
   categories: [],
-  loading: false,
+  loading: true,
   loaded: false,
   setData: (transactions, categories) =>
     set({ transactions, categories, loading: false, loaded: true }),

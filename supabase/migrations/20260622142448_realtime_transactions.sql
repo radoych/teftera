@@ -14,5 +14,3 @@ begin
   end if;
 end $$;
 
--- Full row image on UPDATE/DELETE events (harmless; we refetch on change).
-alter table public.transactions replica identity full;

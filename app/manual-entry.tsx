@@ -7,6 +7,7 @@ import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { useAuthStore } from '@/features/auth/store';
 import { createTransaction } from '@/features/transactions/api';
+import { refreshTransactions } from '@/features/transactions/sync';
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { guessCategory, resolveCategoryId } from '@/lib/categories';
@@ -83,7 +84,8 @@ export default function ManualEntryScreen() {
         date: parsed.data.date,
         note: parsed.data.note,
       });
-      router.back(); // realtime sync refreshes the lists
+      await refreshTransactions(householdId);
+      router.back();
     } catch {
       setSaving(false);
       Alert.alert('Грешка', 'Неуспешно записване. Опитай отново.');

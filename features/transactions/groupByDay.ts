@@ -22,6 +22,7 @@ export function toTransactionView(
   const cat = tx.category_id ? byId.get(tx.category_id) : undefined;
   const name = cat?.name ?? FALLBACK_NAME;
   const time = formatTime(new Date(tx.created_at));
+  // flagReason/isIncome deferred (anomaly + income land in later days)
   return {
     id: tx.id,
     merchant: tx.merchant,
