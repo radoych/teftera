@@ -1,15 +1,26 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { useAuthStore } from '@/features/auth/store';
-import { createTransaction } from '@/features/transactions/api';
-import { refreshTransactions } from '@/features/transactions/sync';
+import { createTransaction, updateTransaction } from '@/features/transactions/api';
+import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
+import { DateField } from '@/features/transactions/components/DateField';
+import { transactionToFormValues } from '@/features/transactions/edit';
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
+import { refreshTransactions } from '@/features/transactions/sync';
 import { guessCategory, resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 
@@ -50,15 +61,57 @@ function FieldRow({
 }
 
 export default function ManualEntryScreen() {
-  const [amount, setAmount] = useState('');
-  const [merchant, setMerchant] = useState('');
-  const [note, setNote] = useState('');
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const isEdit = !!id;
+  const categories = useTransactionsStore((s) => s.categories);
+  const existing = useTransactionsStore((s) =>
+    id ? s.transactions.find((t) => t.id === id) : undefined,
+  );
+
+  const seed = useMemo(
+    () => (existing ? transactionToFormValues(existing) : null),
+    [existing],
+  );
+
+  const [amount, setAmount] = useState(seed?.amount ?? '');
+  const [merchant, setMerchant] = useState(seed?.merchant ?? '');
+  const [note, setNote] = useState(seed?.note ?? '');
+  const [date, setDate] = useState(seed?.date ?? toISODate());
+  const [categoryId, setCategoryId] = useState<string | null>(seed?.categoryId ?? null);
+  const [categoryTouched, setCategoryTouched] = useState(isEdit);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [errors, setErrors] = useState<{ amount?: string; merchant?: string }>({});
   const [saving, setSaving] = useState(false);
 
-  const onDone = async () => {
+  // Edit mode but the transaction is gone (deleted on another device).
+  if (isEdit && !existing) {
+    return (
+      <View className="flex-1 bg-background">
+        <BackgroundGlow />
+        <SafeAreaView className="flex-1 items-center justify-center px-8" edges={['top']}>
+          <Text className="text-center font-inter text-body-lg text-on-surface-variant">
+            {'Транзакцията не е намерена.'}
+          </Text>
+          <Pressable
+            onPress={() => router.back()}
+            className="mt-lg rounded-full border border-primary-container px-6 py-2">
+            <Text className="font-inter text-label-md text-primary-container">{'Назад'}</Text>
+          </Pressable>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  const selectedCategory = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
+  const categoryLabel = selectedCategory
+    ? selectedCategory.name
+    : merchant.trim() && !categoryTouched
+      ? guessCategory(merchant)
+      : 'Автоматично';
+
+  const onSave = async () => {
     if (saving) return;
-    const parsed = parseManualEntry({ amount, merchant, note, date: toISODate() });
+    const parsed = parseManualEntry({ amount, merchant, note, date });
     if (!parsed.success) {
       setErrors({ amount: parsed.errors.amount, merchant: parsed.errors.merchant });
       return;
@@ -70,25 +123,39 @@ export default function ManualEntryScreen() {
       Alert.alert('Грешка', 'Няма активно домакинство.');
       return;
     }
-    const categories = useTransactionsStore.getState().categories;
-    const categoryId = resolveCategoryId(parsed.data.merchant, categories);
+    const resolvedCategoryId = categoryTouched
+      ? categoryId
+      : resolveCategoryId(parsed.data.merchant, categories);
 
     setSaving(true);
     try {
-      await createTransaction({
-        householdId,
-        userId: session?.user.id ?? null,
-        amountCents: parsed.data.amountCents,
-        merchant: parsed.data.merchant,
-        categoryId,
-        date: parsed.data.date,
-        note: parsed.data.note,
-      });
+      if (isEdit && id) {
+        await updateTransaction(id, {
+          amountCents: parsed.data.amountCents,
+          merchant: parsed.data.merchant,
+          categoryId: resolvedCategoryId,
+          date: parsed.data.date,
+          note: parsed.data.note,
+        });
+      } else {
+        await createTransaction({
+          householdId,
+          userId: session?.user.id ?? null,
+          amountCents: parsed.data.amountCents,
+          merchant: parsed.data.merchant,
+          categoryId: resolvedCategoryId,
+          date: parsed.data.date,
+          note: parsed.data.note,
+        });
+      }
       await refreshTransactions(householdId);
       router.back();
     } catch {
       setSaving(false);
-      Alert.alert('Грешка', 'Неуспешно записване. Опитай отново.');
+      Alert.alert(
+        'Грешка',
+        isEdit ? 'Неуспешна редакция. Опитай отново.' : 'Неуспешно записване. Опитай отново.',
+      );
     }
   };
 
@@ -102,13 +169,15 @@ export default function ManualEntryScreen() {
             <MaterialIcons name="arrow-back" size={24} color="#e3e2e6" />
           </Pressable>
           <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-            Ръчно въвеждане
+            {isEdit ? 'Редактиране' : 'Ръчно въвеждане'}
           </Text>
-          <Pressable onPress={onDone} hitSlop={8} disabled={saving} className="px-2 py-1">
+          <Pressable onPress={onSave} hitSlop={8} disabled={saving} className="px-2 py-1">
             {saving ? (
               <ActivityIndicator color="#adc7ff" />
             ) : (
-              <Text className="font-inter-medium text-label-md text-primary-container">ГОТОВО</Text>
+              <Text className="font-inter-medium text-label-md text-primary-container">
+                {isEdit ? 'ЗАПАЗИ' : 'ГОТОВО'}
+              </Text>
             )}
           </Pressable>
         </View>
@@ -116,14 +185,14 @@ export default function ManualEntryScreen() {
         <ScrollView keyboardShouldPersistTaps="handled">
           {/* Amount */}
           <View className="mb-16 mt-12 flex-row items-center justify-center px-6">
-            <Text className="font-jakarta-semibold text-[64px] text-on-surface opacity-30">€</Text>
+            <Text className="font-jakarta-semibold text-[64px] text-on-surface opacity-30">{'€'}</Text>
             <TextInput
               value={amount}
               onChangeText={setAmount}
               placeholder="0,00"
               placeholderTextColor="rgba(196,198,208,0.3)"
               keyboardType="decimal-pad"
-              autoFocus
+              autoFocus={!isEdit}
               className="min-w-[120px] text-center font-jakarta-semibold text-[64px] text-on-surface"
             />
           </View>
@@ -133,7 +202,7 @@ export default function ManualEntryScreen() {
             </Text>
           ) : null}
 
-          {/* Form */}
+          {/* Merchant */}
           <FieldRow label="Търговец">
             <TextInput
               value={merchant}
@@ -147,16 +216,15 @@ export default function ManualEntryScreen() {
             ) : null}
           </FieldRow>
 
-          <FieldRow label="Категория">
-            <Text className="font-inter text-body-lg text-on-surface">
-              {merchant.trim() ? guessCategory(merchant) : 'Автоматично'}
-            </Text>
+          {/* Category — opens the picker */}
+          <FieldRow label="Категория" chevron onPress={() => setPickerOpen(true)}>
+            <Text className="font-inter text-body-lg text-on-surface">{categoryLabel}</Text>
           </FieldRow>
 
-          <FieldRow label="Дата">
-            <Text className="font-inter text-body-lg text-on-surface">Днес</Text>
-          </FieldRow>
+          {/* Date — native picker */}
+          <DateField value={date} onChange={setDate} />
 
+          {/* Note */}
           <FieldRow label="Бележка">
             <TextInput
               value={note}
@@ -168,6 +236,18 @@ export default function ManualEntryScreen() {
           </FieldRow>
         </ScrollView>
       </SafeAreaView>
+
+      <CategoryPickerModal
+        visible={pickerOpen}
+        categories={categories}
+        selectedId={categoryId}
+        onSelect={(cid) => {
+          setCategoryId(cid);
+          setCategoryTouched(true);
+          setPickerOpen(false);
+        }}
+        onClose={() => setPickerOpen(false)}
+      />
     </View>
   );
 }
