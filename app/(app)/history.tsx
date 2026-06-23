@@ -1,5 +1,7 @@
+import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
+import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
@@ -38,11 +40,12 @@ export default function HistoryScreen() {
           <ActivityIndicator color="#adc7ff" />
         </View>
       ) : groups.length === 0 ? (
-        <View className="mt-xxl items-center px-6">
-          <Text className="text-center font-inter text-body-lg text-on-surface-variant opacity-60">
-            {'Все още няма транзакции. Добави първата с „Ръчно" или „Сканирай".'}
-          </Text>
-        </View>
+        <EmptyState
+          icon="receipt-long"
+          title="Все още няма транзакции"
+          message={'Добави първата с „Ръчно" или „Сканирай".'}
+          cta={{ label: 'Ръчно', onPress: () => router.navigate('/manual-entry') }}
+        />
       ) : (
         groups.map((group) => (
           <View key={group.label} className="mt-lg">

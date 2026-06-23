@@ -2,6 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
@@ -78,9 +79,7 @@ export default function DashboardScreen() {
       </View>
 
       {loaded && recent.length === 0 ? (
-        <Text className="py-md font-inter text-body-md text-on-surface-variant opacity-60">
-          Все още няма транзакции.
-        </Text>
+        <EmptyState icon="receipt-long" title="Все още няма транзакции" />
       ) : (
         recent.map((tx, i) => (
           <TransactionRow key={tx.id} tx={tx} showDivider={i < recent.length - 1} />
