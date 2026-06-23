@@ -31,8 +31,13 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
 
   return (
     <View
-      pointerEvents="box-none"
-      style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 12 }}
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: insets.bottom + 12,
+        pointerEvents: 'box-none',
+      }}
       className="items-center">
       <BlurView
         intensity={40}

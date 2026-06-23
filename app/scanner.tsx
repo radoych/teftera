@@ -54,7 +54,9 @@ export default function ScannerScreen() {
       <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back" enableTorch={torch} />
 
       {/* Viewfinder brackets overlay */}
-      <View pointerEvents="none" className="absolute inset-0 items-center justify-center">
+      <View
+        style={{ pointerEvents: 'none' }}
+        className="absolute inset-0 items-center justify-center">
         <View className="aspect-[2/3.5] w-[70%] max-w-[320px]">
           <View className="absolute left-0 top-0 h-6 w-6 rounded-tl-lg border-l-2 border-t-2 border-white/80" />
           <View className="absolute right-0 top-0 h-6 w-6 rounded-tr-lg border-r-2 border-t-2 border-white/80" />

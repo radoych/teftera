@@ -13,7 +13,7 @@ export function BackgroundGlow() {
   const { width, height } = useWindowDimensions();
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
       <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
         <Defs>
           <RadialGradient id="blueGlow" cx="100%" cy="0%" r="70%">

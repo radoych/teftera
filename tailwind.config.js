@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   // NativeWind v4 — class-based dark theme is always-on for Teftera.
+  // `darkMode: 'class'` (not the default 'media') lets the fixed dark scheme be
+  // set without the web runtime throwing "Cannot manually set color scheme".
+  darkMode: 'class',
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
