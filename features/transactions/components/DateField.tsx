@@ -4,17 +4,12 @@ import { useState } from 'react';
 import { Modal, Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HairlineDivider } from '@/components/HairlineDivider';
-import { relativeDay, toISODate } from '@/lib/dates';
+import { parseISODate, relativeDay, toISODate } from '@/lib/dates';
 
 interface DateFieldProps {
   value: string; // YYYY-MM-DD
   onChange: (iso: string) => void;
   label?: string;
-}
-
-function parseISO(iso: string): Date {
-  const [y, m, d] = iso.split('-').map(Number);
-  return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
 }
 
 /** A "Дата" row that opens the native date picker. Defaults label to „Дата". */
@@ -38,7 +33,7 @@ export function DateField({ value, onChange, label = 'Дата' }: DateFieldProp
 
       {open && Platform.OS === 'android' ? (
         <DateTimePicker
-          value={parseISO(value)}
+          value={parseISODate(value)}
           mode="date"
           onChange={(event, selected) => {
             setOpen(false);
@@ -58,7 +53,7 @@ export function DateField({ value, onChange, label = 'Дата' }: DateFieldProp
                   </Pressable>
                 </View>
                 <DateTimePicker
-                  value={parseISO(value)}
+                  value={parseISODate(value)}
                   mode="date"
                   display="spinner"
                   themeVariant="dark"

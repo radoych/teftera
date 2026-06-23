@@ -41,7 +41,7 @@ export function formatTime(date: Date): string {
   }).format(date);
 }
 
-function parseISODate(iso: string): Date {
+export function parseISODate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
 }
