@@ -82,7 +82,12 @@ export default function DashboardScreen() {
         <EmptyState icon="receipt-long" title="Все още няма транзакции" />
       ) : (
         recent.map((tx, i) => (
-          <TransactionRow key={tx.id} tx={tx} showDivider={i < recent.length - 1} />
+          <TransactionRow
+            key={tx.id}
+            tx={tx}
+            onPress={() => router.navigate(`/transaction/${tx.id}`)}
+            showDivider={i < recent.length - 1}
+          />
         ))
       )}
     </Screen>

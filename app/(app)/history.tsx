@@ -51,7 +51,12 @@ export default function HistoryScreen() {
           <View key={group.label} className="mt-lg">
             <SectionLabel className="mb-sm">{group.label}</SectionLabel>
             {group.items.map((tx, i) => (
-              <TransactionRow key={tx.id} tx={tx} showDivider={i < group.items.length - 1} />
+              <TransactionRow
+                key={tx.id}
+                tx={tx}
+                onPress={() => router.navigate(`/transaction/${tx.id}`)}
+                showDivider={i < group.items.length - 1}
+              />
             ))}
           </View>
         ))
