@@ -56,21 +56,25 @@ export default function ProfileScreen() {
       </Text>
 
       {/* User header */}
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-md">
+      <View className="flex-row items-center justify-between gap-md">
+        <View className="flex-1 flex-row items-center gap-md">
           <View className="h-16 w-16 items-center justify-center rounded-full bg-primary-container">
             <Text className="font-jakarta-semibold text-headline-md text-on-primary">{initials}</Text>
           </View>
-          <View>
-            <Text className="font-jakarta-semibold text-headline-md text-on-surface">
+          <View className="flex-1">
+            <Text
+              numberOfLines={1}
+              className="font-jakarta-semibold text-headline-md text-on-surface">
               {displayName}
             </Text>
-            <Text className="font-inter text-body-md text-on-surface-variant opacity-70">
+            <Text
+              numberOfLines={1}
+              className="font-inter text-body-md text-on-surface-variant opacity-70">
               {email}
             </Text>
           </View>
         </View>
-        <Pressable className="rounded-full border border-primary-container px-6 py-2 active:bg-primary-container/10">
+        <Pressable className="shrink-0 rounded-full border border-primary-container px-6 py-2 active:bg-primary-container/10">
           <Text className="font-inter text-label-md text-primary-container">Редакция</Text>
         </Pressable>
       </View>
