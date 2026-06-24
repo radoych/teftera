@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { useAuthStore } from '@/features/auth/store';
@@ -96,7 +97,7 @@ export default function TransactionDetailScreen() {
           <View className="w-8" />
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
           {/* Hero */}
           <View className="items-center py-xl">
             <Text
@@ -120,20 +121,25 @@ export default function TransactionDetailScreen() {
           <DetailRow label="Дата" value={relativeDay(tx.date)} />
           <DetailRow label="Бележка" value={tx.note?.trim() ? tx.note : '—'} />
           <DetailRow label="Добавено от" value={addedBy} />
-
-          {/* Actions */}
-          <View className="mt-xl gap-md px-6">
-            <Pressable
-              onPress={() => router.navigate(`/manual-entry?id=${tx.id}`)}
-              className="items-center rounded-full border border-primary-container py-3 active:bg-primary-container/10">
-              <Text className="font-inter text-label-md text-primary-container">{'Редакция'}</Text>
-            </Pressable>
-            <Pressable onPress={() => setConfirmOpen(true)} className="items-center py-3 active:opacity-70">
-              <Text className="font-inter text-label-md text-error">{'Изтрий'}</Text>
-            </Pressable>
-          </View>
         </ScrollView>
       </SafeAreaView>
+      <FloatingActionBar
+        placement="bottom"
+        actions={[
+          {
+            label: 'Изтрий',
+            icon: 'delete-outline',
+            variant: 'destructive',
+            onPress: () => setConfirmOpen(true),
+          },
+          {
+            label: 'Редакция',
+            icon: 'edit',
+            variant: 'filled',
+            onPress: () => router.navigate(`/manual-entry?id=${tx.id}`),
+          },
+        ]}
+      />
       <ConfirmSheet
         visible={confirmOpen}
         title="Изтриване"
