@@ -8,6 +8,10 @@ import { signOut } from '@/features/auth/api';
 import { useAuthStore } from '@/features/auth/store';
 import { getMembers, getMyHousehold, type HouseholdMember } from '@/features/household/api';
 import { formatInviteCode } from '@/features/household/inviteCode';
+import { SectionLayoutEditor } from '@/features/preferences/components/SectionLayoutEditor';
+import { usePreferencesStore } from '@/features/preferences/store';
+import { upsertMyPreferences } from '@/features/preferences/api';
+import type { UserPreferences } from '@/features/preferences/types';
 
 function Pill({ label }: { label: string }) {
   return (
@@ -22,6 +26,8 @@ export default function ProfileScreen() {
   const session = useAuthStore((s) => s.session);
   const householdId = useAuthStore((s) => s.householdId);
   const displayName = useAuthStore((s) => s.displayName) ?? '';
+  const preferences = usePreferencesStore((s) => s.preferences);
+  const setPreferences = usePreferencesStore((s) => s.setPreferences);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [inviteCode, setInviteCode] = useState('');
 
@@ -44,6 +50,19 @@ export default function ProfileScreen() {
   const onSignOut = async () => {
     await signOut();
     // useProtectedRoute redirects to sign-in once the session clears.
+  };
+
+  const onLayoutChange = async (next: UserPreferences['dashboardSections']) => {
+    const prev = preferences;
+    const updated: UserPreferences = { version: 1, dashboardSections: next };
+    setPreferences(updated); // optimistic
+    const userId = session?.user.id;
+    if (!userId || !householdId) return;
+    try {
+      await upsertMyPreferences({ userId, householdId, settings: updated });
+    } catch {
+      setPreferences(prev); // revert on failure
+    }
   };
 
   const [budgetAlerts, setBudgetAlerts] = useState(true);
@@ -121,6 +140,15 @@ export default function ProfileScreen() {
             {formatInviteCode(inviteCode)}
           </Text>
         ) : null}
+      </View>
+
+      {/* Home layout */}
+      <View className="mt-lg">
+        <SectionLabel className="mb-md">Начало</SectionLabel>
+        <SectionLayoutEditor
+          sections={preferences.dashboardSections}
+          onChange={onLayoutChange}
+        />
       </View>
 
       {/* Preferences */}
