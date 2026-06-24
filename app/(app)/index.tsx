@@ -76,7 +76,7 @@ export default function DashboardScreen() {
 
   const recent = useMemo(() => {
     const byId = new Map(categories.map((c) => [c.id, c]));
-    return filtered.slice(0, 5).map((tx) => toTransactionView(tx, byId));
+    return filtered.slice(0, 3).map((tx) => toTransactionView(tx, byId));
   }, [filtered, categories]);
 
   const onRefresh = async () => {
