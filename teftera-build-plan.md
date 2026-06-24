@@ -100,13 +100,15 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ### Day 7 — Dashboard Wired to Real Data
 
-- [ ] Spending by category: query + group by category for current month
-- [ ] Recent transactions: last 5, with correct category icons
-- [ ] Monthly total + comparison to last month (% change)
-- [ ] Day / Month toggle on the home hero: switch the big total between today's spend and the current month (the hero label currently reads just „Месец")
-- [ ] "Scan" and "Manual" floating action buttons navigate to correct screens
-- [ ] Per-person vs household toggle (filter by `user_id` vs all household members)
-- [ ] Pull-to-refresh
+- [x] Spending by category: query + group by category for current month
+- [x] Recent transactions: last 5, with correct category icons
+- [x] Monthly total + comparison to last month (% change)
+- [x] Day / Month toggle on the home hero: switch the big total between today's spend and the current month
+- [x] "Scan" and "Manual" floating action buttons navigate to correct screens
+- [x] Per-person vs household toggle (filter by `user_id` vs all household members)
+- [x] Pull-to-refresh
+
+> Implemented on branch `feat/day7-dashboard-real-data`. New pure helpers in `features/transactions/dashboard.ts` (day/prev-month totals, `pctChange`, `filterByUser`, `spendingByCategory`) are unit-tested. Category breakdown is proportional `View` bars (no chart lib — consistent with charts-deferred). Reusable `SegmentedToggle` + `Screen` pull-to-refresh added. On-device two-device check is the human's verification step.
 
 **Checkpoint:** Dashboard shows real totals and categories. Toggle switches between personal and household view.
 

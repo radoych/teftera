@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ScrollView, View } from 'react-native';
+import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackgroundGlow } from './BackgroundGlow';
 
@@ -16,6 +16,10 @@ interface ScreenProps {
    * which self-positions; Screen just provides the mount point + clearance.
    */
   floatingAboveTabBar?: ReactNode;
+  /** Enables pull-to-refresh on the scrolling body. Ignored when `scroll` is false. */
+  onRefresh?: () => void;
+  /** Whether the pull-to-refresh spinner is showing. */
+  refreshing?: boolean;
 }
 
 /**
@@ -28,6 +32,8 @@ export function Screen({
   withTabBar = false,
   contentClassName = '',
   floatingAboveTabBar,
+  onRefresh,
+  refreshing = false,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
 
@@ -48,7 +54,18 @@ export function Screen({
             className="flex-1"
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: bottomPad }}
             contentContainerClassName={contentClassName}
-            showsVerticalScrollIndicator={false}>
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              onRefresh ? (
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#adc7ff"
+                  colors={['#adc7ff']}
+                  progressBackgroundColor="#1e2023"
+                />
+              ) : undefined
+            }>
             {children}
           </ScrollView>
         ) : (

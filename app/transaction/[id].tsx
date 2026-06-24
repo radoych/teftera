@@ -1,9 +1,11 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
+import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { useAuthStore } from '@/features/auth/store';
 import { getMembers, type HouseholdMember } from '@/features/household/api';
@@ -37,6 +39,8 @@ export default function TransactionDetailScreen() {
   const categories = useTransactionsStore((s) => s.categories);
   const householdId = useAuthStore((s) => s.householdId);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
 
   useEffect(() => {
     if (householdId) getMembers(householdId).then(setMembers);
@@ -66,23 +70,16 @@ export default function TransactionDetailScreen() {
   const catColor = cat?.color ?? '#8e909a';
   const addedBy = memberName(tx.user_id, members);
 
-  const onDelete = () => {
-    Alert.alert('Изтриване', 'Сигурни ли сте, че искате да изтриете тази транзакция?', [
-      { text: 'Отказ', style: 'cancel' },
-      {
-        text: 'Изтрий',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteTransaction(tx.id);
-            if (householdId) await refreshTransactions(householdId);
-            router.back();
-          } catch {
-            Alert.alert('Грешка', 'Неуспешно изтриване. Опитай отново.');
-          }
-        },
-      },
-    ]);
+  const onConfirmDelete = async () => {
+    try {
+      await deleteTransaction(tx.id);
+      if (householdId) await refreshTransactions(householdId);
+      setConfirmOpen(false);
+      router.back();
+    } catch {
+      setConfirmOpen(false);
+      setDeleteError(true);
+    }
   };
 
   return (
@@ -100,7 +97,7 @@ export default function TransactionDetailScreen() {
           <View className="w-8" />
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
           {/* Hero */}
           <View className="items-center py-xl">
             <Text
@@ -124,20 +121,41 @@ export default function TransactionDetailScreen() {
           <DetailRow label="Дата" value={relativeDay(tx.date)} />
           <DetailRow label="Бележка" value={tx.note?.trim() ? tx.note : '—'} />
           <DetailRow label="Добавено от" value={addedBy} />
-
-          {/* Actions */}
-          <View className="mt-xl gap-md px-6">
-            <Pressable
-              onPress={() => router.navigate(`/manual-entry?id=${tx.id}`)}
-              className="items-center rounded-full border border-primary-container py-3 active:bg-primary-container/10">
-              <Text className="font-inter text-label-md text-primary-container">{'Редакция'}</Text>
-            </Pressable>
-            <Pressable onPress={onDelete} className="items-center py-3 active:opacity-70">
-              <Text className="font-inter text-label-md text-error">{'Изтрий'}</Text>
-            </Pressable>
-          </View>
         </ScrollView>
       </SafeAreaView>
+      <FloatingActionBar
+        actions={[
+          {
+            label: 'Изтрий',
+            icon: 'delete-outline',
+            variant: 'destructive',
+            onPress: () => setConfirmOpen(true),
+          },
+          {
+            label: 'Редакция',
+            icon: 'edit',
+            variant: 'filled',
+            onPress: () => router.navigate(`/manual-entry?id=${tx.id}`),
+          },
+        ]}
+      />
+      <ConfirmSheet
+        visible={confirmOpen}
+        title="Изтриване"
+        message="Сигурни ли сте, че искате да изтриете тази транзакция?"
+        confirmLabel="Изтрий"
+        destructive
+        onConfirm={onConfirmDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
+      <ConfirmSheet
+        visible={deleteError}
+        title="Грешка"
+        message="Неуспешно изтриване. Опитай отново."
+        confirmLabel="Добре"
+        onConfirm={() => setDeleteError(false)}
+        onCancel={() => setDeleteError(false)}
+      />
     </View>
   );
 }

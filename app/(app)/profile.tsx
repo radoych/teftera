@@ -1,13 +1,22 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
+import { BottomSheet } from '@/components/BottomSheet';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { signOut } from '@/features/auth/api';
 import { useAuthStore } from '@/features/auth/store';
-import { getMembers, getMyHousehold, type HouseholdMember } from '@/features/household/api';
+import {
+  getMembers,
+  getMyHousehold,
+  type HouseholdMember,
+} from '@/features/household/api';
 import { formatInviteCode } from '@/features/household/inviteCode';
+import { SectionLayoutEditor } from '@/features/preferences/components/SectionLayoutEditor';
+import { usePreferencesStore } from '@/features/preferences/store';
+import { upsertMyPreferences } from '@/features/preferences/api';
+import type { UserPreferences } from '@/features/preferences/types';
 
 function Pill({ label }: { label: string }) {
   return (
@@ -22,6 +31,8 @@ export default function ProfileScreen() {
   const session = useAuthStore((s) => s.session);
   const householdId = useAuthStore((s) => s.householdId);
   const displayName = useAuthStore((s) => s.displayName) ?? '';
+  const preferences = usePreferencesStore((s) => s.preferences);
+  const setPreferences = usePreferencesStore((s) => s.setPreferences);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [inviteCode, setInviteCode] = useState('');
 
@@ -46,8 +57,22 @@ export default function ProfileScreen() {
     // useProtectedRoute redirects to sign-in once the session clears.
   };
 
+  const onLayoutChange = async (next: UserPreferences['dashboardSections']) => {
+    const prev = preferences;
+    const updated: UserPreferences = { version: 1, dashboardSections: next };
+    setPreferences(updated); // optimistic
+    const userId = session?.user.id;
+    if (!userId || !householdId) return;
+    try {
+      await upsertMyPreferences({ userId, householdId, settings: updated });
+    } catch {
+      setPreferences(prev); // revert on failure
+    }
+  };
+
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [anomalyAlerts, setAnomalyAlerts] = useState(false);
+  const [layoutSheetOpen, setLayoutSheetOpen] = useState(false);
 
   return (
     <Screen withTabBar>
@@ -59,23 +84,29 @@ export default function ProfileScreen() {
       <View className="flex-row items-center justify-between gap-md">
         <View className="flex-1 flex-row items-center gap-md">
           <View className="h-16 w-16 items-center justify-center rounded-full bg-primary-container">
-            <Text className="font-jakarta-semibold text-headline-md text-on-primary">{initials}</Text>
+            <Text className="font-jakarta-semibold text-headline-md text-on-primary">
+              {initials}
+            </Text>
           </View>
           <View className="flex-1">
             <Text
               numberOfLines={1}
-              className="font-jakarta-semibold text-headline-md text-on-surface">
+              className="font-jakarta-semibold text-headline-md text-on-surface"
+            >
               {displayName}
             </Text>
             <Text
               numberOfLines={1}
-              className="font-inter text-body-md text-on-surface-variant opacity-70">
+              className="font-inter text-body-md text-on-surface-variant opacity-70"
+            >
               {email}
             </Text>
           </View>
         </View>
         <Pressable className="shrink-0 rounded-full border border-primary-container px-6 py-2 active:bg-primary-container/10">
-          <Text className="font-inter text-label-md text-primary-container">Редакция</Text>
+          <Text className="font-inter text-label-md text-primary-container">
+            Редакция
+          </Text>
         </Pressable>
       </View>
 
@@ -102,7 +133,9 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="font-inter text-body-lg text-on-surface">{memberName}</Text>
+                  <Text className="font-inter text-body-lg text-on-surface">
+                    {memberName}
+                  </Text>
                   <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
                     {roleLabel}
                   </Text>
@@ -114,7 +147,9 @@ export default function ProfileScreen() {
         })}
         <Pressable className="flex-row items-center gap-3 py-5 active:opacity-70">
           <MaterialIcons name="person-add" size={20} color="#adc7ff" />
-          <Text className="font-inter text-body-md text-primary-container">Покани член</Text>
+          <Text className="font-inter text-body-md text-primary-container">
+            Покани член
+          </Text>
         </Pressable>
         {inviteCode ? (
           <Text className="mt-2 font-inter-semibold text-body-lg tracking-widest text-primary">
@@ -122,6 +157,37 @@ export default function ProfileScreen() {
           </Text>
         ) : null}
       </View>
+
+      {/* Home layout */}
+      <View className="mt-lg">
+        <SectionLabel className="mb-md">Начало</SectionLabel>
+        <Pressable
+          onPress={() => setLayoutSheetOpen(true)}
+          className="flex-row items-center justify-between py-md active:bg-white/5"
+        >
+          <Text className="font-inter text-body-lg text-on-surface">
+            Подреди секциите
+          </Text>
+          <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
+        </Pressable>
+      </View>
+
+      <BottomSheet visible={layoutSheetOpen} onClose={() => setLayoutSheetOpen(false)}>
+        <Text className="px-6 pb-1 pt-1 font-jakarta-semibold text-headline-md text-on-surface">
+          Подреждане на началния екран
+        </Text>
+        <Text className="px-6 pb-3 font-inter text-body-md text-on-surface-variant opacity-70">
+          Влачи дръжката, за да подредиш. Превключи Вкл/Изкл, за да скриеш.
+        </Text>
+        {/* Extra bottom padding lifts the rows above the Android home-gesture
+            zone so the last item can be dragged up without triggering it. */}
+        <View className="px-6 pb-16">
+          <SectionLayoutEditor
+            sections={preferences.dashboardSections}
+            onChange={onLayoutChange}
+          />
+        </View>
+      </BottomSheet>
 
       {/* Preferences */}
       <View className="mt-lg">
@@ -170,7 +236,9 @@ export default function ProfileScreen() {
       <View className="mt-lg">
         <SectionLabel className="mb-md">Известия</SectionLabel>
         <View className="flex-row items-center justify-between py-3">
-          <Text className="font-inter text-body-lg text-on-surface">Бюджетни сигнали</Text>
+          <Text className="font-inter text-body-lg text-on-surface">
+            Бюджетни сигнали
+          </Text>
           <Switch
             value={budgetAlerts}
             onValueChange={setBudgetAlerts}
@@ -180,7 +248,9 @@ export default function ProfileScreen() {
         </View>
         <HairlineDivider />
         <View className="flex-row items-center justify-between py-3">
-          <Text className="font-inter text-body-lg text-on-surface">Сигнали за аномалии</Text>
+          <Text className="font-inter text-body-lg text-on-surface">
+            Сигнали за аномалии
+          </Text>
           <Switch
             value={anomalyAlerts}
             onValueChange={setAnomalyAlerts}
@@ -194,12 +264,15 @@ export default function ProfileScreen() {
       <View className="mt-lg">
         <SectionLabel className="mb-md">Общи</SectionLabel>
         <Pressable className="flex-row items-center justify-between py-5 active:bg-white/5">
-          <Text className="font-inter text-body-lg text-on-surface">Управление на категории</Text>
+          <Text className="font-inter text-body-lg text-on-surface">
+            Управление на категории
+          </Text>
           <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
         </Pressable>
         <Pressable
           onPress={onSignOut}
-          className="flex-row items-center gap-3 py-5 active:opacity-70">
+          className="flex-row items-center gap-3 py-5 active:opacity-70"
+        >
           <MaterialIcons name="logout" size={22} color="#ffb4ab" />
           <Text className="font-inter text-body-lg text-error">Изход</Text>
         </Pressable>
