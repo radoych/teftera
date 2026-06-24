@@ -1,5 +1,6 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { BottomSheet } from './BottomSheet';
+import { SheetActions } from './SheetActions';
 
 interface ConfirmSheetProps {
   visible: boolean;
@@ -30,26 +31,13 @@ export function ConfirmSheet({
         {message ? (
           <Text className="font-inter text-body-md text-on-surface-variant">{message}</Text>
         ) : null}
-        <Pressable
-          onPress={onConfirm}
-          className={`items-center py-3 active:opacity-80 ${
-            destructive ? 'bg-error-container' : 'bg-primary-container'
-          }`}
-          style={{ borderRadius: 9999 }}>
-          <Text
-            className="font-inter-semibold text-label-md uppercase"
-            style={{ color: destructive ? '#ffb4ab' : '#112f5e' }}>
-            {confirmLabel}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={onCancel}
-          className="items-center border border-white/10 py-3 active:bg-white/5"
-          style={{ borderRadius: 9999 }}>
-          <Text className="font-inter-semibold text-label-md uppercase text-on-surface">
-            {cancelLabel}
-          </Text>
-        </Pressable>
+        {/* Confirm on the left, cancel on the right — side by side. */}
+        <SheetActions
+          actions={[
+            { label: confirmLabel, onPress: onConfirm, variant: destructive ? 'destructive' : 'filled' },
+            { label: cancelLabel, onPress: onCancel, variant: 'ghost' },
+          ]}
+        />
       </View>
     </BottomSheet>
   );

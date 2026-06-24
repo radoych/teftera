@@ -205,6 +205,7 @@ label-md:           Inter,             12px, lh 1.0, ls 0.05em,  fw 500
 - **Floating pill buttons** — outlined ghost pills above nav bar, icon + uppercase label
 - **Section labels** — uppercase, label-md, on-surface-variant at 50% opacity
 - **Pill buttons** → `borderRadius: 9999` in RN StyleSheet (not the Tailwind `full` token which is only 12px)
+- **Action button rows** — *one* action renders **centered**; *two or more* render **side by side, equal width**, in listed order (the primary/confirm action is listed first, so it sits on the **left**). Don't stack action pills vertically. This layout is owned by two components, not hand-rolled per screen: `SheetActions` (pill rows inside a `BottomSheet` — e.g. `ConfirmSheet`) and `FloatingActionBar` (floating pills on non-tab screens). Use them.
 
 ---
 

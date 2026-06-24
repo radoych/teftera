@@ -24,31 +24,25 @@ const VARIANTS = {
 
 interface FloatingActionBarProps {
   actions: FloatingAction[];
-  /** 'aboveTabBar' floats above the nav pill (default); 'bottom' pins near the safe-area bottom. */
-  placement?: 'aboveTabBar' | 'bottom';
-  /** When true (use with 'bottom'), the bar rises above the keyboard. */
+  /** When true, the bar rises above the keyboard while one is open (e.g. forms). */
   liftWithKeyboard?: boolean;
 }
 
 /**
- * A row of pill actions. 'aboveTabBar' keeps the centered cluster above the nav
- * pill; 'bottom' lays actions out full-width (space-between) near the bottom of
- * a non-tab screen, optionally lifting above the keyboard.
+ * A centered cluster of content-hugging pill actions (single → centered, two+ →
+ * side by side, equal hug). The single source of truth for the app's floating
+ * pill look. It rests at one height (insets.bottom + 88) on every screen so the
+ * actions line up; with `liftWithKeyboard` it rises above an open keyboard.
  */
 export function FloatingActionBar({
   actions,
-  placement = 'aboveTabBar',
   liftWithKeyboard = false,
 }: FloatingActionBarProps) {
   const insets = useSafeAreaInsets();
   const keyboard = useKeyboardHeight();
 
   const bottom =
-    placement === 'aboveTabBar'
-      ? insets.bottom + 88
-      : (liftWithKeyboard && keyboard > 0 ? keyboard : insets.bottom) + 16;
-
-  const single = actions.length === 1;
+    liftWithKeyboard && keyboard > 0 ? keyboard + 24 : insets.bottom + 88;
 
   const buttons = actions.map((action) => {
     const v = VARIANTS[action.variant ?? 'ghost'];
@@ -61,7 +55,7 @@ export function FloatingActionBar({
         accessibilityRole="button"
         className={`h-12 flex-row items-center justify-center gap-2 rounded-full px-6 active:opacity-80 ${
           v.container
-        } ${placement === 'bottom' && !single ? 'flex-1' : ''} ${inactive ? 'opacity-60' : ''}`}>
+        } ${inactive ? 'opacity-60' : ''}`}>
         {action.loading ? (
           <ActivityIndicator color={v.content} />
         ) : (
@@ -77,18 +71,6 @@ export function FloatingActionBar({
       </Pressable>
     );
   });
-
-  if (placement === 'bottom') {
-    return (
-      <View
-        style={{ position: 'absolute', left: 0, right: 0, bottom, pointerEvents: 'box-none' }}
-        className="px-md">
-        <View className={`flex-row gap-md ${single ? 'justify-center' : 'justify-between'}`}>
-          {buttons}
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View

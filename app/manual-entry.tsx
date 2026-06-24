@@ -230,7 +230,6 @@ export default function ManualEntryScreen() {
       </SafeAreaView>
 
       <FloatingActionBar
-        placement="bottom"
         liftWithKeyboard
         actions={[
           {

@@ -124,7 +124,6 @@ export default function TransactionDetailScreen() {
         </ScrollView>
       </SafeAreaView>
       <FloatingActionBar
-        placement="bottom"
         actions={[
           {
             label: 'Изтрий',

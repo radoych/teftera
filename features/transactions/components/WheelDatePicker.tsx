@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { clampDay, daysInMonth, isoToParts, partsToISO } from '@/features/transactions/wheelDate';
 
@@ -57,26 +57,33 @@ function Wheel({ items, index, onIndexChange }: WheelProps) {
 interface WheelDatePickerProps {
   visible: boolean;
   value: string; // ISO YYYY-MM-DD
-  onConfirm: (iso: string) => void;
+  /** Called with the selected date when the sheet is dismissed. */
+  onChange: (iso: string) => void;
   onClose: () => void;
 }
 
-/** Day / month / year scroll-wheels in a bottom sheet. */
-export function WheelDatePicker({ visible, value, onConfirm, onClose }: WheelDatePickerProps) {
+/**
+ * Day / month / year scroll-wheels in a bottom sheet. There is no confirm button:
+ * the current wheel selection is committed via `onChange` when the sheet is
+ * dismissed (scrim tap, grabber swipe, or back), then `onClose` fires.
+ */
+export function WheelDatePicker({ visible, value, onChange, onClose }: WheelDatePickerProps) {
   const seed = isoToParts(value);
   const [year, setYear] = useState(seed.year);
   const [month, setMonth] = useState(seed.month);
   const [day, setDay] = useState(seed.day);
 
-  // Re-seed each time the sheet opens with a (possibly new) value.
-  useEffect(() => {
+  // Re-seed the wheels when the sheet (re)opens or the incoming value changes.
+  // Derived during render — React's recommended alternative to setState-in-effect.
+  const [synced, setSynced] = useState({ visible, value });
+  if (synced.visible !== visible || synced.value !== value) {
+    setSynced({ visible, value });
     if (visible) {
-      const p = isoToParts(value);
-      setYear(p.year);
-      setMonth(p.month);
-      setDay(p.day);
+      setYear(seed.year);
+      setMonth(seed.month);
+      setDay(seed.day);
     }
-  }, [visible, value]);
+  }
 
   const thisYear = new Date().getFullYear();
   const minYear = Math.min(1970, year);
@@ -86,10 +93,16 @@ export function WheelDatePicker({ visible, value, onConfirm, onClose }: WheelDat
   const days = Array.from({ length: monthCount }, (_, i) => i + 1);
   const clampedDay = clampDay(year, month, day);
 
+  // Commit the current selection, then let the host close the sheet.
+  const handleClose = () => {
+    onChange(partsToISO(year, month, clampedDay));
+    onClose();
+  };
+
   return (
-    <BottomSheet visible={visible} onClose={onClose}>
+    <BottomSheet visible={visible} onClose={handleClose}>
       <Text className="px-6 py-3 font-jakarta-semibold text-headline-md text-on-surface">Дата</Text>
-      <View className="flex-row px-6">
+      <View className="flex-row px-6 pb-6">
         <Wheel
           items={days.map(String)}
           index={clampedDay - 1}
@@ -101,16 +114,6 @@ export function WheelDatePicker({ visible, value, onConfirm, onClose }: WheelDat
           index={years.indexOf(year)}
           onIndexChange={(i) => setYear(years[i]!)}
         />
-      </View>
-      <View className="px-6 pb-2 pt-4">
-        <Pressable
-          onPress={() => onConfirm(partsToISO(year, month, clampedDay))}
-          className="items-center bg-primary-container py-3 active:opacity-80"
-          style={{ borderRadius: 9999 }}>
-          <Text className="font-inter-semibold text-label-md uppercase" style={{ color: '#112f5e' }}>
-            Готово
-          </Text>
-        </Pressable>
       </View>
     </BottomSheet>
   );

@@ -33,10 +33,7 @@ export function DateField({ value, onChange, label = 'Дата' }: DateFieldProp
       <WheelDatePicker
         visible={open}
         value={value}
-        onConfirm={(iso) => {
-          onChange(iso);
-          setOpen(false);
-        }}
+        onChange={onChange}
         onClose={() => setOpen(false)}
       />
     </View>
