@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
@@ -8,6 +9,7 @@ import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { useAuthStore } from '@/features/auth/store';
+import { usePreferencesStore } from '@/features/preferences/store';
 import { TransactionRow } from '@/features/transactions/components/TransactionRow';
 import {
   dayTotalCents,
@@ -50,6 +52,8 @@ export default function DashboardScreen() {
   const householdId = useAuthStore((s) => s.householdId);
   const userId = useAuthStore((s) => s.session?.user.id ?? null);
 
+  const dashboardSections = usePreferencesStore((s) => s.preferences.dashboardSections);
+
   const [timeframe, setTimeframe] = useState<Timeframe>('month');
   const [scope, setScope] = useState<Scope>('household');
   const [refreshing, setRefreshing] = useState(false);
@@ -76,7 +80,7 @@ export default function DashboardScreen() {
 
   const recent = useMemo(() => {
     const byId = new Map(categories.map((c) => [c.id, c]));
-    return filtered.slice(0, 5).map((tx) => toTransactionView(tx, byId));
+    return filtered.slice(0, 3).map((tx) => toTransactionView(tx, byId));
   }, [filtered, categories]);
 
   const onRefresh = async () => {
@@ -90,6 +94,69 @@ export default function DashboardScreen() {
   };
 
   const comparisonLabel = timeframe === 'day' ? 'спрямо вчера' : 'спрямо миналия месец';
+
+  const categoriesSection: ReactNode =
+    loaded && categoryRows.length > 0 ? (
+      <View className="mb-xl">
+        <SectionLabel className="mb-md">По категория</SectionLabel>
+        {categoryRows.map((row) => (
+          <View key={row.id} className="py-sm">
+            <View className="mb-2 flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2">
+                <MaterialIcons name={row.icon} size={16} color={row.color} />
+                <Text className="font-inter text-body-md text-on-surface">{row.name}</Text>
+              </View>
+              <Text className="font-inter-semibold text-body-md text-on-surface">
+                {formatCurrency(row.totalCents)}
+              </Text>
+            </View>
+            <View
+              className="h-1.5 overflow-hidden bg-surface-container"
+              style={{ borderRadius: 9999 }}>
+              <View
+                className="h-full"
+                style={{
+                  width: `${Math.max(row.fraction * 100, 2)}%`,
+                  backgroundColor: row.color,
+                  borderRadius: 9999,
+                }}
+              />
+            </View>
+          </View>
+        ))}
+      </View>
+    ) : null;
+
+  const recentSection: ReactNode = (
+    <View>
+      <View className="mb-md flex-row items-center justify-between">
+        <SectionLabel>Последни</SectionLabel>
+        <Pressable
+          onPress={() => router.navigate('/(app)/history')}
+          className="flex-row items-center gap-1">
+          <Text className="font-inter-semibold text-label-md text-primary">Виж всички</Text>
+          <MaterialIcons name="chevron-right" size={16} color="#d8e3ff" />
+        </Pressable>
+      </View>
+      {loaded && recent.length === 0 ? (
+        <EmptyState icon="receipt-long" title="Все още няма транзакции" />
+      ) : (
+        recent.map((tx, i) => (
+          <TransactionRow
+            key={tx.id}
+            tx={tx}
+            onPress={() => router.navigate(`/transaction/${tx.id}`)}
+            showDivider={i < recent.length - 1}
+          />
+        ))
+      )}
+    </View>
+  );
+
+  const sectionContent: Record<'categories' | 'recent', ReactNode> = {
+    categories: categoriesSection,
+    recent: recentSection,
+  };
 
   return (
     <Screen
@@ -158,61 +225,12 @@ export default function DashboardScreen() {
         />
       </View>
 
-      {/* Spending by category */}
-      {loaded && categoryRows.length > 0 ? (
-        <View className="mb-xl">
-          <SectionLabel className="mb-md">По категория</SectionLabel>
-          {categoryRows.map((row) => (
-            <View key={row.id} className="py-sm">
-              <View className="mb-2 flex-row items-center justify-between">
-                <View className="flex-row items-center gap-2">
-                  <MaterialIcons name={row.icon} size={16} color={row.color} />
-                  <Text className="font-inter text-body-md text-on-surface">{row.name}</Text>
-                </View>
-                <Text className="font-inter-semibold text-body-md text-on-surface">
-                  {formatCurrency(row.totalCents)}
-                </Text>
-              </View>
-              <View
-                className="h-1.5 overflow-hidden bg-surface-container"
-                style={{ borderRadius: 9999 }}>
-                <View
-                  className="h-full"
-                  style={{
-                    width: `${Math.max(row.fraction * 100, 2)}%`,
-                    backgroundColor: row.color,
-                    borderRadius: 9999,
-                  }}
-                />
-              </View>
-            </View>
-          ))}
-        </View>
-      ) : null}
-
-      {/* Recent entries */}
-      <View className="mb-md flex-row items-center justify-between">
-        <SectionLabel>Последни</SectionLabel>
-        <Pressable
-          onPress={() => router.navigate('/(app)/history')}
-          className="flex-row items-center gap-1">
-          <Text className="font-inter-semibold text-label-md text-primary">Виж всички</Text>
-          <MaterialIcons name="chevron-right" size={16} color="#d8e3ff" />
-        </Pressable>
-      </View>
-
-      {loaded && recent.length === 0 ? (
-        <EmptyState icon="receipt-long" title="Все още няма транзакции" />
-      ) : (
-        recent.map((tx, i) => (
-          <TransactionRow
-            key={tx.id}
-            tx={tx}
-            onPress={() => router.navigate(`/transaction/${tx.id}`)}
-            showDivider={i < recent.length - 1}
-          />
-        ))
-      )}
+      {/* Configurable sections rendered in user-preference order */}
+      {dashboardSections
+        .filter((s) => s.visible)
+        .map((s) =>
+          sectionContent[s.key] ? <View key={s.key}>{sectionContent[s.key]}</View> : null,
+        )}
     </Screen>
   );
 }

@@ -2,7 +2,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -12,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { useAuthStore } from '@/features/auth/store';
 import { createTransaction, updateTransaction } from '@/features/transactions/api';
@@ -171,18 +171,10 @@ export default function ManualEntryScreen() {
           <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
             {isEdit ? 'Редактиране' : 'Ръчно въвеждане'}
           </Text>
-          <Pressable onPress={onSave} hitSlop={8} disabled={saving} className="px-2 py-1">
-            {saving ? (
-              <ActivityIndicator color="#adc7ff" />
-            ) : (
-              <Text className="font-inter-medium text-label-md text-primary-container">
-                {isEdit ? 'ЗАПАЗИ' : 'ГОТОВО'}
-              </Text>
-            )}
-          </Pressable>
+          <View className="w-8" />
         </View>
 
-        <ScrollView keyboardShouldPersistTaps="handled">
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 96 }}>
           {/* Amount */}
           <View className="mb-16 mt-12 flex-row items-center justify-center px-6">
             <Text className="font-jakarta-semibold text-[64px] text-on-surface opacity-30">{'€'}</Text>
@@ -236,6 +228,20 @@ export default function ManualEntryScreen() {
           </FieldRow>
         </ScrollView>
       </SafeAreaView>
+
+      <FloatingActionBar
+        placement="bottom"
+        liftWithKeyboard
+        actions={[
+          {
+            label: isEdit ? 'Запази' : 'Готово',
+            icon: 'check',
+            variant: 'filled',
+            loading: saving,
+            onPress: onSave,
+          },
+        ]}
+      />
 
       <CategoryPickerModal
         visible={pickerOpen}
