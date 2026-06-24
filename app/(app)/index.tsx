@@ -228,9 +228,9 @@ export default function DashboardScreen() {
       {/* Configurable sections rendered in user-preference order */}
       {dashboardSections
         .filter((s) => s.visible)
-        .map((s) => (
-          <View key={s.key}>{sectionContent[s.key]}</View>
-        ))}
+        .map((s) =>
+          sectionContent[s.key] ? <View key={s.key}>{sectionContent[s.key]}</View> : null,
+        )}
     </Screen>
   );
 }

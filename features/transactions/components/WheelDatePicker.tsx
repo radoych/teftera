@@ -79,7 +79,9 @@ export function WheelDatePicker({ visible, value, onConfirm, onClose }: WheelDat
   }, [visible, value]);
 
   const thisYear = new Date().getFullYear();
-  const years = Array.from({ length: thisYear + 1 - 1970 + 1 }, (_, i) => 1970 + i);
+  const minYear = Math.min(1970, year);
+  const maxYear = Math.max(thisYear + 1, year);
+  const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);
   const monthCount = daysInMonth(year, month);
   const days = Array.from({ length: monthCount }, (_, i) => i + 1);
   const clampedDay = clampDay(year, month, day);
