@@ -102,7 +102,7 @@ export function WheelDatePicker({ visible, value, onConfirm, onClose }: WheelDat
       </View>
       <View className="px-6 pb-2 pt-4">
         <Pressable
-          onPress={() => onConfirm(partsToISO(year, month, day))}
+          onPress={() => onConfirm(partsToISO(year, month, clampedDay))}
           className="items-center bg-primary-container py-3 active:opacity-80"
           style={{ borderRadius: 9999 }}>
           <Text className="font-inter-semibold text-label-md uppercase" style={{ color: '#112f5e' }}>
