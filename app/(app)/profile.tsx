@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
+import { BottomSheet } from '@/components/BottomSheet';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
@@ -67,6 +68,7 @@ export default function ProfileScreen() {
 
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [anomalyAlerts, setAnomalyAlerts] = useState(false);
+  const [layoutSheetOpen, setLayoutSheetOpen] = useState(false);
 
   return (
     <Screen withTabBar>
@@ -145,11 +147,28 @@ export default function ProfileScreen() {
       {/* Home layout */}
       <View className="mt-lg">
         <SectionLabel className="mb-md">Начало</SectionLabel>
-        <SectionLayoutEditor
-          sections={preferences.dashboardSections}
-          onChange={onLayoutChange}
-        />
+        <Pressable
+          onPress={() => setLayoutSheetOpen(true)}
+          className="flex-row items-center justify-between py-md active:bg-white/5">
+          <Text className="font-inter text-body-lg text-on-surface">Подреди секциите</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
+        </Pressable>
       </View>
+
+      <BottomSheet visible={layoutSheetOpen} onClose={() => setLayoutSheetOpen(false)}>
+        <Text className="px-6 pb-1 pt-1 font-jakarta-semibold text-headline-md text-on-surface">
+          Подреждане на началния екран
+        </Text>
+        <Text className="px-6 pb-3 font-inter text-body-md text-on-surface-variant opacity-70">
+          Влачи дръжката, за да подредиш. Превключи Вкл/Изкл, за да скриеш.
+        </Text>
+        <View className="px-6 pb-2">
+          <SectionLayoutEditor
+            sections={preferences.dashboardSections}
+            onChange={onLayoutChange}
+          />
+        </View>
+      </BottomSheet>
 
       {/* Preferences */}
       <View className="mt-lg">

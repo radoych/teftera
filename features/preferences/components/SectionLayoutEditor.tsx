@@ -29,8 +29,9 @@ function DraggableRow({ section, index, count, onMove, onVisible }: RowProps) {
   const translateY = useSharedValue(0);
   const zIndex = useSharedValue(0);
 
+  // No long-press gate: the editor lives in a non-scrolling sheet, so dragging
+  // the handle should pick the row up immediately.
   const pan = Gesture.Pan()
-    .activateAfterLongPress(150)
     .onStart(() => {
       zIndex.value = 1;
     })
@@ -48,11 +49,14 @@ function DraggableRow({ section, index, count, onMove, onVisible }: RowProps) {
   const style = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     zIndex: zIndex.value,
+    elevation: zIndex.value * 8, // lift above the neighbour on Android while dragging
   }));
 
   return (
     <Animated.View style={style}>
-      <View style={{ height: ROW_HEIGHT }} className="flex-row items-center justify-between gap-md">
+      <View
+        style={{ height: ROW_HEIGHT }}
+        className="flex-row items-center justify-between gap-md bg-surface-container">
         <View className="flex-1 flex-row items-center gap-3">
           <GestureDetector gesture={pan}>
             <View hitSlop={8} className="py-2 pr-1">
