@@ -6,6 +6,7 @@ insert into storage.buckets (id, name, public)
 values ('receipts', 'receipts', false)
 on conflict (id) do nothing;
 
+drop policy if exists "receipts: household read" on storage.objects;
 create policy "receipts: household read"
   on storage.objects for select to authenticated
   using (
@@ -17,6 +18,7 @@ create policy "receipts: household read"
     )
   );
 
+drop policy if exists "receipts: household insert" on storage.objects;
 create policy "receipts: household insert"
   on storage.objects for insert to authenticated
   with check (
@@ -28,6 +30,7 @@ create policy "receipts: household insert"
     )
   );
 
+drop policy if exists "receipts: household update" on storage.objects;
 create policy "receipts: household update"
   on storage.objects for update to authenticated
   using (
@@ -47,6 +50,7 @@ create policy "receipts: household update"
     )
   );
 
+drop policy if exists "receipts: household delete" on storage.objects;
 create policy "receipts: household delete"
   on storage.objects for delete to authenticated
   using (
