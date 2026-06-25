@@ -2,6 +2,7 @@ import {
   cleanMerchant,
   normalizeDskRow,
   normalizeMerchant,
+  occurredAtISO,
   parseBgAmount,
   parseCsv,
   parseDskCsv,
@@ -91,6 +92,7 @@ describe('parseDskCsv', () => {
     expect(first.debit).toBe('37,66');
     expect(first.credit).toBe('');
     expect(first.date).toBe('04.02.2026');
+    expect(first.time).toBe('21:48');
     expect(first.currency).toBe('EUR');
   });
 
@@ -122,6 +124,22 @@ describe('normalizeMerchant', () => {
   });
 });
 
+describe('occurredAtISO', () => {
+  it('combines date + time into a local-wallclock ISO timestamp', () => {
+    const d = new Date(occurredAtISO('2026-02-04', '21:48'));
+    expect(d.getFullYear()).toBe(2026);
+    expect(d.getDate()).toBe(4);
+    expect(d.getHours()).toBe(21);
+    expect(d.getMinutes()).toBe(48);
+  });
+
+  it('defaults to midnight when the time is missing', () => {
+    const d = new Date(occurredAtISO('2026-02-04', ''));
+    expect(d.getHours()).toBe(0);
+    expect(d.getMinutes()).toBe(0);
+  });
+});
+
 describe('normalizeDskRow', () => {
   it('normalizes a EUR debit into an expense (no conversion)', () => {
     const out = normalizeDskRow({
@@ -130,6 +148,7 @@ describe('normalizeDskRow', () => {
       description: 'POS',
       debit: '37,66',
       credit: '',
+      time: '21:48',
       currency: 'EUR',
     });
     expect(out.kind).toBe('expense');
@@ -139,6 +158,13 @@ describe('normalizeDskRow', () => {
     expect(out.merchant).toBe('Lidl');
     expect(out.categoryGuess).toBe('Groceries');
     expect(out.date).toBe('2026-02-04');
+    // occurredAt carries the real transaction date + time (local wall-clock).
+    const occ = new Date(out.occurredAt);
+    expect(occ.getFullYear()).toBe(2026);
+    expect(occ.getMonth()).toBe(1); // February
+    expect(occ.getDate()).toBe(4);
+    expect(occ.getHours()).toBe(21);
+    expect(occ.getMinutes()).toBe(48);
   });
 
   it('normalizes a EUR credit into income', () => {
@@ -148,6 +174,7 @@ describe('normalizeDskRow', () => {
       description: 'ЗАПЛАТА',
       debit: '',
       credit: '506,22',
+      time: '09:30',
       currency: 'EUR',
     });
     expect(out.kind).toBe('income');
@@ -161,6 +188,7 @@ describe('normalizeDskRow', () => {
       description: 'POS',
       debit: '1 955,83',
       credit: '',
+      time: '14:05',
       currency: 'BGN',
     });
     expect(out.kind).toBe('expense');

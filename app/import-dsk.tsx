@@ -1,5 +1,4 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -25,7 +24,13 @@ interface Preview {
   fileName: string;
 }
 
-type Status = 'idle' | 'reading' | 'ready' | 'importing';
+type Status = 'idle' | 'reading' | 'ready' | 'importing' | 'done';
+
+interface ImportSummary {
+  imported: number;
+  duplicates: number;
+  other: number;
+}
 
 function Header() {
   return (
@@ -74,28 +79,30 @@ function Row({ row, muted, badge }: { row: NormalizedTransaction; muted?: boolea
 export default function ImportDskScreen() {
   const [status, setStatus] = useState<Status>('idle');
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [summary, setSummary] = useState<ImportSummary | null>(null);
   const transactions = useTransactionsStore((s) => s.transactions);
   const categories = useTransactionsStore((s) => s.categories);
 
   const pickAndParse = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['text/csv', 'text/comma-separated-values', 'application/vnd.ms-excel', '*/*'],
-        copyToCacheDirectory: true,
+      // Pick via expo-file-system's own picker: it returns a module-owned File
+      // that is readable in Expo Go, unlike an external DocumentPicker cache URI
+      // (which Android scoped storage rejects for read).
+      const result = await File.pickFileAsync({
+        mimeTypes: ['text/csv', 'text/comma-separated-values', 'application/vnd.ms-excel'],
       });
       if (result.canceled) return;
 
-      const asset = result.assets[0];
-      if (!asset) return;
+      const file = result.result;
       setStatus('reading');
-      const text = await new File(asset.uri).text();
+      const text = await file.text();
 
       const rows = parseDskCsv(text).map(normalizeDskRow);
       const expenses = rows.filter((r) => r.kind === 'expense');
       const income = rows.filter((r) => r.kind === 'income');
       const { toImport, duplicates } = dedupeImport(expenses, transactions);
 
-      setPreview({ toImport, duplicates, income, fileName: asset.name });
+      setPreview({ toImport, duplicates, income, fileName: file.name });
       setStatus('ready');
     } catch (err) {
       if (__DEV__) console.warn('[dsk-import] parse failed', err);
@@ -122,16 +129,62 @@ export default function ImportDskScreen() {
         merchant: r.merchant,
         categoryId: resolveCategoryId(r.merchant, categories),
         date: r.date,
+        occurredAt: r.occurredAt,
         note: null,
       }));
       await bulkInsertImported(rows);
       await refreshTransactions(householdId);
-      router.back();
+      setSummary({
+        imported: preview.toImport.length,
+        duplicates: preview.duplicates.length,
+        other: preview.toImport.filter((r) => r.categoryGuess === 'Other').length,
+      });
+      setStatus('done');
     } catch {
       setStatus('ready');
       Alert.alert('Грешка', 'Импортирането не успя. Опитай отново.');
     }
   };
+
+  // Post-import summary
+  if (status === 'done' && summary) {
+    return (
+      <Screen
+        floatingAboveTabBar={
+          <FloatingActionBar
+            actions={[{ label: 'Готово', icon: 'check', variant: 'filled', onPress: () => router.back() }]}
+          />
+        }>
+        <Header />
+        <SectionLabel className="mb-lg">Резултат от импорта</SectionLabel>
+        <View className="gap-4">
+          <View className="flex-row items-center justify-between py-md">
+            <Text className="font-inter text-body-lg text-on-surface">Импортирани</Text>
+            <Text className="font-inter-semibold text-body-lg text-on-surface">{summary.imported}</Text>
+          </View>
+          <HairlineDivider />
+          <View className="flex-row items-center justify-between py-md">
+            <Text className="font-inter text-body-lg text-on-surface-variant opacity-70">
+              Пропуснати дубликати
+            </Text>
+            <Text className="font-inter-semibold text-body-lg text-on-surface-variant opacity-70">
+              {summary.duplicates}
+            </Text>
+          </View>
+          <HairlineDivider />
+          <View className="flex-row items-center justify-between py-md">
+            <Text className="font-inter text-body-lg text-on-surface-variant opacity-70">
+              {`В категория „Други"`}
+            </Text>
+            <Text className="font-inter-semibold text-body-lg text-on-surface-variant opacity-70">
+              {summary.other}
+            </Text>
+          </View>
+          <HairlineDivider />
+        </View>
+      </Screen>
+    );
+  }
 
   // Initial / reading states
   if (!preview) {

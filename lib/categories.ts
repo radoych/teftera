@@ -28,17 +28,48 @@ export const DEFAULT_CATEGORIES: readonly DefaultCategory[] = [
   { name: 'Other', icon: 'category', color: '#8e909a' },
 ] as const;
 
-/** Keyword → category name rules. First match wins. */
+/**
+ * Keyword → category name rules. First match wins.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * PERSONAL MERCHANTS
+ * Add [/pattern/i, 'Category'] lines here for small local shops you frequent.
+ * These run FIRST, so they always win over the generic rules below.
+ * Example (uncomment and edit):
+ *   [/пекарна иванови|petko butcher/i, 'Food & Dining'],
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 const MERCHANT_RULES: ReadonlyArray<readonly [RegExp, string]> = [
-  [/starbucks|coffee|cafe|кафе/i, 'Beverages'],
-  [/lidl|kaufland|billa|fantastico|grocery|market|супермаркет/i, 'Groceries'],
-  [/shell|omv|petrol|gas|fuel|uber|taxi|бензин/i, 'Transport'],
-  [/restaurant|mcdonald|kfc|pizza|ресторан/i, 'Food & Dining'],
-  [/pharmacy|apteka|hospital|clinic|аптека/i, 'Health'],
-  [/netflix|spotify|cinema|kino|hbo|кино/i, 'Entertainment'],
-  [/zara|h&m|mall|amazon|emag/i, 'Shopping'],
-  [/electric|water|internet|vivacom|a1|ток|вода/i, 'Utilities'],
-  [/rent|наем|mortgage/i, 'Housing'],
+  // ── PERSONAL MERCHANTS (household-specific overrides) ────────────────────
+  // [/your-local-shop-name/i, 'Groceries'],   ← add your own lines here
+
+  // ── BEVERAGES ─────────────────────────────────────────────────────────────
+  // Must come before Groceries so "coffee" inside a supermarket name still wins
+  [/starbucks|coffee\b|cafe\b|кафе/i, 'Beverages'],
+
+  // ── GROCERIES ─────────────────────────────────────────────────────────────
+  [/\blidl\b|kaufland|billa|fantastico|t[\s-]market|\bmarket\b|\bcba\b|metro\s+cash|супермаркет|магазин/i, 'Groceries'],
+
+  // ── FOOD & DINING ─────────────────────────────────────────────────────────
+  [/restaurant|mcdonald|kfc|pizza|burger|kebab|\bbar\b|grill|грил|ресторан|glovo/i, 'Food & Dining'],
+
+  // ── TRANSPORT ─────────────────────────────────────────────────────────────
+  [/\bomv\b|shell|\beko\b|lukoil|petrol\b|бензин|\bbolt\b|uber|\btaxi\b|такси/i, 'Transport'],
+
+  // ── HEALTH ────────────────────────────────────────────────────────────────
+  [/apteka|аптека|sopharmacy|pharma|аптеч|болница|hospital|clinic|медицин|\bsmdl\b|лаборатор/i, 'Health'],
+
+  // ── ENTERTAINMENT ─────────────────────────────────────────────────────────
+  [/netflix|spotify|hbo|youtube|\bsteam\b|anthropic|openai|cinema|kino|кино/i, 'Entertainment'],
+
+  // ── UTILITIES ─────────────────────────────────────────────────────────────
+  [/vivacom|\ba1\b|yettel|telenor|топлофикация|toplofikatsia|в\s+и\s+к|(?<![а-яА-Я])вик(?![а-яА-Я])|водоснабд|електро|(?<![а-яА-Я])ток(?![а-яА-Я])|(?<![а-яА-Я])вода(?![а-яА-Я])|internet|интернет/i, 'Utilities'],
+
+  // ── HOUSING ───────────────────────────────────────────────────────────────
+  [/\brent\b|наем|mortgage|ипотек/i, 'Housing'],
+
+  // ── SHOPPING ──────────────────────────────────────────────────────────────
+  [/emag|technopolis|technomarket|zara|h&m|pepco|bulmag|\bmall\b|(?<![а-яА-Я])мол(?![а-яА-Я])|amazon|ikea|jysk/i, 'Shopping'],
 ];
 
 /**

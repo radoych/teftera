@@ -17,6 +17,7 @@ export interface DskParsedRow {
   description: string; // long description (col 2)
   debit: string; // money out, Bulgarian-formatted (col 9)
   credit: string; // money in, Bulgarian-formatted (col 10)
+  time: string; // HH:MM (col 12)
   currency: 'EUR' | 'BGN';
 }
 
@@ -28,6 +29,7 @@ export interface NormalizedTransaction {
   merchant: string;
   categoryGuess: string;
   date: string; // YYYY-MM-DD
+  occurredAt: string; // ISO timestamp of the actual transaction (date + time)
 }
 
 /** Parse a Bulgarian decimal string ("1 234,56") into integer minor units. */
@@ -130,6 +132,7 @@ export function parseDskCsv(text: string): DskParsedRow[] {
       description: cell(r, 2),
       debit: cell(r, 9),
       credit: cell(r, 10),
+      time: cell(r, 12),
       currency,
     });
   }
@@ -181,6 +184,22 @@ export function normalizeMerchant(raw: string): string {
 }
 
 /**
+ * Build an ISO timestamp from an ISO date (YYYY-MM-DD) and a HH:MM time.
+ * Components are interpreted in the device's local timezone (the statement's
+ * time is local wall-clock), so display round-trips to the same HH:MM.
+ * Missing/invalid time defaults to midnight.
+ */
+export function occurredAtISO(isoDate: string, time: string): string {
+  const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
+  if (!dm) return isoDate;
+  const tm = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+  const [, y, mo, d] = dm;
+  const hh = tm ? Number(tm[1]) : 0;
+  const mm = tm ? Number(tm[2]) : 0;
+  return new Date(Number(y), Number(mo) - 1, Number(d), hh, mm).toISOString();
+}
+
+/**
  * Normalize one parsed DSK row into a transaction draft. Debit rows are
  * expenses, credit rows are income. BGN statements convert to EUR and retain
  * the original; EUR statements store cents directly.
@@ -190,11 +209,13 @@ export function normalizeDskRow(row: DskParsedRow): NormalizedTransaction {
   const amountStr = isIncome ? row.credit : row.debit;
   const rawCents = Math.abs(parseBgAmount(amountStr));
   const merchant = normalizeMerchant(row.merchantRaw);
+  const isoDate = parseDskDate(row.date);
   const base = {
     kind: (isIncome ? 'income' : 'expense') as 'income' | 'expense',
     merchant,
     categoryGuess: guessCategory(merchant),
-    date: parseDskDate(row.date),
+    date: isoDate,
+    occurredAt: occurredAtISO(isoDate, row.time),
   };
 
   if (row.currency === 'BGN') {

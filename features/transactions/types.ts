@@ -12,8 +12,10 @@ export interface Transaction {
   category_id: string | null;
   date: string; // YYYY-MM-DD
   note: string | null;
+  source: 'manual' | 'dsk_import' | 'receipt';
   receipt_id: string | null;
   is_flagged: boolean;
+  occurred_at: string | null; // actual transaction time; falls back to created_at for display
   created_at: string;
 }
 

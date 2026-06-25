@@ -21,7 +21,7 @@ export function toTransactionView(
 ): TransactionView {
   const cat = tx.category_id ? byId.get(tx.category_id) : undefined;
   const name = cat?.name ?? FALLBACK_NAME;
-  const time = formatTime(new Date(tx.created_at));
+  const time = formatTime(new Date(tx.occurred_at ?? tx.created_at));
   // flagReason/isIncome deferred (anomaly + income land in later days)
   return {
     id: tx.id,
@@ -43,7 +43,9 @@ export function groupTransactionsByDay(
   const byId = new Map(categories.map((c) => [c.id, c]));
   const sorted = [...txs].map((tx, idx) => ({ tx, idx })).sort((a, b) => {
     if (a.tx.date !== b.tx.date) return a.tx.date < b.tx.date ? 1 : -1; // date desc
-    if (a.tx.created_at !== b.tx.created_at) return a.tx.created_at < b.tx.created_at ? 1 : -1; // newest first within a day
+    const aAt = a.tx.occurred_at ?? a.tx.created_at;
+    const bAt = b.tx.occurred_at ?? b.tx.created_at;
+    if (aAt !== bAt) return aAt < bAt ? 1 : -1; // newest first within a day
     return a.idx - b.idx; // preserve input order when equal
   }).map((x) => x.tx);
 
