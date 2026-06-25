@@ -1,6 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File } from 'expo-file-system';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
@@ -86,25 +85,24 @@ export default function ImportDskScreen() {
 
   const pickAndParse = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['text/csv', 'text/comma-separated-values', 'application/vnd.ms-excel', '*/*'],
-        copyToCacheDirectory: true,
+      // Pick via expo-file-system's own picker: it returns a module-owned File
+      // that is readable in Expo Go, unlike an external DocumentPicker cache URI
+      // (which Android scoped storage rejects for read).
+      const result = await File.pickFileAsync({
+        mimeTypes: ['text/csv', 'text/comma-separated-values', 'application/vnd.ms-excel'],
       });
       if (result.canceled) return;
 
-      const asset = result.assets[0];
-      if (!asset) return;
+      const file = result.result;
       setStatus('reading');
-      // Legacy FS reader: handles DocumentPicker's cache/content URIs. The new
-      // `File().text()` API enforces scoped-storage perms and rejects them on Android.
-      const text = await FileSystem.readAsStringAsync(asset.uri);
+      const text = await file.text();
 
       const rows = parseDskCsv(text).map(normalizeDskRow);
       const expenses = rows.filter((r) => r.kind === 'expense');
       const income = rows.filter((r) => r.kind === 'income');
       const { toImport, duplicates } = dedupeImport(expenses, transactions);
 
-      setPreview({ toImport, duplicates, income, fileName: asset.name });
+      setPreview({ toImport, duplicates, income, fileName: file.name });
       setStatus('ready');
     } catch (err) {
       if (__DEV__) console.warn('[dsk-import] parse failed', err);
