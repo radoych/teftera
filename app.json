@@ -51,6 +51,12 @@
         {
           "photosPermission": "Teftera accesses your photos so you can attach receipt images."
         }
+      ],
+      [
+        "react-native-document-scanner-plugin",
+        {
+          "cameraPermission": "Teftera използва камерата за сканиране на бележки."
+        }
       ]
     ],
     "experiments": {
