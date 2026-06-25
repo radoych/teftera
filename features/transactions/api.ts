@@ -63,6 +63,7 @@ export async function bulkInsertImported(rows: ImportedTransaction[]): Promise<v
       category_id: r.categoryId,
       date: r.date,
       note: r.note,
+      source: 'dsk_import',
     })),
   );
   if (error) throw error;
@@ -80,6 +81,7 @@ export async function createTransaction(input: NewTransaction): Promise<void> {
     category_id: input.categoryId,
     date: input.date,
     note: input.note,
+    source: 'manual',
   });
   if (error) throw error;
 }

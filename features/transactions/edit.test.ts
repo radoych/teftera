@@ -5,7 +5,7 @@ function tx(p: Partial<Transaction>): Transaction {
   return {
     id: 'id', household_id: 'h', user_id: 'u', amount_eur: 1250,
     original_amount: null, original_currency: null, merchant: 'Billa',
-    category_id: 'c1', date: '2026-06-22', note: 'lunch', receipt_id: null,
+    category_id: 'c1', date: '2026-06-22', note: 'lunch', source: 'manual', receipt_id: null,
     is_flagged: false, created_at: '2026-06-22T08:30:00.000Z', ...p,
   };
 }

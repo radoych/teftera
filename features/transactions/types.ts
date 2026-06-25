@@ -12,6 +12,7 @@ export interface Transaction {
   category_id: string | null;
   date: string; // YYYY-MM-DD
   note: string | null;
+  source: string;
   receipt_id: string | null;
   is_flagged: boolean;
   created_at: string;

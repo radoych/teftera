@@ -18,6 +18,7 @@ function tx(p: Partial<Transaction>): Transaction {
     category_id: 'c1',
     date: '2026-06-22',
     note: null,
+    source: 'manual',
     receipt_id: null,
     is_flagged: false,
     created_at: '2026-06-22T08:30:00.000Z',
