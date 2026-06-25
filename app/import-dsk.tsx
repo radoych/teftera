@@ -25,7 +25,13 @@ interface Preview {
   fileName: string;
 }
 
-type Status = 'idle' | 'reading' | 'ready' | 'importing';
+type Status = 'idle' | 'reading' | 'ready' | 'importing' | 'done';
+
+interface ImportSummary {
+  imported: number;
+  duplicates: number;
+  other: number;
+}
 
 function Header() {
   return (
@@ -74,6 +80,7 @@ function Row({ row, muted, badge }: { row: NormalizedTransaction; muted?: boolea
 export default function ImportDskScreen() {
   const [status, setStatus] = useState<Status>('idle');
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [summary, setSummary] = useState<ImportSummary | null>(null);
   const transactions = useTransactionsStore((s) => s.transactions);
   const categories = useTransactionsStore((s) => s.categories);
 
@@ -126,12 +133,57 @@ export default function ImportDskScreen() {
       }));
       await bulkInsertImported(rows);
       await refreshTransactions(householdId);
-      router.back();
+      setSummary({
+        imported: preview.toImport.length,
+        duplicates: preview.duplicates.length,
+        other: preview.toImport.filter((r) => r.categoryGuess === 'Other').length,
+      });
+      setStatus('done');
     } catch {
       setStatus('ready');
       Alert.alert('Грешка', 'Импортирането не успя. Опитай отново.');
     }
   };
+
+  // Post-import summary
+  if (status === 'done' && summary) {
+    return (
+      <Screen
+        floatingAboveTabBar={
+          <FloatingActionBar
+            actions={[{ label: 'Готово', icon: 'check', variant: 'filled', onPress: () => router.back() }]}
+          />
+        }>
+        <Header />
+        <SectionLabel className="mb-lg">Резултат от импорта</SectionLabel>
+        <View className="gap-4">
+          <View className="flex-row items-center justify-between py-md">
+            <Text className="font-inter text-body-lg text-on-surface">Импортирани</Text>
+            <Text className="font-inter-semibold text-body-lg text-on-surface">{summary.imported}</Text>
+          </View>
+          <HairlineDivider />
+          <View className="flex-row items-center justify-between py-md">
+            <Text className="font-inter text-body-lg text-on-surface-variant opacity-70">
+              Пропуснати дубликати
+            </Text>
+            <Text className="font-inter-semibold text-body-lg text-on-surface-variant opacity-70">
+              {summary.duplicates}
+            </Text>
+          </View>
+          <HairlineDivider />
+          <View className="flex-row items-center justify-between py-md">
+            <Text className="font-inter text-body-lg text-on-surface-variant opacity-70">
+              {`В категория „Други"`}
+            </Text>
+            <Text className="font-inter-semibold text-body-lg text-on-surface-variant opacity-70">
+              {summary.other}
+            </Text>
+          </View>
+          <HairlineDivider />
+        </View>
+      </Screen>
+    );
+  }
 
   // Initial / reading states
   if (!preview) {
