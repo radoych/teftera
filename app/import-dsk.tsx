@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { File } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
@@ -95,7 +95,9 @@ export default function ImportDskScreen() {
       const asset = result.assets[0];
       if (!asset) return;
       setStatus('reading');
-      const text = await new File(asset.uri).text();
+      // Legacy FS reader: handles DocumentPicker's cache/content URIs. The new
+      // `File().text()` API enforces scoped-storage perms and rejects them on Android.
+      const text = await FileSystem.readAsStringAsync(asset.uri);
 
       const rows = parseDskCsv(text).map(normalizeDskRow);
       const expenses = rows.filter((r) => r.kind === 'expense');
