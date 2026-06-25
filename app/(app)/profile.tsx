@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -222,10 +223,12 @@ export default function ProfileScreen() {
             <Text className="mb-3 font-inter text-label-md text-on-surface-variant opacity-60">
               Последна синхронизация: преди 2 часа
             </Text>
-            <Pressable className="flex-row items-center gap-1 active:opacity-70">
-              <MaterialIcons name="sync" size={16} color="#adc7ff" />
+            <Pressable
+              onPress={() => router.push('/import-dsk')}
+              className="flex-row items-center gap-1 active:opacity-70">
+              <MaterialIcons name="upload-file" size={16} color="#adc7ff" />
               <Text className="font-inter text-label-md text-primary-container">
-                Синхронизирай
+                Импортирай от CSV
               </Text>
             </Pressable>
           </View>

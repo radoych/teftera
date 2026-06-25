@@ -36,6 +36,38 @@ export async function listTransactions(householdId: string): Promise<Transaction
   return (data ?? []) as Transaction[];
 }
 
+/** A normalized imported row, carrying its BGN provenance when converted. */
+export interface ImportedTransaction {
+  householdId: string;
+  userId: string | null;
+  amountCents: number;
+  originalAmountCents: number | null;
+  originalCurrency: string | null;
+  merchant: string;
+  categoryId: string | null;
+  date: string; // YYYY-MM-DD
+  note: string | null;
+}
+
+/** Insert many imported transactions in a single batch (DSK CSV import). */
+export async function bulkInsertImported(rows: ImportedTransaction[]): Promise<void> {
+  if (rows.length === 0) return;
+  const { error } = await supabase.from('transactions').insert(
+    rows.map((r) => ({
+      household_id: r.householdId,
+      user_id: r.userId,
+      amount_eur: r.amountCents,
+      original_amount: r.originalAmountCents,
+      original_currency: r.originalCurrency,
+      merchant: r.merchant,
+      category_id: r.categoryId,
+      date: r.date,
+      note: r.note,
+    })),
+  );
+  if (error) throw error;
+}
+
 /** Insert one expense. EUR-native, so original_amount/currency stay null. */
 export async function createTransaction(input: NewTransaction): Promise<void> {
   const { error } = await supabase.from('transactions').insert({
