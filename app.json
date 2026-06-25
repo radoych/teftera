@@ -41,12 +41,6 @@
         }
       ],
       [
-        "expo-camera",
-        {
-          "cameraPermission": "Teftera uses the camera to scan receipts."
-        }
-      ],
-      [
         "expo-image-picker",
         {
           "photosPermission": "Teftera accesses your photos so you can attach receipt images."
