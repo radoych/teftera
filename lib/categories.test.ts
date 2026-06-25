@@ -178,6 +178,23 @@ describe('guessCategory', () => {
     ])('categorises %s as Shopping', (merchant) => {
       expect(guessCategory(merchant)).toBe('Shopping');
     });
+
+    it('does NOT match a Cyrillic merchant containing "мол" mid-word (МОЛЕРОВ ЕООД → Other)', () => {
+      expect(guessCategory('МОЛЕРОВ ЕООД')).toBe('Other');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Groceries — market keyword regression guard
+  // ---------------------------------------------------------------------------
+  describe('Groceries — market keyword', () => {
+    it('categorises CITY MARKET as Groceries', () => {
+      expect(guessCategory('CITY MARKET')).toBe('Groceries');
+    });
+
+    it('categorises FRESH MARKET as Groceries', () => {
+      expect(guessCategory('FRESH MARKET')).toBe('Groceries');
+    });
   });
 
   // ---------------------------------------------------------------------------

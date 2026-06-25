@@ -48,19 +48,19 @@ const MERCHANT_RULES: ReadonlyArray<readonly [RegExp, string]> = [
   [/starbucks|coffee\b|cafe\b|кафе/i, 'Beverages'],
 
   // ── GROCERIES ─────────────────────────────────────────────────────────────
-  [/\blidl\b|kaufland|billa|fantastico|t[\s-]market|\bcba\b|metro\s+cash|супермаркет|магазин/i, 'Groceries'],
+  [/\blidl\b|kaufland|billa|fantastico|t[\s-]market|\bmarket\b|\bcba\b|metro\s+cash|супермаркет|магазин/i, 'Groceries'],
 
   // ── FOOD & DINING ─────────────────────────────────────────────────────────
   [/restaurant|mcdonald|kfc|pizza|burger|kebab|\bbar\b|grill|грил|ресторан|glovo/i, 'Food & Dining'],
 
   // ── TRANSPORT ─────────────────────────────────────────────────────────────
-  [/\bomv\b|shell|eko\b|lukoil|petrol\b|бензин|\bbolt\b|uber|\btaxi\b|такси/i, 'Transport'],
+  [/\bomv\b|shell|\beko\b|lukoil|petrol\b|бензин|\bbolt\b|uber|\btaxi\b|такси/i, 'Transport'],
 
   // ── HEALTH ────────────────────────────────────────────────────────────────
   [/apteka|аптека|sopharmacy|pharma|аптеч|болница|hospital|clinic|медицин|\bsmdl\b|лаборатор/i, 'Health'],
 
   // ── ENTERTAINMENT ─────────────────────────────────────────────────────────
-  [/netflix|spotify|hbo|youtube|steam|anthropic|openai|cinema|kino|кино/i, 'Entertainment'],
+  [/netflix|spotify|hbo|youtube|\bsteam\b|anthropic|openai|cinema|kino|кино/i, 'Entertainment'],
 
   // ── UTILITIES ─────────────────────────────────────────────────────────────
   [/vivacom|\ba1\b|yettel|telenor|топлофикация|toplofikatsia|в\s+и\s+к|(?<![а-яА-Я])вик(?![а-яА-Я])|водоснабд|електро|(?<![а-яА-Я])ток(?![а-яА-Я])|(?<![а-яА-Я])вода(?![а-яА-Я])|internet|интернет/i, 'Utilities'],
@@ -69,7 +69,7 @@ const MERCHANT_RULES: ReadonlyArray<readonly [RegExp, string]> = [
   [/\brent\b|наем|mortgage|ипотек/i, 'Housing'],
 
   // ── SHOPPING ──────────────────────────────────────────────────────────────
-  [/emag|technopolis|technomarket|zara|h&m|pepco|bulmag|\bmall\b|мол|amazon|ikea|jysk/i, 'Shopping'],
+  [/emag|technopolis|technomarket|zara|h&m|pepco|bulmag|\bmall\b|(?<![а-яА-Я])мол(?![а-яА-Я])|amazon|ikea|jysk/i, 'Shopping'],
 ];
 
 /**

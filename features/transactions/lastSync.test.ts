@@ -98,4 +98,16 @@ describe('formatLastSync', () => {
     // Should contain the time
     expect(result).toMatch(/\d{2}:\d{2}/);
   });
+
+  it('handles a real UTC Z-suffixed timestamp (production code path)', () => {
+    // Production created_at values always end in Z (e.g. '2026-06-25T07:30:00Z')
+    // Use a now that is clearly in the future on the same day so the label is day-based
+    const now = new Date(2026, 5, 25, 23, 59, 0); // 25 Jun 2026 local
+    const iso = '2026-06-25T07:30:00Z';
+    const result = formatLastSync(iso, now);
+    // The label must contain a day keyword and a time portion
+    expect(result).toMatch(/\d{2}:\d{2}/);
+    // Should not be Никога
+    expect(result).not.toBe('Никога');
+  });
 });
