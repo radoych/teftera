@@ -68,6 +68,7 @@ export default function RootLayout() {
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
         <Stack.Screen name="transaction/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="import-dsk" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </GestureHandlerRootView>
   );
