@@ -35,7 +35,6 @@ export default function HistoryScreen() {
           actions={[
             { label: 'Филтри', icon: 'tune', variant: 'ghost' },
             { label: 'Търси', icon: 'search', variant: 'filled' },
-            { label: 'Импорт', icon: 'upload-file', variant: 'ghost', onPress: () => router.push('/import-dsk') },
           ]}
         />
       }>
