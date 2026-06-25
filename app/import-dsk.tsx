@@ -129,6 +129,7 @@ export default function ImportDskScreen() {
         merchant: r.merchant,
         categoryId: resolveCategoryId(r.merchant, categories),
         date: r.date,
+        occurredAt: r.occurredAt,
         note: null,
       }));
       await bulkInsertImported(rows);

@@ -28,6 +28,7 @@ function tx(p: Partial<Transaction>): Transaction {
     source: 'manual',
     receipt_id: null,
     is_flagged: false,
+    occurred_at: null,
     created_at: '2026-06-22T08:30:00.000Z',
     ...p,
   };

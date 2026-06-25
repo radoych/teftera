@@ -46,6 +46,7 @@ export interface ImportedTransaction {
   merchant: string;
   categoryId: string | null;
   date: string; // YYYY-MM-DD
+  occurredAt: string; // ISO timestamp of the actual transaction
   note: string | null;
 }
 
@@ -62,6 +63,7 @@ export async function bulkInsertImported(rows: ImportedTransaction[]): Promise<v
       merchant: r.merchant,
       category_id: r.categoryId,
       date: r.date,
+      occurred_at: r.occurredAt,
       note: r.note,
       source: 'dsk_import',
     })),

@@ -1,4 +1,5 @@
 import { groupTransactionsByDay, monthTotalCents, toTransactionView } from './groupByDay';
+import { formatTime } from '@/lib/dates';
 import type { Transaction } from './types';
 
 const cats = [
@@ -21,6 +22,7 @@ function tx(p: Partial<Transaction>): Transaction {
     source: 'manual',
     receipt_id: null,
     is_flagged: false,
+    occurred_at: null,
     created_at: '2026-06-22T08:30:00.000Z',
     ...p,
   };
@@ -50,6 +52,16 @@ describe('toTransactionView', () => {
   it('carries the flagged state through', () => {
     const v = toTransactionView(tx({ id: 'c', is_flagged: true }), byId, NOW);
     expect(v.isFlagged).toBe(true);
+  });
+
+  it('uses occurred_at for the time when present, not created_at', () => {
+    const occurred = new Date(2026, 5, 22, 21, 48).toISOString();
+    const v = toTransactionView(
+      tx({ id: 'occ', occurred_at: occurred, created_at: '2026-06-22T03:00:00.000Z' }),
+      byId,
+      NOW,
+    );
+    expect(v.meta).toBe(`Groceries • ${formatTime(new Date(occurred))}`);
   });
 });
 
