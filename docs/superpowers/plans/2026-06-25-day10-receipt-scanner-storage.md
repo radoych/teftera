@@ -27,11 +27,11 @@
 
 **Files:**
 - Modify: `package.json` (deps via installers)
-- Modify: `app.json:31-55` (plugins + iOS camera permission)
+- Modify: `app.json:31-55` (add doc-scanner plugin + iOS camera permission)
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `react-native-document-scanner-plugin`, `expo-image-manipulator`, `expo-crypto`, `expo-dev-client` installed and configured; `expo-camera` removed. Later tasks import these.
+- Produces: `react-native-document-scanner-plugin`, `expo-image-manipulator`, `expo-crypto`, `expo-dev-client` installed and configured. (`expo-camera` removal is deferred to Task 4, after `scanner.tsx` stops importing it, so every task stays green.) Later tasks import these.
 
 - [ ] **Step 1: Install new dependencies**
 
@@ -41,26 +41,9 @@ npx expo install expo-dev-client react-native-document-scanner-plugin expo-image
 ```
 Expected: installs succeed; the four packages appear in `package.json` dependencies.
 
-- [ ] **Step 2: Remove expo-camera**
+- [ ] **Step 2: Add the document-scanner plugin to `app.json`**
 
-Run:
-```bash
-npm uninstall expo-camera
-```
-Expected: `expo-camera` removed from `package.json` (it is only referenced by the old `scanner.tsx`, which Task 4 rewrites).
-
-- [ ] **Step 3: Update `app.json` plugins and iOS permission**
-
-In `app.json`, **remove** the `expo-camera` plugin block:
-```json
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Teftera uses the camera to scan receipts."
-        }
-      ],
-```
-and **add** the document-scanner plugin to the `plugins` array (e.g. after the `expo-image-picker` entry):
+In `app.json`, **add** the document-scanner plugin to the `plugins` array (e.g. after the `expo-image-picker` entry). Leave the existing `expo-camera` plugin block in place for now — it is removed in Task 4:
 ```json
       [
         "react-native-document-scanner-plugin",
@@ -71,21 +54,19 @@ and **add** the document-scanner plugin to the `plugins` array (e.g. after the `
 ```
 (The plugin's config plugin wires the iOS `NSCameraUsageDescription` from `cameraPermission`. Android's ML Kit document scanner runs in Google Play Services and needs no declared `CAMERA` permission.)
 
-- [ ] **Step 4: Typecheck**
+- [ ] **Step 3: Typecheck**
 
 Run: `npm run typecheck`
-Expected: PASS (no references to removed `expo-camera` yet — `scanner.tsx` still imports it; if typecheck fails only on `app/scanner.tsx` expo-camera imports, that is expected and resolved in Task 4. To keep this task green, proceed — Task 4 removes those imports. If you prefer a clean gate, run Task 4 immediately after.)
+Expected: PASS. (`scanner.tsx` still imports `expo-camera`, which remains installed — nothing is broken yet.)
 
-> **Note:** Typecheck may report errors in `app/scanner.tsx` because `expo-camera` is now uninstalled. That file is fully replaced in Task 4. This is the one place the plan tolerates a transient red between tasks; everything else stays green.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add package.json package-lock.json app.json
-git commit -m "chore(day10): add doc-scanner + dev-client deps, drop expo-camera"
+git commit -m "chore(day10): add doc-scanner + dev-client deps"
 ```
 
-- [ ] **Step 6: MANUAL — build & install the dev client (human, on-device)**
+- [ ] **Step 5: MANUAL — build & install the dev client (human, on-device)**
 
 This is a human step; the agent cannot build on a device. Run once now and again only when native deps change:
 ```bash
@@ -313,17 +294,17 @@ git commit -m "feat(day10): receipt storage upload service + object-key helper"
 
 **Files:**
 - Modify (full rewrite): `app/scanner.tsx`
+- Modify: `package.json`, `app.json` (remove `expo-camera`)
 
 **Interfaces:**
 - Consumes: `DocumentScanner.scanDocument` (Task 1), `manipulateAsync`/`SaveFormat` (Task 1), `uploadReceipt` (Task 3), `useAuthStore` (existing).
-- Produces: navigation to `/confirm-receipt` with `{ storagePath, previewUri }` params.
+- Produces: navigation to `/confirm-receipt` with `{ storagePath, previewUri }` params; `expo-camera` fully removed from the repo.
 
 - [ ] **Step 1: Replace `app/scanner.tsx` with the launcher**
 
 Replace the entire file with:
 ```tsx
 import { MaterialIcons } from '@expo/vector-icons';
-import * as Crypto from 'expo-crypto';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -428,21 +409,33 @@ export default function ScannerScreen() {
 }
 ```
 
-> Note: `Crypto` import above is unused in this file — remove it. (It is referenced here only because earlier drafts generated the uuid in the screen; uuid generation lives in `storage.ts`.) Final file must not import `expo-crypto`.
+- [ ] **Step 2: Remove `expo-camera` (now unused)**
 
-- [ ] **Step 2: Remove the stray import**
+`scanner.tsx` was the only consumer of `expo-camera`; it no longer imports it. Remove the package and its `app.json` plugin block.
 
-Delete the line `import * as Crypto from 'expo-crypto';` from `app/scanner.tsx` (it is unused — `uploadReceipt` owns uuid generation).
+Run:
+```bash
+npm uninstall expo-camera
+```
+Then in `app.json`, delete the `expo-camera` plugin block:
+```json
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Teftera uses the camera to scan receipts."
+        }
+      ],
+```
 
 - [ ] **Step 3: Typecheck and lint**
 
 Run: `npm run typecheck && npm run lint`
-Expected: PASS, no unused-import or `any` errors. No remaining reference to `expo-camera`.
+Expected: PASS, no unused-import or `any` errors. No remaining reference to `expo-camera` anywhere in the repo.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add app/scanner.tsx
+git add app/scanner.tsx package.json package-lock.json app.json
 git commit -m "feat(day10): scanner auto-captures via ML Kit and uploads to storage"
 ```
 
@@ -533,7 +526,7 @@ Expected: PASS, no `expo-camera` references remain.
 
 **Spec coverage:**
 - Dev client + deps + config → Task 1. ✅
-- `expo-camera` removed → Task 1 (pkg) + Task 4 (usage). ✅
+- `expo-camera` removed (pkg + app.json + usage) → Task 4, after the scanner rewrite drops the import (keeps every task green). ✅
 - Private bucket + 4 household-scoped Storage RLS policies, `{household_id}/{uuid}.jpg` → Task 2. ✅
 - `features/receipts/storage.ts` upload service + unit-tested key helper → Task 3. ✅ (helper split into `objectKey.ts` for import-free testability.)
 - Compress before upload (~1600px, JPEG 0.7) → Task 4 `manipulateAsync`. ✅
