@@ -8,6 +8,7 @@ import { SectionLabel } from '@/components/SectionLabel';
 import { TransactionRow } from '@/features/transactions/components/TransactionRow';
 import { groupTransactionsByDay } from '@/features/transactions/groupByDay';
 import { useTransactionsStore } from '@/features/transactions/store';
+import { lastDskSyncAt, formatLastSync } from '@/features/transactions/lastSync';
 
 export default function HistoryScreen() {
   const transactions = useTransactionsStore((s) => s.transactions);
@@ -20,6 +21,12 @@ export default function HistoryScreen() {
     [transactions, categories],
   );
 
+  const lastSyncLabel = useMemo(() => {
+    const iso = lastDskSyncAt(transactions);
+    if (iso === null) return null;
+    return formatLastSync(iso);
+  }, [transactions]);
+
   return (
     <Screen
       withTabBar
@@ -28,12 +35,19 @@ export default function HistoryScreen() {
           actions={[
             { label: 'Филтри', icon: 'tune', variant: 'ghost' },
             { label: 'Търси', icon: 'search', variant: 'filled' },
+            { label: 'Импорт', icon: 'upload-file', variant: 'ghost', onPress: () => router.push('/import-dsk') },
           ]}
         />
       }>
       <Text className="mb-xl mt-md font-jakarta-semibold text-headline-xl text-on-surface">
         История
       </Text>
+
+      {lastSyncLabel !== null && (
+        <Text className="mb-lg -mt-lg font-inter text-body-md text-on-surface-variant opacity-70">
+          Последна синхронизация с DSK: {lastSyncLabel}
+        </Text>
+      )}
 
       {loading && !loaded ? (
         <View className="mt-xxl items-center">
