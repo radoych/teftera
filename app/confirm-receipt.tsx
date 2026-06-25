@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { HairlineDivider } from '@/components/HairlineDivider';
@@ -21,6 +21,7 @@ const INITIAL_ITEMS: Item[] = [
 ];
 
 export default function ConfirmReceiptScreen() {
+  const { previewUri } = useLocalSearchParams<{ storagePath?: string; previewUri?: string }>();
   const [merchant, setMerchant] = useState('Starbucks');
   const [total, setTotal] = useState('14,20');
   const [items, setItems] = useState<Item[]>(INITIAL_ITEMS);
@@ -50,9 +51,17 @@ export default function ConfirmReceiptScreen() {
           keyboardShouldPersistTaps="handled">
           {/* Thumbnail */}
           <View className="my-xl items-center">
-            <View className="h-28 w-20 items-center justify-center rounded-xl bg-surface-container-high">
-              <MaterialIcons name="receipt-long" size={28} color="rgba(255,255,255,0.4)" />
-            </View>
+            {previewUri ? (
+              <Image
+                source={{ uri: previewUri }}
+                className="h-28 w-20 rounded-xl"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="h-28 w-20 items-center justify-center rounded-xl bg-surface-container-high">
+                <MaterialIcons name="receipt-long" size={28} color="rgba(255,255,255,0.4)" />
+              </View>
+            )}
           </View>
 
           {/* Merchant */}
