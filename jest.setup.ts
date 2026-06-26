@@ -1,5 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 jest.mock('@react-native-async-storage/async-storage', () => ({
   __esModule: true,
   default: {
@@ -13,7 +11,8 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   },
 }));
 
-// Mock Supabase to avoid needing .env configuration in tests
+// Module-level stub to prevent import-time Supabase client init in tests.
+// Tests that need real Supabase behavior must provide their own jest.mock override.
 jest.mock('@/services/supabase', () => ({
   supabase: {},
 }));
