@@ -84,3 +84,13 @@ export function parseAmountToCents(input: string): number | null {
   }
   return Math.round(value * 100);
 }
+
+/**
+ * Format integer minor units as a bare decimal input string (comma decimal,
+ * no currency symbol, no grouping) — the inverse of `parseAmountToCents`.
+ * Intended for seeding editable amount `TextInput`s. Non-finite → "0,00".
+ */
+export function centsToInput(cents: number): string {
+  if (!Number.isFinite(cents)) return '0,00';
+  return (cents / 100).toFixed(2).replace('.', ',');
+}
