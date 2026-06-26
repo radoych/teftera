@@ -7,7 +7,10 @@
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const MODEL = 'gemini-2.0-flash';
+// Receipt extraction model. `gemini-3-flash-preview` is current and fast; the
+// older `gemini-2.0-flash` free tier returns 429 (limit:0) on this project.
+// Stable fallback if the preview is deprecated/rate-limited: 'gemini-2.5-flash'.
+const MODEL = 'gemini-3-flash-preview';
 const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
 
 export const isGeminiConfigured = Boolean(apiKey);
