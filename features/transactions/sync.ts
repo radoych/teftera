@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/features/auth/store';
 import { listCategories, listTransactions } from './api';
+import { subscribeToTransactions } from './realtimeChannel';
 import { useTransactionsStore } from './store';
 
 /** Fetch the household's categories + transactions and write them into the store. */
@@ -44,23 +45,11 @@ export function useTransactionsSync(): void {
     store.setLoading(true);
     load();
 
-    const channel = supabase
-      .channel(`transactions:${householdId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'transactions',
-          filter: `household_id=eq.${householdId}`,
-        },
-        () => load(),
-      )
-      .subscribe();
+    const unsubscribe = subscribeToTransactions(supabase, householdId, () => load());
 
     return () => {
       active = false;
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, [householdId]);
 }
