@@ -11,6 +11,7 @@ export interface NewTransaction {
   categoryId: string | null;
   date: string; // YYYY-MM-DD
   note: string | null;
+  receiptId?: string | null;
 }
 
 /** The household's categories, name-ascending. */
@@ -83,7 +84,8 @@ export async function createTransaction(input: NewTransaction): Promise<void> {
     category_id: input.categoryId,
     date: input.date,
     note: input.note,
-    source: 'manual',
+    receipt_id: input.receiptId ?? null,
+    source: input.receiptId ? 'receipt' : 'manual',
   });
   if (error) throw error;
 }
