@@ -1,107 +1,102 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import DocumentScanner from 'react-native-document-scanner-plugin';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { PillButton } from '@/components/PillButton';
+import { useAuthStore } from '@/features/auth/store';
+import { uploadReceipt } from '@/features/receipts/storage';
 
-/** Camera capture for receipts. Capture/gallery route to the confirm screen,
- *  where Gemini extraction is reviewed (and where parsing failures fall back). */
+type Phase = 'scanning' | 'uploading' | 'error' | 'no-household';
+
+/** Thin launcher around the native document scanner: auto-capture → compress →
+ *  upload → confirm screen. The capture UI is OS-native; this screen only shows
+ *  branded loading / error states. */
 export default function ScannerScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [torch, setTorch] = useState(false);
-  const cameraRef = useRef<CameraView>(null);
+  const [phase, setPhase] = useState<Phase>('scanning');
+  const started = useRef(false);
 
-  const capture = async () => {
+  const run = useCallback(async () => {
+    const householdId = useAuthStore.getState().householdId;
+    if (!householdId) {
+      setPhase('no-household');
+      return;
+    }
+    setPhase('scanning');
     try {
-      await cameraRef.current?.takePictureAsync({ quality: 0.7, base64: false });
-    } catch {
-      // Ignore capture errors in this static slice.
+      const { scannedImages, status } = await DocumentScanner.scanDocument({
+        maxNumDocuments: 1,
+      });
+      if (status !== 'success' || !scannedImages?.length) {
+        router.back();
+        return;
+      }
+      setPhase('uploading');
+      const shrunk = await manipulateAsync(scannedImages[0]!, [{ resize: { width: 1600 } }], {
+        compress: 0.7,
+        format: SaveFormat.JPEG,
+      });
+      const { storagePath } = await uploadReceipt(shrunk.uri, householdId);
+      router.replace({
+        pathname: '/confirm-receipt',
+        params: { storagePath, previewUri: shrunk.uri },
+      });
+    } catch (err) {
+      if (__DEV__) console.warn('[scanner] capture/upload failed', err);
+      setPhase('error');
     }
-    router.replace('/confirm-receipt');
-  };
+  }, []);
 
-  const pickFromGallery = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
-    if (!result.canceled) {
-      router.replace('/confirm-receipt');
-    }
-  };
-
-  // Permission gate.
-  if (!permission) {
-    return <View className="flex-1 bg-black" />;
-  }
-  if (!permission.granted) {
-    return (
-      <View className="flex-1 items-center justify-center gap-lg bg-black px-xl">
-        <MaterialIcons name="photo-camera" size={48} color="#adc7ff" />
-        <Text className="text-center font-inter text-body-lg text-on-surface">
-          Нужен е достъп до камерата, за да сканираш бележки.
-        </Text>
-        <PillButton label="Разреши достъп" onPress={requestPermission} />
-        <Pressable onPress={() => router.back()}>
-          <Text className="font-inter text-label-md text-on-surface-variant">Назад</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    run();
+  }, [run]);
 
   return (
-    <View className="flex-1 bg-black">
-      <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back" enableTorch={torch} />
+    <View className="flex-1 bg-background">
+      <BackgroundGlow />
+      <SafeAreaView className="flex-1 items-center justify-center px-xl">
+        {phase === 'uploading' && (
+          <View className="items-center gap-lg">
+            <ActivityIndicator size="large" color="#adc7ff" />
+            <Text className="font-inter text-body-lg text-on-surface">Качване на бележка…</Text>
+          </View>
+        )}
 
-      {/* Viewfinder brackets overlay */}
-      <View
-        style={{ pointerEvents: 'none' }}
-        className="absolute inset-0 items-center justify-center">
-        <View className="aspect-[2/3.5] w-[70%] max-w-[320px]">
-          <View className="absolute left-0 top-0 h-6 w-6 rounded-tl-lg border-l-2 border-t-2 border-white/80" />
-          <View className="absolute right-0 top-0 h-6 w-6 rounded-tr-lg border-r-2 border-t-2 border-white/80" />
-          <View className="absolute bottom-0 left-0 h-6 w-6 rounded-bl-lg border-b-2 border-l-2 border-white/80" />
-          <View className="absolute bottom-0 right-0 h-6 w-6 rounded-br-lg border-b-2 border-r-2 border-white/80" />
-        </View>
-      </View>
+        {phase === 'scanning' && <ActivityIndicator size="large" color="#adc7ff" />}
 
-      {/* UI layer */}
-      <SafeAreaView className="absolute inset-0 justify-between">
-        {/* Top bar */}
-        <View className="px-6 pt-md">
-          <Pressable
-            onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-highest/40 active:scale-90">
-            <MaterialIcons name="close" size={24} color="#e3e2e6" />
-          </Pressable>
-        </View>
-
-        {/* Bottom controls */}
-        <View className="items-center px-6 pb-xxl">
-          <Text className="mb-xl font-inter text-body-md text-white opacity-90">
-            Подравни бележката в рамката
-          </Text>
-          <View className="w-full max-w-sm flex-row items-center justify-between">
-            <Pressable
-              onPress={() => setTorch((t) => !t)}
-              className={`h-12 w-12 items-center justify-center rounded-full border border-white/20 ${torch ? 'bg-primary-container' : 'bg-white/5'}`}>
-              <MaterialIcons name="bolt" size={24} color={torch ? '#112f5e' : '#ffffff'} />
-            </Pressable>
-
-            <Pressable
-              onPress={capture}
-              className="h-20 w-20 items-center justify-center active:scale-95">
-              <View className="absolute inset-0 rounded-full border-4 border-primary-container" />
-              <View className="h-[60px] w-[60px] rounded-full bg-white" />
-            </Pressable>
-
-            <Pressable
-              onPress={pickFromGallery}
-              className="h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5">
-              <MaterialIcons name="photo-library" size={24} color="#ffffff" />
+        {phase === 'no-household' && (
+          <View className="items-center gap-lg">
+            <MaterialIcons name="error-outline" size={48} color="#ffb4ab" />
+            <Text className="text-center font-inter text-body-lg text-on-surface">
+              Няма активно домакинство.
+            </Text>
+            <Pressable onPress={() => router.back()} hitSlop={8}>
+              <Text className="font-inter text-label-md text-on-surface-variant">Назад</Text>
             </Pressable>
           </View>
-        </View>
+        )}
+
+        {phase === 'error' && (
+          <View className="w-full items-center gap-lg">
+            <MaterialIcons name="cloud-off" size={48} color="#ffb4ab" />
+            <Text className="text-center font-inter text-body-lg text-on-surface">
+              Качването не успя. Опитай отново.
+            </Text>
+            <View className="w-full max-w-xs flex-row gap-md">
+              <View className="flex-1">
+                <PillButton label="Назад" variant="ghost" uppercase block onPress={() => router.back()} />
+              </View>
+              <View className="flex-1">
+                <PillButton label="Опитай пак" variant="filled" uppercase block onPress={run} />
+              </View>
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );

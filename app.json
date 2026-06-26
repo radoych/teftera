@@ -21,7 +21,10 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "single",
@@ -41,21 +44,28 @@
         }
       ],
       [
-        "expo-camera",
-        {
-          "cameraPermission": "Teftera uses the camera to scan receipts."
-        }
-      ],
-      [
         "expo-image-picker",
         {
           "photosPermission": "Teftera accesses your photos so you can attach receipt images."
+        }
+      ],
+      [
+        "react-native-document-scanner-plugin",
+        {
+          "cameraPermission": "Teftera използва камерата за сканиране на бележки."
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bcee3c0e-1a24-4576-88eb-12cd0f089bb5"
+      }
+    },
+    "owner": "radoych"
   }
 }
