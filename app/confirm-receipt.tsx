@@ -102,7 +102,7 @@ export default function ConfirmReceiptScreen() {
     : 'Автоматично';
 
   const onSave = async () => {
-    if (saving) return;
+    if (saving || phase !== 'ready') return;
     const note = itemsToNote(items);
     const parsed = parseManualEntry({ amount: total, merchant, note, date });
     if (!parsed.success) {
@@ -133,12 +133,17 @@ export default function ConfirmReceiptScreen() {
         date: parsed.data.date,
         note: parsed.data.note,
       });
-      await refreshTransactions(householdId);
-      router.replace('/(app)');
     } catch {
       setSaving(false);
       Alert.alert('Грешка', 'Неуспешно записване. Опитай отново.');
+      return;
     }
+    try {
+      await refreshTransactions(householdId);
+    } catch {
+      // Non-fatal: the save already succeeded; the list reconciles on next focus.
+    }
+    router.replace('/(app)');
   };
 
   return (
