@@ -1,6 +1,7 @@
 import {
   BGN_PER_EUR,
   bgnToEurCents,
+  centsToInput,
   eurToBgnCents,
   formatCurrency,
   parseAmountToCents,
@@ -56,5 +57,23 @@ describe('parseAmountToCents', () => {
   it('rejects garbage', () => {
     expect(parseAmountToCents('abc')).toBeNull();
     expect(parseAmountToCents('')).toBeNull();
+  });
+});
+
+describe('centsToInput', () => {
+  it('formats integer cents as a comma-decimal string without a symbol', () => {
+    expect(centsToInput(1250)).toBe('12,50');
+  });
+  it('keeps two decimals for round amounts', () => {
+    expect(centsToInput(500)).toBe('5,00');
+  });
+  it('formats zero', () => {
+    expect(centsToInput(0)).toBe('0,00');
+  });
+  it('keeps the sign for negatives', () => {
+    expect(centsToInput(-500)).toBe('-5,00');
+  });
+  it('falls back to 0,00 for non-finite input', () => {
+    expect(centsToInput(NaN)).toBe('0,00');
   });
 });

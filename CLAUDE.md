@@ -63,7 +63,7 @@ eas build --profile preview --platform all
 | State | Zustand |
 | Forms | React Hook Form + Zod |
 | Backend / DB | Supabase (Postgres + Auth + Storage + Realtime) |
-| AI / LLM | Gemini 2.0 Flash — Google AI Studio free tier |
+| AI / LLM | Gemini Flash (`gemini-3-flash-preview`; stable fallback `gemini-2.5-flash`) — Google AI Studio. Model set in `services/gemini.ts`. |
 | Charts | Victory Native XL (Skia) |
 | Camera | expo-camera + expo-image-picker |
 | Blur | expo-blur BlurView |

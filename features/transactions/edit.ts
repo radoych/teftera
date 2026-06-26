@@ -1,3 +1,4 @@
+import { centsToInput } from '@/lib/formatCurrency';
 import type { Transaction } from './types';
 
 export interface ManualEntryFormValues {
@@ -15,7 +16,7 @@ export interface ManualEntryFormValues {
  */
 export function transactionToFormValues(tx: Transaction): ManualEntryFormValues {
   return {
-    amount: (tx.amount_eur / 100).toFixed(2).replace('.', ','),
+    amount: centsToInput(tx.amount_eur),
     merchant: tx.merchant,
     note: tx.note ?? '',
     date: tx.date,
