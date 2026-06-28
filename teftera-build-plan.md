@@ -183,6 +183,27 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ---
 
+### Day 11.5 — Internal Build & Distribution (out of sequence)
+
+> Pulled forward from Day 18 so the household can actually *use* the app now, mid-build. Full release polish (icon/splash/README/store-ready) still lives in Day 18.
+
+**Android — done:**
+- [x] `eas.json` `preview` profile bound to the `preview` EAS environment (`environment: preview`) so `EXPO_PUBLIC_*` are injected at build time
+- [x] Supabase + Gemini keys pushed to EAS `preview` environment via `eas env:push preview --path .env` (not committed; `.env` stays gitignored)
+- [x] `eas build --platform android --profile preview` → internal-distribution **APK**, keystore auto-generated (build `7d253c8b`, v1.0.0)
+- [x] Installable on Android directly via the EAS QR/link (no Play Store)
+
+**iOS — free-tier sideload (no paid Apple account):**
+- [ ] Build the iOS `.ipa` via `eas build --platform ios --profile preview` (free Apple ID → Personal Team development signing; one-time interactive Apple login + 2FA, EAS caches credentials)
+- [ ] Sideload onto the iPhone with **AltStore Classic + AltServer** on Windows; AltServer auto-refreshes the 7-day signature over same-Wi-Fi
+- [ ] Trust the developer profile on-device, sign into the shared household
+
+> **Notes.** Both builds point at the **live production Supabase** (real household data, not a sandbox). Receipt scanning runs on `gemini-3-flash-preview` with a manual-entry fallback. Future updates: a new `eas build` per version (credentials already saved); wiring `expo-updates` would let JS-only changes ship over-the-air via `eas update` without a reinstall. The original distribution step (EAS preview build on both phones) remains listed under **Day 18**, now partially satisfied here.
+
+**Checkpoint:** App installed and running on the Android phone from the EAS APK; iOS path documented and ready to run (pending the one-time interactive build + AltStore install).
+
+---
+
 ## Phase 5 — Intelligence
 
 ### Day 12 — Insights Screen: Real Data
