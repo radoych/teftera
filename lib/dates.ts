@@ -62,3 +62,14 @@ export function isValidISODate(iso: string): boolean {
     date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d
   );
 }
+
+/** Bulgarian 3-letter month abbreviations; index 0 = January. */
+export const MONTH_ABBR_BG = [
+  'ЯНУ', 'ФЕВ', 'МАР', 'АПР', 'МАЙ', 'ЮНИ',
+  'ЮЛИ', 'АВГ', 'СЕП', 'ОКТ', 'НОЕ', 'ДЕК',
+] as const;
+
+/** BG 3-letter abbreviation for a 0-based month index (wraps via modulo 12). */
+export function monthAbbr(monthIndex: number): string {
+  return MONTH_ABBR_BG[((monthIndex % 12) + 12) % 12]!;
+}
