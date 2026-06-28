@@ -1,4 +1,5 @@
 import {
+  categoryBreakdown,
   dayTotalCents,
   filterByUser,
   pctChange,
@@ -164,5 +165,33 @@ describe('spendingByCategory', () => {
 
   it('returns an empty array when there is no current-month spend', () => {
     expect(spendingByCategory([tx({ date: '2026-05-01' })], cats, NOW)).toEqual([]);
+  });
+});
+
+describe('categoryBreakdown', () => {
+  it('groups, sums and sorts the given txs without any date filter', () => {
+    const rows = categoryBreakdown(
+      [
+        tx({ id: '1', category_id: 'c1', date: '2026-05-31', amount_eur: 1000 }),
+        tx({ id: '2', category_id: 'c2', date: '2026-06-05', amount_eur: 3000 }),
+        tx({ id: '3', category_id: 'c1', date: '2026-01-01', amount_eur: 1000 }),
+      ],
+      cats,
+    );
+    expect(rows.map((r) => [r.id, r.totalCents])).toEqual([
+      ['c2', 3000],
+      ['c1', 2000],
+    ]);
+    expect(rows[0]!.fraction).toBe(1);
+    expect(rows[1]!.fraction).toBeCloseTo(2 / 3);
+  });
+
+  it('buckets null/unknown categories into Other', () => {
+    const rows = categoryBreakdown(
+      [tx({ id: '1', category_id: null, amount_eur: 300 }), tx({ id: '2', category_id: 'gone', amount_eur: 200 })],
+      cats,
+    );
+    expect(rows).toHaveLength(1);
+    expect([rows[0]!.id, rows[0]!.name, rows[0]!.totalCents]).toEqual(['uncategorized', 'Other', 500]);
   });
 });

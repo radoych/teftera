@@ -48,18 +48,19 @@ export interface CategorySpend {
   fraction: number; // 0..1 of the largest bucket
 }
 
-/** Current-month spend grouped by category, sorted high to low. Unknown/null → "Other". */
-export function spendingByCategory(
+/**
+ * Group → sort → fraction for an already-filtered set of transactions.
+ * Unknown/null category → an "Other" row. `fraction` is relative to the
+ * largest bucket. This is the shared core used by the dashboard and insights.
+ */
+export function categoryBreakdown(
   txs: Transaction[],
   categories: CategoryLite[],
-  now: Date = new Date(),
 ): CategorySpend[] {
   const byId = new Map(categories.map((c) => [c.id, c]));
-  const prefix = monthPrefix(now.getFullYear(), now.getMonth());
   const totals = new Map<string, number>();
 
   for (const tx of txs) {
-    if (!tx.date.startsWith(prefix)) continue;
     const cat = tx.category_id ? byId.get(tx.category_id) : undefined;
     const key = cat ? cat.id : FALLBACK_ID;
     totals.set(key, (totals.get(key) ?? 0) + tx.amount_eur);
@@ -81,4 +82,17 @@ export function spendingByCategory(
   const max = rows[0]?.totalCents ?? 0;
   if (max > 0) for (const row of rows) row.fraction = row.totalCents / max;
   return rows;
+}
+
+/** Current-month spend grouped by category, sorted high to low. Unknown/null → "Other". */
+export function spendingByCategory(
+  txs: Transaction[],
+  categories: CategoryLite[],
+  now: Date = new Date(),
+): CategorySpend[] {
+  const prefix = monthPrefix(now.getFullYear(), now.getMonth());
+  return categoryBreakdown(
+    txs.filter((tx) => tx.date.startsWith(prefix)),
+    categories,
+  );
 }
