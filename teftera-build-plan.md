@@ -223,13 +223,15 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ### Day 13 — Anomaly Detection
 
-- [ ] `/services/anomaly.ts`: Z-score function over transaction history per category
-- [ ] Runs after every new transaction is saved (or on a manual "analyze" trigger)
-- [ ] Threshold: |Z| > 2.5 → flag the transaction, create `anomalies` row
-- [ ] Flagged transactions render with `secondary-fixed` (`#c3f400`) accent in history list: dot on icon, lime amount text, reason label ("Unusual amount" / "High frequency")
-- [ ] Anomaly section on Insights screen shows flagged transactions with "Review" action
-- [ ] Mark-as-reviewed action clears the flag
-- [ ] Unit tests: Z-score function, threshold edge cases
+- [x] `/services/anomaly.ts`: Z-score function over transaction history per category *(pre-existing, reused)*
+- [x] Runs after every new transaction is saved *(automatic on manual + receipt saves; no manual trigger)*
+- [x] Threshold: |Z| > 2.5 → flag the transaction, create `anomalies` row
+- [x] Flagged transactions render with `secondary-fixed` (`#c3f400`) accent in history list: dot on icon, lime amount text, reason label
+- [x] Anomaly section on Insights screen shows flagged transactions with "Review" action
+- [x] Mark-as-reviewed action clears the flag
+- [x] Unit tests: Z-score function, threshold edge cases
+
+> Implemented on branch `feat/day13-anomaly-detection` (plan `docs/superpowers/plans/2026-06-28-day13-anomaly-detection.md`). Detection runs automatically after manual + receipt saves (best-effort, never blocks the save), household-scoped, amount-only. New `features/anomalies/` slice (`detect`, `api`, `runDetection`, `reasons`) wraps the pre-existing tested Z-score engine; `createTransaction` now returns the new id; the store loads open anomalies so reasons render in history and sync via the existing realtime refetch. **Out of scope (v1):** edit re-scoring, DSK-import scoring, high-frequency detector, review-from-detail-screen.
 
 **Checkpoint:** Make a transaction that's 3x your average for a category. It shows flagged in lime in the transaction list and on insights.
 
