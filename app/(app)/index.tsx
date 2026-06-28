@@ -19,6 +19,7 @@ import {
   prevMonthTotalCents,
   spendingByCategory,
 } from '@/features/transactions/dashboard';
+import { reasonByTxId } from '@/features/anomalies/reasons';
 import { monthTotalCents, toTransactionView } from '@/features/transactions/groupByDay';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
@@ -34,6 +35,7 @@ function yesterday(now: Date): Date {
 export default function DashboardScreen() {
   const transactions = useTransactionsStore((s) => s.transactions);
   const categories = useTransactionsStore((s) => s.categories);
+  const openAnomalies = useTransactionsStore((s) => s.openAnomalies);
   const loaded = useTransactionsStore((s) => s.loaded);
   const householdId = useAuthStore((s) => s.householdId);
   const userId = useAuthStore((s) => s.session?.user.id ?? null);
@@ -64,10 +66,12 @@ export default function DashboardScreen() {
     [filtered, categories],
   );
 
+  const reasons = useMemo(() => reasonByTxId(openAnomalies), [openAnomalies]);
+
   const recent = useMemo(() => {
     const byId = new Map(categories.map((c) => [c.id, c]));
-    return filtered.slice(0, 3).map((tx) => toTransactionView(tx, byId));
-  }, [filtered, categories]);
+    return filtered.slice(0, 3).map((tx) => toTransactionView(tx, byId, undefined, reasons));
+  }, [filtered, categories, reasons]);
 
   const onRefresh = async () => {
     if (!householdId) return;

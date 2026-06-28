@@ -2,17 +2,19 @@
 import { useEffect } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/features/auth/store';
+import { listOpenAnomalies } from '@/features/anomalies/api';
 import { listCategories, listTransactions } from './api';
 import { subscribeToTransactions } from './realtimeChannel';
 import { useTransactionsStore } from './store';
 
-/** Fetch the household's categories + transactions and write them into the store. */
+/** Fetch the household's categories + transactions + open anomalies into the store. */
 export async function refreshTransactions(householdId: string): Promise<void> {
-  const [categories, transactions] = await Promise.all([
+  const [categories, transactions, openAnomalies] = await Promise.all([
     listCategories(householdId),
     listTransactions(householdId),
+    listOpenAnomalies(householdId),
   ]);
-  useTransactionsStore.getState().setData(transactions, categories);
+  useTransactionsStore.getState().setData(transactions, categories, openAnomalies);
 }
 
 /**

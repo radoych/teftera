@@ -18,11 +18,12 @@ export function toTransactionView(
   tx: Transaction,
   byId: Map<string, CategoryLite>,
   now: Date = new Date(),
+  reasons: Map<string, string> = new Map(),
 ): TransactionView {
   const cat = tx.category_id ? byId.get(tx.category_id) : undefined;
   const name = cat?.name ?? FALLBACK_NAME;
   const time = formatTime(new Date(tx.occurred_at ?? tx.created_at));
-  // flagReason/isIncome deferred (anomaly + income land in later days)
+  // isIncome deferred (income lands in a later day)
   return {
     id: tx.id,
     merchant: tx.merchant,
@@ -31,6 +32,7 @@ export function toTransactionView(
     icon: (cat?.icon as MaterialIconName) ?? FALLBACK_ICON,
     iconColor: cat?.color ?? FALLBACK_COLOR,
     isFlagged: tx.is_flagged,
+    flagReason: tx.is_flagged ? reasons.get(tx.id) : undefined,
   };
 }
 
@@ -39,6 +41,7 @@ export function groupTransactionsByDay(
   txs: Transaction[],
   categories: CategoryLite[],
   now: Date = new Date(),
+  reasons: Map<string, string> = new Map(),
 ): TransactionDayGroup[] {
   const byId = new Map(categories.map((c) => [c.id, c]));
   const sorted = [...txs].map((tx, idx) => ({ tx, idx })).sort((a, b) => {
@@ -58,7 +61,7 @@ export function groupTransactionsByDay(
       groupByDate.set(tx.date, group);
       groups.push(group);
     }
-    group.items.push(toTransactionView(tx, byId, now));
+    group.items.push(toTransactionView(tx, byId, now, reasons));
   }
   return groups;
 }

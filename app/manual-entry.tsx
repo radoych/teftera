@@ -14,6 +14,7 @@ import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { useAuthStore } from '@/features/auth/store';
+import { runDetection } from '@/features/anomalies/runDetection';
 import { createTransaction, updateTransaction } from '@/features/transactions/api';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
@@ -128,6 +129,7 @@ export default function ManualEntryScreen() {
       : resolveCategoryId(parsed.data.merchant, categories);
 
     setSaving(true);
+    let createdId: string | null = null;
     try {
       if (isEdit && id) {
         await updateTransaction(id, {
@@ -138,7 +140,7 @@ export default function ManualEntryScreen() {
           note: parsed.data.note,
         });
       } else {
-        await createTransaction({
+        const { id: newId } = await createTransaction({
           householdId,
           userId: session?.user.id ?? null,
           amountCents: parsed.data.amountCents,
@@ -147,16 +149,33 @@ export default function ManualEntryScreen() {
           date: parsed.data.date,
           note: parsed.data.note,
         });
+        createdId = newId;
       }
-      await refreshTransactions(householdId);
-      router.back();
     } catch {
       setSaving(false);
       Alert.alert(
         'Грешка',
         isEdit ? 'Неуспешна редакция. Опитай отново.' : 'Неуспешно записване. Опитай отново.',
       );
+      return;
     }
+    // Refresh + detection are non-fatal: the save already succeeded, so a failure
+    // here must not invite a retry that would double-insert.
+    try {
+      await refreshTransactions(householdId);
+      if (createdId !== null) {
+        await runDetection({
+          transactionId: createdId,
+          householdId,
+          amountCents: parsed.data.amountCents,
+          categoryId: resolvedCategoryId,
+          transactions: useTransactionsStore.getState().transactions,
+        });
+      }
+    } catch {
+      // List reconciles on next focus / realtime refetch.
+    }
+    router.back();
   };
 
   return (

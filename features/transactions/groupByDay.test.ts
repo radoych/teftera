@@ -63,6 +63,18 @@ describe('toTransactionView', () => {
     );
     expect(v.meta).toBe(`Groceries • ${formatTime(new Date(occurred))}`);
   });
+
+  it('populates flagReason from the reasons map for a flagged tx', () => {
+    const reasons = new Map([['c', 'Над обичайното']]);
+    const v = toTransactionView(tx({ id: 'c', is_flagged: true }), byId, NOW, reasons);
+    expect(v.flagReason).toBe('Над обичайното');
+  });
+
+  it('leaves flagReason undefined for an unflagged tx even if a reason exists', () => {
+    const reasons = new Map([['d', 'Над обичайното']]);
+    const v = toTransactionView(tx({ id: 'd', is_flagged: false }), byId, NOW, reasons);
+    expect(v.flagReason).toBeUndefined();
+  });
 });
 
 describe('groupTransactionsByDay', () => {
