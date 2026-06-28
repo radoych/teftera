@@ -21,10 +21,12 @@ describe('saveReceiptTransaction', () => {
     });
     const createTransaction = jest.fn(async () => {
       calls.push('transaction');
+      return { id: 'tx-1' };
     });
 
-    await saveReceiptTransaction(input, { insertReceipt, createTransaction });
+    const result = await saveReceiptTransaction(input, { insertReceipt, createTransaction });
 
+    expect(result).toEqual({ id: 'tx-1' });
     expect(calls).toEqual(['receipt', 'transaction']);
     expect(insertReceipt).toHaveBeenCalledWith({
       householdId: 'H',
@@ -48,7 +50,7 @@ describe('saveReceiptTransaction', () => {
     const insertReceipt = jest.fn(async () => {
       throw new Error('insert failed');
     });
-    const createTransaction = jest.fn(async () => {});
+    const createTransaction = jest.fn(async () => ({ id: 'tx-1' }));
 
     await expect(
       saveReceiptTransaction(input, { insertReceipt, createTransaction }),

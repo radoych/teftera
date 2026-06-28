@@ -28,14 +28,14 @@ const defaultDeps: SaveReceiptDeps = { insertReceipt, createTransaction };
 export async function saveReceiptTransaction(
   input: SaveReceiptInput,
   deps: SaveReceiptDeps = defaultDeps,
-): Promise<void> {
+): Promise<{ id: string }> {
   const receipt: NewReceipt = {
     householdId: input.householdId,
     userId: input.userId,
     storagePath: input.storagePath,
     rawGeminiJson: input.rawGeminiJson,
   };
-  const { id } = await deps.insertReceipt(receipt);
+  const { id: receiptId } = await deps.insertReceipt(receipt);
 
   const transaction: NewTransaction = {
     householdId: input.householdId,
@@ -45,7 +45,7 @@ export async function saveReceiptTransaction(
     categoryId: input.categoryId,
     date: input.date,
     note: input.note,
-    receiptId: id,
+    receiptId,
   };
-  await deps.createTransaction(transaction);
+  return deps.createTransaction(transaction);
 }

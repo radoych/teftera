@@ -72,22 +72,27 @@ export async function bulkInsertImported(rows: ImportedTransaction[]): Promise<v
   if (error) throw error;
 }
 
-/** Insert one expense. EUR-native, so original_amount/currency stay null. */
-export async function createTransaction(input: NewTransaction): Promise<void> {
-  const { error } = await supabase.from('transactions').insert({
-    household_id: input.householdId,
-    user_id: input.userId,
-    amount_eur: input.amountCents,
-    original_amount: null,
-    original_currency: null,
-    merchant: input.merchant,
-    category_id: input.categoryId,
-    date: input.date,
-    note: input.note,
-    receipt_id: input.receiptId ?? null,
-    source: input.receiptId ? 'receipt' : 'manual',
-  });
+/** Insert one expense. EUR-native, so original_amount/currency stay null. Returns the new id. */
+export async function createTransaction(input: NewTransaction): Promise<{ id: string }> {
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert({
+      household_id: input.householdId,
+      user_id: input.userId,
+      amount_eur: input.amountCents,
+      original_amount: null,
+      original_currency: null,
+      merchant: input.merchant,
+      category_id: input.categoryId,
+      date: input.date,
+      note: input.note,
+      receipt_id: input.receiptId ?? null,
+      source: input.receiptId ? 'receipt' : 'manual',
+    })
+    .select('id')
+    .single();
   if (error) throw error;
+  return { id: (data as { id: string }).id };
 }
 
 export interface TransactionPatch {
