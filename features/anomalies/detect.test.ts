@@ -3,7 +3,7 @@ import { evaluate, historyForCategory } from './detect';
 
 function tx(p: Partial<Transaction> & { id: string }): Transaction {
   return {
-    id: p.id, household_id: 'h', user_id: 'u', amount_eur: 1000,
+    household_id: 'h', user_id: 'u', amount_eur: 1000,
     original_amount: null, original_currency: null, merchant: 'M',
     category_id: 'c1', date: '2026-06-01', note: null, source: 'manual',
     receipt_id: null, is_flagged: false, occurred_at: null,
