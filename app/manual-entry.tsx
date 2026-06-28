@@ -14,6 +14,7 @@ import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { useAuthStore } from '@/features/auth/store';
+import { runDetection } from '@/features/anomalies/runDetection';
 import { createTransaction, updateTransaction } from '@/features/transactions/api';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
@@ -137,8 +138,9 @@ export default function ManualEntryScreen() {
           date: parsed.data.date,
           note: parsed.data.note,
         });
+        await refreshTransactions(householdId);
       } else {
-        await createTransaction({
+        const { id: newId } = await createTransaction({
           householdId,
           userId: session?.user.id ?? null,
           amountCents: parsed.data.amountCents,
@@ -147,8 +149,15 @@ export default function ManualEntryScreen() {
           date: parsed.data.date,
           note: parsed.data.note,
         });
+        await refreshTransactions(householdId);
+        await runDetection({
+          transactionId: newId,
+          householdId,
+          amountCents: parsed.data.amountCents,
+          categoryId: resolvedCategoryId,
+          transactions: useTransactionsStore.getState().transactions,
+        });
       }
-      await refreshTransactions(householdId);
       router.back();
     } catch {
       setSaving(false);

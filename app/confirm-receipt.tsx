@@ -24,6 +24,7 @@ import {
   itemsToNote,
   type ReceiptFormItem,
 } from '@/features/receipts/extraction';
+import { runDetection } from '@/features/anomalies/runDetection';
 import { saveReceiptTransaction } from '@/features/receipts/save';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
@@ -121,8 +122,9 @@ export default function ConfirmReceiptScreen() {
       : resolveCategoryId(parsed.data.merchant, categories);
 
     setSaving(true);
+    let newId: string;
     try {
-      await saveReceiptTransaction({
+      ({ id: newId } = await saveReceiptTransaction({
         householdId,
         userId: session?.user.id ?? null,
         storagePath,
@@ -132,7 +134,7 @@ export default function ConfirmReceiptScreen() {
         categoryId: resolvedCategoryId,
         date: parsed.data.date,
         note: parsed.data.note,
-      });
+      }));
     } catch {
       setSaving(false);
       Alert.alert('Грешка', 'Неуспешно записване. Опитай отново.');
@@ -140,6 +142,13 @@ export default function ConfirmReceiptScreen() {
     }
     try {
       await refreshTransactions(householdId);
+      await runDetection({
+        transactionId: newId,
+        householdId,
+        amountCents: parsed.data.amountCents,
+        categoryId: resolvedCategoryId,
+        transactions: useTransactionsStore.getState().transactions,
+      });
     } catch {
       // Non-fatal: the save already succeeded; the list reconciles on next focus.
     }
