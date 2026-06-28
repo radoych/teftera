@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Comparison } from '@/components/Comparison';
 import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { Screen } from '@/components/Screen';
@@ -28,21 +29,6 @@ type Scope = 'me' | 'household';
 
 function yesterday(now: Date): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-}
-
-function Comparison({ pct, label }: { pct: number | null; label: string }) {
-  if (pct === null) return null;
-  const up = pct > 0;
-  const color = pct === 0 ? '#c4c6d0' : up ? '#ffb4ab' : '#c3f400';
-  const icon = pct === 0 ? 'remove' : up ? 'arrow-upward' : 'arrow-downward';
-  return (
-    <View className="flex-row items-center gap-1">
-      <MaterialIcons name={icon} size={14} color={color} />
-      <Text style={{ color }} className="font-inter text-body-md">
-        {Math.abs(pct)}% {label}
-      </Text>
-    </View>
-  );
 }
 
 export default function DashboardScreen() {

@@ -208,12 +208,14 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ### Day 12 — Insights Screen: Real Data
 
-- [ ] Spending by category: real query, proportional bars, sorted high to low
-- [ ] Monthly trend: 6-month bar chart from aggregated data (Victory Native XL)
-- [ ] Top merchants: ranked by total spent, current month
-- [ ] Time range filter pills (This Month / Last Month / 3 Months / Year) actually filter the queries
-- [ ] Per-person vs household toggle
-- [ ] Loading skeletons while data fetches
+- [x] Spending by category: real query, proportional bars, sorted high to low
+- [x] Monthly trend: 6-month bar chart from aggregated data *(proportional Views — Victory Native XL deferred, see charts-deferred)*
+- [x] Top merchants: ranked by total spent, selected range
+- [x] Time range filter pills (This Month / Last Month / 3 Months / Year) actually filter the queries
+- [x] Per-person vs household toggle
+- [x] Loading skeletons while data fetches
+
+> Implemented + reviewed on branch `feat/day12-insights-real-data` (subagent-driven, plan `docs/superpowers/plans/2026-06-28-day12-insights-real-data.md`). Pure helpers in `features/insights/` (`range.ts`, `aggregate.ts`) + a shared `categoryBreakdown` extracted from `dashboard.ts`; all unit-tested. Range pills scope the hero/category/merchant sections; the trend stays a fixed last-6-months view (person-aware). AI summary (Day 14) and Anomalies (Day 13) remain static placeholders. No chart library added; hero delta reuses the shared `Comparison` component.
 
 **Checkpoint:** Insights screen shows real data. All filters work. Charts render correctly.
 
