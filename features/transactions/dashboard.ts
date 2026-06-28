@@ -38,7 +38,7 @@ export function filterByUser(txs: Transaction[], userId: string | null): Transac
   return txs.filter((tx) => tx.user_id === userId);
 }
 
-/** One category's current-month spend, with a bar fraction relative to the largest bucket. */
+/** One category's spend bucket, with a bar fraction relative to the largest bucket. */
 export interface CategorySpend {
   id: string;
   name: string;
