@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { Comparison } from '@/components/Comparison';
 import { EmptyState } from '@/components/EmptyState';
 import { HairlineDivider } from '@/components/HairlineDivider';
@@ -8,6 +8,7 @@ import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { Skeleton } from '@/components/Skeleton';
+import { markReviewed } from '@/features/anomalies/api';
 import { useAuthStore } from '@/features/auth/store';
 import { monthlyTrend, sumCents, topMerchants } from '@/features/insights/aggregate';
 import {
@@ -18,22 +19,19 @@ import {
 } from '@/features/insights/range';
 import { categoryBreakdown, filterByUser, pctChange } from '@/features/transactions/dashboard';
 import { useTransactionsStore } from '@/features/transactions/store';
+import { refreshTransactions } from '@/features/transactions/sync';
 import { formatCurrency } from '@/lib/formatCurrency';
 
 type Scope = 'me' | 'household';
 
-// STATIC placeholder until Day 13 wires real anomalies.
-const ANOMALIES = [
-  { name: 'Amazon.de', reason: 'Необичайна сума', amountCents: 45800, icon: 'warning' as const },
-  { name: 'Le Bistro', reason: 'Висока честота', amountCents: 12450, icon: 'restaurant' as const },
-];
-
 export default function InsightsScreen() {
   const transactions = useTransactionsStore((s) => s.transactions);
   const categories = useTransactionsStore((s) => s.categories);
+  const openAnomalies = useTransactionsStore((s) => s.openAnomalies);
   const loaded = useTransactionsStore((s) => s.loaded);
   const loading = useTransactionsStore((s) => s.loading);
   const userId = useAuthStore((s) => s.session?.user.id ?? null);
+  const householdId = useAuthStore((s) => s.householdId);
 
   const [range, setRange] = useState<TimeRange>('this_month');
   const [scope, setScope] = useState<Scope>('household');
@@ -61,6 +59,33 @@ export default function InsightsScreen() {
   );
   const trend = useMemo(() => monthlyTrend(personFiltered, 6, now), [personFiltered, now]);
   const merchants = useMemo(() => topMerchants(rangeFiltered, 5), [rangeFiltered]);
+
+  const anomalyCards = useMemo(() => {
+    const txById = new Map(transactions.map((t) => [t.id, t]));
+    return openAnomalies
+      .map((a) => {
+        const t = txById.get(a.transactionId);
+        return t
+          ? {
+              id: a.id,
+              transactionId: a.transactionId,
+              merchant: t.merchant,
+              amountCents: t.amount_eur,
+              reason: a.reason,
+            }
+          : null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+  }, [openAnomalies, transactions]);
+
+  const onReview = async (anomalyId: string, transactionId: string) => {
+    try {
+      await markReviewed(anomalyId, transactionId);
+      if (householdId) await refreshTransactions(householdId);
+    } catch {
+      Alert.alert('Грешка', 'Неуспешно. Опитай отново.');
+    }
+  };
 
   const showSkeleton = loading && !loaded;
   const showEmpty = loaded && transactions.length === 0;
@@ -216,33 +241,48 @@ export default function InsightsScreen() {
             </View>
           )}
 
-          <HairlineDivider className="my-xl" />
-
-          {/* Anomalies — STATIC placeholder (Day 13) */}
-          <SectionLabel className="mb-md">Аномалии</SectionLabel>
-          <View className="gap-md">
-            {ANOMALIES.map((a) => (
-              <View
-                key={a.name}
-                className="flex-row items-center justify-between rounded-xl border border-secondary-fixed/20 bg-secondary-fixed/5 p-md">
-                <View className="flex-row items-center gap-md">
-                  <View className="relative">
-                    <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-high">
-                      <MaterialIcons name={a.icon} size={20} color="#c3f400" />
+          {anomalyCards.length > 0 ? (
+            <>
+              <HairlineDivider className="my-xl" />
+              <SectionLabel className="mb-md">Аномалии</SectionLabel>
+              <View className="gap-md">
+                {anomalyCards.map((a) => (
+                  <View
+                    key={a.id}
+                    className="flex-row items-center justify-between rounded-xl border border-secondary-fixed/20 bg-secondary-fixed/5 p-md">
+                    <View className="flex-1 flex-row items-center gap-md">
+                      <View className="relative">
+                        <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-high">
+                          <MaterialIcons name="warning" size={20} color="#c3f400" />
+                        </View>
+                        <View className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-secondary-fixed" />
+                      </View>
+                      <View className="flex-1">
+                        <Text
+                          numberOfLines={1}
+                          className="font-inter-semibold text-body-md text-on-surface">
+                          {a.merchant}
+                        </Text>
+                        <Text
+                          numberOfLines={1}
+                          className="font-inter text-[10px] uppercase text-secondary-fixed">
+                          {a.reason}
+                        </Text>
+                      </View>
                     </View>
-                    <View className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-secondary-fixed" />
+                    <View className="items-end gap-1">
+                      <Text className="font-inter-semibold text-data-mono text-secondary-fixed">
+                        {formatCurrency(a.amountCents)}
+                      </Text>
+                      <Pressable onPress={() => onReview(a.id, a.transactionId)} hitSlop={6}>
+                        <Text className="font-inter-semibold text-label-md text-primary">Прегледай</Text>
+                      </Pressable>
+                    </View>
                   </View>
-                  <View>
-                    <Text className="font-inter-semibold text-body-md text-on-surface">{a.name}</Text>
-                    <Text className="font-inter text-[10px] uppercase text-secondary-fixed">{a.reason}</Text>
-                  </View>
-                </View>
-                <Text className="font-inter-semibold text-data-mono text-secondary-fixed">
-                  {formatCurrency(a.amountCents)}
-                </Text>
+                ))}
               </View>
-            ))}
-          </View>
+            </>
+          ) : null}
         </>
       )}
     </Screen>
