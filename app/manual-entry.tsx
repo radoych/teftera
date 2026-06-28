@@ -129,6 +129,7 @@ export default function ManualEntryScreen() {
       : resolveCategoryId(parsed.data.merchant, categories);
 
     setSaving(true);
+    let createdId: string | null = null;
     try {
       if (isEdit && id) {
         await updateTransaction(id, {
@@ -138,7 +139,6 @@ export default function ManualEntryScreen() {
           date: parsed.data.date,
           note: parsed.data.note,
         });
-        await refreshTransactions(householdId);
       } else {
         const { id: newId } = await createTransaction({
           householdId,
@@ -149,23 +149,33 @@ export default function ManualEntryScreen() {
           date: parsed.data.date,
           note: parsed.data.note,
         });
-        await refreshTransactions(householdId);
-        await runDetection({
-          transactionId: newId,
-          householdId,
-          amountCents: parsed.data.amountCents,
-          categoryId: resolvedCategoryId,
-          transactions: useTransactionsStore.getState().transactions,
-        });
+        createdId = newId;
       }
-      router.back();
     } catch {
       setSaving(false);
       Alert.alert(
         'Грешка',
         isEdit ? 'Неуспешна редакция. Опитай отново.' : 'Неуспешно записване. Опитай отново.',
       );
+      return;
     }
+    // Refresh + detection are non-fatal: the save already succeeded, so a failure
+    // here must not invite a retry that would double-insert.
+    try {
+      await refreshTransactions(householdId);
+      if (createdId !== null) {
+        await runDetection({
+          transactionId: createdId,
+          householdId,
+          amountCents: parsed.data.amountCents,
+          categoryId: resolvedCategoryId,
+          transactions: useTransactionsStore.getState().transactions,
+        });
+      }
+    } catch {
+      // List reconciles on next focus / realtime refetch.
+    }
+    router.back();
   };
 
   return (
