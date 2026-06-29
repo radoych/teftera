@@ -239,13 +239,15 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ### Day 14 — AI Spend Insights (Gemini Natural Language Summary)
 
-- [ ] `/services/gemini.ts`: `generateInsightsSummary(monthlyData)` function
+- [x] `/services/gemini.ts`: `generateInsightsSummary(monthlyData)` function
   - Builds a structured prompt from aggregated spend data for the current month
   - Returns a 2–3 sentence natural language summary
   - try/catch: on failure, show nothing (don't show an error in the UI, just hide the summary card)
-- [ ] Summary renders in the AI Summary section on Insights screen with the left accent line + sparkle icon
-- [ ] Regenerate on pull-to-refresh
-- [ ] Cache the summary in Zustand for the session (don't re-call Gemini on every tab switch)
+- [x] Summary renders in the AI Summary section on Insights screen with the left accent line + sparkle icon
+- [x] Regenerate on pull-to-refresh
+- [x] Cache the summary in Zustand for the session (don't re-call Gemini on every tab switch)
+
+> Implemented on branch `feat/day14-ai-spend-summary` (subagent-driven, plan `docs/superpowers/plans/2026-06-29-day14-ai-spend-summary.md`). Summary is fixed to **current-month household** scope (ignores the Insights range/person controls), session-cached in `summaryStore`, regenerated only on pull-to-refresh, hidden on failure/no-data. Uses `gemini-2.5-flash` with the shared transient retry; pure `buildSummaryInput` + `buildSummaryPrompt` + the `refreshSummary` orchestrator are unit-tested.
 
 **Checkpoint:** Insights screen shows a natural language summary of your real spending. Pulling to refresh regenerates it.
 
