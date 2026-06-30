@@ -132,9 +132,18 @@ Called right after a successful save in `app/manual-entry.tsx` and
 `app/confirm-receipt.tsx` — the same call sites as `runDetection`. Best-effort,
 wrapped in try/catch: a notification failure never blocks or crashes the save.
 
+**No database I/O of its own.** `runBudgetCheck` reads budgets and transactions
+from in-memory stores — the transactions store already holds the household's rows
+(loaded once, kept fresh by the realtime subscription; the dashboard and Day 13
+anomaly check compute over it the same way), and budgets are loaded once into a
+budgets store (refetched only on app start and after an edit on the settings
+screen). So saving a transaction triggers **0 extra DB reads** for the budget check,
+and **0 writes** — the dedup marker is local `AsyncStorage` and the notification is
+local. Worst case if budgets were not cached: 1 read, still 0 writes.
+
 Logic:
 1. Skip if the "Бюджетни сигнали" preference is off.
-2. Load budgets + current-month household spend; run `budgetProgress`.
+2. Run `budgetProgress` over the in-memory budgets + current-month household spend.
 3. For the saved transaction's category, if it **crossed into `warning` (≥80%)** or
    **`over` (>100%)** as a result of this save, and we have not already alerted for
    that `(category, month, threshold)`, fire a local notification and record the
