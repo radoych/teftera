@@ -26,6 +26,7 @@ export function AmountInput({ valueCents, onChangeCents, placeholder = '0,00' }:
 
   // Re-sync if the parent resets the value (e.g. category switch).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDigits(centsToDigits(valueCents));
   }, [valueCents]);
 

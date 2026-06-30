@@ -245,6 +245,16 @@ export default function ProfileScreen() {
       {/* Notifications */}
       <View className="mt-lg">
         <SectionLabel className="mb-md">Известия</SectionLabel>
+        <Pressable
+          onPress={() => router.push('/budgets')}
+          className="flex-row items-center justify-between py-md active:bg-white/5"
+        >
+          <Text className="font-inter text-body-lg text-on-surface">
+            Управление на бюджети
+          </Text>
+          <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
+        </Pressable>
+        <HairlineDivider />
         <View className="flex-row items-center justify-between py-3">
           <Text className="font-inter text-body-lg text-on-surface">
             Бюджетни сигнали
