@@ -198,7 +198,12 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 - [ ] Sideload onto the iPhone with **AltStore Classic + AltServer** on Windows; AltServer auto-refreshes the 7-day signature over same-Wi-Fi
 - [ ] Trust the developer profile on-device, sign into the shared household
 
-> **Notes.** Both builds point at the **live production Supabase** (real household data, not a sandbox). Receipt scanning runs on `gemini-3-flash-preview` with a manual-entry fallback. Future updates: a new `eas build` per version (credentials already saved); wiring `expo-updates` would let JS-only changes ship over-the-air via `eas update` without a reinstall. The original distribution step (EAS preview build on both phones) remains listed under **Day 18**, now partially satisfied here.
+> **Notes.** Both builds point at the **live production Supabase** (real household data, not a sandbox). Receipt scanning runs on `gemini-2.5-flash` with a manual-entry fallback (preview models 503'd too often). Future updates: a new `eas build` per version (credentials already saved); wiring `expo-updates` would let JS-only changes ship over-the-air via `eas update` without a reinstall. The original distribution step (EAS preview build on both phones) remains listed under **Day 18**, now partially satisfied here.
+
+**Polish fixes found in the internal build (TODO):**
+- [ ] Fix the logo on the login (sign-in) page — it renders wrong / broken.
+- [ ] Remove the "Sign in with Google" control from the login page nav/header (Google OAuth is deferred — see Day 4; don't show a dead button).
+- [ ] Amount inputs (manual-entry total, confirm-receipt total + item amounts): auto-place the decimal separator as digits are typed (cents-based entry — typing `1234` shows `12,34`), instead of requiring the user to type the `,`/`.` manually.
 
 **Checkpoint:** App installed and running on the Android phone from the EAS APK; iOS path documented and ready to run (pending the one-time interactive build + AltStore install).
 
