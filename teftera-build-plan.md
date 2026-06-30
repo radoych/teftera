@@ -198,7 +198,12 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 - [ ] Sideload onto the iPhone with **AltStore Classic + AltServer** on Windows; AltServer auto-refreshes the 7-day signature over same-Wi-Fi
 - [ ] Trust the developer profile on-device, sign into the shared household
 
-> **Notes.** Both builds point at the **live production Supabase** (real household data, not a sandbox). Receipt scanning runs on `gemini-3-flash-preview` with a manual-entry fallback. Future updates: a new `eas build` per version (credentials already saved); wiring `expo-updates` would let JS-only changes ship over-the-air via `eas update` without a reinstall. The original distribution step (EAS preview build on both phones) remains listed under **Day 18**, now partially satisfied here.
+> **Notes.** Both builds point at the **live production Supabase** (real household data, not a sandbox). Receipt scanning runs on `gemini-2.5-flash` with a manual-entry fallback (preview models 503'd too often). Future updates: a new `eas build` per version (credentials already saved); wiring `expo-updates` would let JS-only changes ship over-the-air via `eas update` without a reinstall. The original distribution step (EAS preview build on both phones) remains listed under **Day 18**, now partially satisfied here.
+
+**Polish fixes found in the internal build (TODO):**
+- [ ] Fix the logo on the login (sign-in) page — it renders wrong / broken.
+- [ ] Remove the "Sign in with Google" control from the login page nav/header (Google OAuth is deferred — see Day 4; don't show a dead button).
+- [ ] Amount inputs (manual-entry total, confirm-receipt total + item amounts): auto-place the decimal separator as digits are typed (cents-based entry — typing `1234` shows `12,34`), instead of requiring the user to type the `,`/`.` manually.
 
 **Checkpoint:** App installed and running on the Android phone from the EAS APK; iOS path documented and ready to run (pending the one-time interactive build + AltStore install).
 
@@ -239,13 +244,15 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ### Day 14 — AI Spend Insights (Gemini Natural Language Summary)
 
-- [ ] `/services/gemini.ts`: `generateInsightsSummary(monthlyData)` function
+- [x] `/services/gemini.ts`: `generateInsightsSummary(monthlyData)` function
   - Builds a structured prompt from aggregated spend data for the current month
   - Returns a 2–3 sentence natural language summary
   - try/catch: on failure, show nothing (don't show an error in the UI, just hide the summary card)
-- [ ] Summary renders in the AI Summary section on Insights screen with the left accent line + sparkle icon
-- [ ] Regenerate on pull-to-refresh
-- [ ] Cache the summary in Zustand for the session (don't re-call Gemini on every tab switch)
+- [x] Summary renders in the AI Summary section on Insights screen with the left accent line + sparkle icon
+- [x] Regenerate on pull-to-refresh
+- [x] Cache the summary in Zustand for the session (don't re-call Gemini on every tab switch)
+
+> Implemented on branch `feat/day14-ai-spend-summary` (subagent-driven, plan `docs/superpowers/plans/2026-06-29-day14-ai-spend-summary.md`). Summary is fixed to **current-month household** scope (ignores the Insights range/person controls), session-cached in `summaryStore`, regenerated only on pull-to-refresh, hidden on failure/no-data. Uses `gemini-2.5-flash` with the shared transient retry; pure `buildSummaryInput` + `buildSummaryPrompt` + the `refreshSummary` orchestrator are unit-tested.
 
 **Checkpoint:** Insights screen shows a natural language summary of your real spending. Pulling to refresh regenerates it.
 

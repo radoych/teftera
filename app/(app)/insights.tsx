@@ -1,5 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { Comparison } from '@/components/Comparison';
 import { EmptyState } from '@/components/EmptyState';
@@ -11,6 +11,8 @@ import { Skeleton } from '@/components/Skeleton';
 import { markReviewed } from '@/features/anomalies/api';
 import { useAuthStore } from '@/features/auth/store';
 import { monthlyTrend, sumCents, topMerchants } from '@/features/insights/aggregate';
+import { refreshSummary } from '@/features/insights/summary';
+import { useSummaryStore } from '@/features/insights/summaryStore';
 import {
   comparisonRange,
   filterByDateBounds,
@@ -32,6 +34,10 @@ export default function InsightsScreen() {
   const loading = useTransactionsStore((s) => s.loading);
   const userId = useAuthStore((s) => s.session?.user.id ?? null);
   const householdId = useAuthStore((s) => s.householdId);
+
+  const summaryStatus = useSummaryStore((s) => s.status);
+  const summaryText = useSummaryStore((s) => s.text);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [range, setRange] = useState<TimeRange>('this_month');
   const [scope, setScope] = useState<Scope>('household');
@@ -87,11 +93,31 @@ export default function InsightsScreen() {
     }
   };
 
+  // Generate once per session on first view with data (status leaves 'idle' after,
+  // so transaction/realtime changes never re-trigger — manual refresh only).
+  useEffect(() => {
+    if (loaded && transactions.length > 0 && useSummaryStore.getState().status === 'idle') {
+      void refreshSummary(filterByUser(transactions, null), categories);
+    }
+  }, [loaded, transactions, categories]);
+
+  const onRefresh = async () => {
+    if (!householdId) return;
+    setRefreshing(true);
+    try {
+      await refreshTransactions(householdId);
+      const s = useTransactionsStore.getState();
+      await refreshSummary(filterByUser(s.transactions, null), s.categories);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const showSkeleton = loading && !loaded;
   const showEmpty = loaded && transactions.length === 0;
 
   return (
-    <Screen withTabBar>
+    <Screen withTabBar refreshing={refreshing} onRefresh={onRefresh}>
       <Text className="mb-lg mt-md font-jakarta-semibold text-headline-xl text-on-surface">
         Анализи
       </Text>
@@ -145,21 +171,25 @@ export default function InsightsScreen() {
             <Comparison pct={comparison} label={comparisonLabel} />
           </View>
 
-          {/* AI summary — STATIC placeholder (Day 14) */}
-          <View className="mt-xl flex-row gap-md">
-            <View className="w-1 rounded-full bg-surface-tint opacity-30" />
-            <View className="flex-1 gap-sm">
-              <View className="flex-row items-center gap-sm">
-                <MaterialIcons name="auto-awesome" size={14} color="#c4c6d0" />
-                <SectionLabel>AI обобщение</SectionLabel>
+          {/* AI summary — generated, session-cached; hidden on error/idle */}
+          {summaryStatus === 'loading' || (summaryStatus === 'ready' && summaryText) ? (
+            <View className="mt-xl flex-row gap-md">
+              <View className="w-1 rounded-full bg-surface-tint opacity-30" />
+              <View className="flex-1 gap-sm">
+                <View className="flex-row items-center gap-sm">
+                  <MaterialIcons name="auto-awesome" size={14} color="#c4c6d0" />
+                  <SectionLabel>AI обобщение</SectionLabel>
+                </View>
+                {summaryStatus === 'loading' ? (
+                  <Skeleton height={48} />
+                ) : (
+                  <Text className="font-inter text-body-md leading-relaxed text-on-surface-variant">
+                    {summaryText}
+                  </Text>
+                )}
               </View>
-              <Text className="font-inter text-body-md leading-relaxed text-on-surface-variant">
-                Похарчихте €340 повече от миналия месец, основно за хранене навън.
-                Хранителните стоки останаха без промяна, а разходите за развлечения
-                леко намаляха.
-              </Text>
             </View>
-          </View>
+          ) : null}
 
           <HairlineDivider className="my-xl" />
 
