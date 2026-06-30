@@ -24,6 +24,11 @@ import { monthTotalCents, toTransactionView } from '@/features/transactions/grou
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { useBudgetsStore } from '@/features/budgets/store';
+import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
+import { budgetProgress } from '@/features/budgets/progress';
+import type { BudgetProgress } from '@/features/budgets/types';
+import { firstOfMonth } from '@/lib/dates';
 
 type Timeframe = 'day' | 'month';
 type Scope = 'me' | 'household';
@@ -66,6 +71,21 @@ export default function DashboardScreen() {
     [filtered, categories],
   );
 
+  // Household-scoped category spend: always uses all household transactions,
+  // ignoring the per-person toggle, so budget progress is household-level.
+  const householdCategoryRows = useMemo(
+    () => spendingByCategory(transactions, categories),
+    [transactions, categories],
+  );
+
+  const budgetRows = useBudgetsStore((s) => s.rows);
+
+  const budgetMap = useMemo((): Map<string, BudgetProgress> => {
+    const resolved = resolveBudgetsForMonth(budgetRows, firstOfMonth());
+    const progress = budgetProgress(resolved, householdCategoryRows);
+    return new Map(progress.map((p) => [p.categoryId, p]));
+  }, [budgetRows, householdCategoryRows]);
+
   const reasons = useMemo(() => reasonByTxId(openAnomalies), [openAnomalies]);
 
   const recent = useMemo(() => {
@@ -89,31 +109,46 @@ export default function DashboardScreen() {
     loaded && categoryRows.length > 0 ? (
       <View className="mb-xl">
         <SectionLabel className="mb-md">По категория</SectionLabel>
-        {categoryRows.map((row) => (
-          <View key={row.id} className="py-sm">
-            <View className="mb-2 flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2">
-                <MaterialIcons name={row.icon} size={16} color={row.color} />
-                <Text className="font-inter text-body-md text-on-surface">{row.name}</Text>
+        {categoryRows.map((row) => {
+            const bp = budgetMap.get(row.id);
+            const barColor = bp
+              ? bp.state === 'over'
+                ? '#ffb4ab'
+                : bp.state === 'warning'
+                  ? '#ffdfa7'
+                  : '#adc7ff'
+              : row.color;
+            const rightLabel = bp
+              ? `${formatCurrency(bp.spentCents)} / ${formatCurrency(bp.budgetCents)}`
+              : formatCurrency(row.totalCents);
+            return (
+              <View key={row.id} className="py-sm">
+                <View className="mb-2 flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-2">
+                    <MaterialIcons name={row.icon} size={16} color={row.color} />
+                    <Text className="font-inter text-body-md text-on-surface">{row.name}</Text>
+                  </View>
+                  <Text className="font-inter-semibold text-body-md text-on-surface">
+                    {rightLabel}
+                  </Text>
+                </View>
+                <View
+                  className="h-1.5 overflow-hidden bg-surface-container"
+                  style={{ borderRadius: 9999 }}>
+                  <View
+                    className="h-full"
+                    style={{
+                      width: bp
+                        ? `${Math.min(bp.pct, 100)}%`
+                        : `${Math.max(row.fraction * 100, 2)}%`,
+                      backgroundColor: barColor,
+                      borderRadius: 9999,
+                    }}
+                  />
+                </View>
               </View>
-              <Text className="font-inter-semibold text-body-md text-on-surface">
-                {formatCurrency(row.totalCents)}
-              </Text>
-            </View>
-            <View
-              className="h-1.5 overflow-hidden bg-surface-container"
-              style={{ borderRadius: 9999 }}>
-              <View
-                className="h-full"
-                style={{
-                  width: `${Math.max(row.fraction * 100, 2)}%`,
-                  backgroundColor: row.color,
-                  borderRadius: 9999,
-                }}
-              />
-            </View>
-          </View>
-        ))}
+            );
+          })}
       </View>
     ) : null;
 
