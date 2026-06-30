@@ -25,6 +25,9 @@ import {
   type ReceiptFormItem,
 } from '@/features/receipts/extraction';
 import { runDetection } from '@/features/anomalies/runDetection';
+import { runBudgetCheck } from '@/features/budgets/runBudgetCheck';
+import { useBudgetsStore } from '@/features/budgets/store';
+import { usePreferencesStore } from '@/features/preferences/store';
 import { saveReceiptTransaction } from '@/features/receipts/save';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
@@ -148,6 +151,14 @@ export default function ConfirmReceiptScreen() {
         amountCents: parsed.data.amountCents,
         categoryId: resolvedCategoryId,
         transactions: useTransactionsStore.getState().transactions,
+      });
+      await runBudgetCheck({
+        householdId,
+        savedCategoryId: resolvedCategoryId,
+        alertsEnabled: usePreferencesStore.getState().preferences.budgetAlertsEnabled ?? true,
+        transactions: useTransactionsStore.getState().transactions,
+        categories: useTransactionsStore.getState().categories,
+        budgets: useBudgetsStore.getState().rows,
       });
     } catch {
       // Non-fatal: the save already succeeded; the list reconciles on next focus.

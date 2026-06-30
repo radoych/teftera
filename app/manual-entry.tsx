@@ -15,6 +15,9 @@ import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { useAuthStore } from '@/features/auth/store';
 import { runDetection } from '@/features/anomalies/runDetection';
+import { runBudgetCheck } from '@/features/budgets/runBudgetCheck';
+import { useBudgetsStore } from '@/features/budgets/store';
+import { usePreferencesStore } from '@/features/preferences/store';
 import { createTransaction, updateTransaction } from '@/features/transactions/api';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
@@ -170,6 +173,14 @@ export default function ManualEntryScreen() {
           amountCents: parsed.data.amountCents,
           categoryId: resolvedCategoryId,
           transactions: useTransactionsStore.getState().transactions,
+        });
+        await runBudgetCheck({
+          householdId,
+          savedCategoryId: resolvedCategoryId,
+          alertsEnabled: usePreferencesStore.getState().preferences.budgetAlertsEnabled ?? true,
+          transactions: useTransactionsStore.getState().transactions,
+          categories: useTransactionsStore.getState().categories,
+          budgets: useBudgetsStore.getState().rows,
         });
       }
     } catch {
