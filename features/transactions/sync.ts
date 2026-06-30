@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/features/auth/store';
 import { listOpenAnomalies } from '@/features/anomalies/api';
+import { loadBudgets, useBudgetsStore } from '@/features/budgets/store';
 import { listCategories, listTransactions } from './api';
 import { subscribeToTransactions } from './realtimeChannel';
 import { useTransactionsStore } from './store';
@@ -29,6 +30,7 @@ export function useTransactionsSync(): void {
   useEffect(() => {
     if (!householdId) {
       useTransactionsStore.getState().reset();
+      useBudgetsStore.getState().reset();
       return;
     }
 
@@ -38,6 +40,7 @@ export function useTransactionsSync(): void {
     async function load() {
       try {
         await refreshTransactions(householdId!);
+        void loadBudgets(householdId!);
       } catch (err) {
         if (__DEV__) console.warn('[transactions] load failed', err);
         if (active) store.setLoading(false);
