@@ -22,6 +22,7 @@ export function usePreferencesSync(): void {
         usePreferencesStore.getState().setPreferences({
           version: 1,
           dashboardSections: resolveDashboardSections(stored?.dashboardSections),
+          budgetAlertsEnabled: stored?.budgetAlertsEnabled,
         });
       } catch (err) {
         if (__DEV__) console.warn('[preferences] load failed', err);
