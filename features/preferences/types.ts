@@ -8,4 +8,5 @@ export interface DashboardSection {
 export interface UserPreferences {
   version: 1;
   dashboardSections: DashboardSection[];
+  budgetAlertsEnabled?: boolean; // default true when absent
 }

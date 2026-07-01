@@ -260,13 +260,13 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ### Day 15 — Budget Goals
 
-- [ ] Budget setup: set a monthly EUR amount per category from profile/settings
-- [ ] Budget progress bars on dashboard: current spend vs budget per category
-- [ ] Alert at 80% threshold: Expo push notification (ask for permission on first budget creation)
-- [ ] Telegram bot notification as alternative/backup (reuse the Telegram bot pattern from the café project)
-- [ ] Insights screen: budget vs actual section
+- [x] Budget setup: set a monthly EUR amount per category from profile/settings (with carry-forward)
+- [x] Budget progress bars on dashboard: current spend vs budget per category
+- [x] Alert at 80%/over-budget threshold: **client-side local** notification, fired after each save with device-local dedup (ask for permission on first budget creation). Server/Expo push deferred; alerting excludes DSK bulk import.
+- [ ] Telegram bot notification as alternative/backup (reuse the Telegram bot pattern from the café project) — **deferred**
+- [x] Insights screen: budget vs actual section
 
-**Checkpoint:** Set a €200 Groceries budget. Spend €160 → get a push notification. Dashboard shows progress bar at 80%.
+**Checkpoint:** Set a €200 Groceries budget. Spend €160 → get a push notification. Dashboard shows progress bar at 80%.  *(on-device human checkpoint — pending)*
 
 ---
 

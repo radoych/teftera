@@ -19,10 +19,15 @@ import {
   filterByRange,
   type TimeRange,
 } from '@/features/insights/range';
-import { categoryBreakdown, filterByUser, pctChange } from '@/features/transactions/dashboard';
+import { categoryBreakdown, filterByUser, pctChange, spendingByCategory } from '@/features/transactions/dashboard';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
+import { useBudgetsStore } from '@/features/budgets/store';
+import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
+import { budgetProgress } from '@/features/budgets/progress';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { firstOfMonth } from '@/lib/dates';
+import type { MaterialIconName } from '@/lib/categories';
 
 type Scope = 'me' | 'household';
 
@@ -37,6 +42,7 @@ export default function InsightsScreen() {
 
   const summaryStatus = useSummaryStore((s) => s.status);
   const summaryText = useSummaryStore((s) => s.text);
+  const budgetRows = useBudgetsStore((s) => s.rows);
   const [refreshing, setRefreshing] = useState(false);
 
   const [range, setRange] = useState<TimeRange>('this_month');
@@ -83,6 +89,24 @@ export default function InsightsScreen() {
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
   }, [openAnomalies, transactions]);
+
+  // Budget vs Actual: always current-month + full household; range/person pills do NOT affect this.
+  const categoryById = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories],
+  );
+  const currentMonthHouseholdSpend = useMemo(
+    () => spendingByCategory(transactions, categories),
+    [transactions, categories],
+  );
+  const budgetSection = useMemo(
+    () =>
+      budgetProgress(
+        resolveBudgetsForMonth(budgetRows, firstOfMonth()),
+        currentMonthHouseholdSpend,
+      ),
+    [budgetRows, currentMonthHouseholdSpend],
+  );
 
   const onReview = async (anomalyId: string, transactionId: string) => {
     try {
@@ -268,6 +292,64 @@ export default function InsightsScreen() {
                   {i < merchants.length - 1 ? <HairlineDivider /> : null}
                 </View>
               ))}
+            </View>
+          )}
+
+          <HairlineDivider className="my-xl" />
+
+          {/* Budget vs Actual — fixed to current-month + household; range/person pills ignored */}
+          <SectionLabel className="mb-lg">Бюджет</SectionLabel>
+          {budgetSection.length === 0 ? (
+            <Text className="font-inter text-body-md text-on-surface-variant">
+              Задай бюджети от Профил → Управление на бюджети.
+            </Text>
+          ) : (
+            <View className="gap-lg">
+              {budgetSection.map((p) => {
+                const cat = categoryById.get(p.categoryId);
+                const icon = (cat?.icon ?? 'category') as MaterialIconName;
+                const iconColor = cat?.color ?? '#8e909a';
+                const name = cat?.name ?? 'Other';
+                const barColor =
+                  p.state === 'over'
+                    ? '#ffb4ab'
+                    : p.state === 'warning'
+                      ? '#ffdfa7'
+                      : '#adc7ff';
+                const remaining = p.budgetCents - p.spentCents;
+                return (
+                  <View key={p.categoryId} className="gap-sm">
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-md">
+                        <MaterialIcons name={icon} size={16} color={iconColor} />
+                        <Text className="font-inter text-body-md text-on-surface">{name}</Text>
+                      </View>
+                      <Text className="font-inter-semibold text-data-mono text-on-surface">
+                        {formatCurrency(p.spentCents)} / {formatCurrency(p.budgetCents)}
+                      </Text>
+                    </View>
+                    <View
+                      className="h-1.5 overflow-hidden bg-surface-container"
+                      style={{ borderRadius: 9999 }}>
+                      <View
+                        className="h-full"
+                        style={{
+                          width: `${Math.min(p.pct, 100)}%`,
+                          backgroundColor: barColor,
+                          borderRadius: 9999,
+                        }}
+                      />
+                    </View>
+                    <Text
+                      className="font-inter text-label-md"
+                      style={{ color: remaining < 0 ? '#ffb4ab' : '#c4c6d0' }}>
+                      {remaining < 0
+                        ? `Над бюджета с ${formatCurrency(-remaining)}`
+                        : `Остава ${formatCurrency(remaining)}`}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           )}
 

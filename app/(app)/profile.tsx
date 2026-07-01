@@ -58,9 +58,8 @@ export default function ProfileScreen() {
     // useProtectedRoute redirects to sign-in once the session clears.
   };
 
-  const onLayoutChange = async (next: UserPreferences['dashboardSections']) => {
+  const updatePreferences = async (updated: UserPreferences) => {
     const prev = preferences;
-    const updated: UserPreferences = { version: 1, dashboardSections: next };
     setPreferences(updated); // optimistic
     const userId = session?.user.id;
     if (!userId || !householdId) return;
@@ -71,7 +70,15 @@ export default function ProfileScreen() {
     }
   };
 
-  const [budgetAlerts, setBudgetAlerts] = useState(true);
+  const onLayoutChange = async (next: UserPreferences['dashboardSections']) => {
+    await updatePreferences({ ...preferences, dashboardSections: next });
+  };
+
+  const budgetAlerts = preferences.budgetAlertsEnabled ?? true;
+  const onBudgetAlertsChange = (value: boolean) => {
+    void updatePreferences({ ...preferences, budgetAlertsEnabled: value });
+  };
+
   const [anomalyAlerts, setAnomalyAlerts] = useState(false);
   const [layoutSheetOpen, setLayoutSheetOpen] = useState(false);
 
@@ -238,13 +245,23 @@ export default function ProfileScreen() {
       {/* Notifications */}
       <View className="mt-lg">
         <SectionLabel className="mb-md">Известия</SectionLabel>
+        <Pressable
+          onPress={() => router.push('/budgets')}
+          className="flex-row items-center justify-between py-md active:bg-white/5"
+        >
+          <Text className="font-inter text-body-lg text-on-surface">
+            Управление на бюджети
+          </Text>
+          <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
+        </Pressable>
+        <HairlineDivider />
         <View className="flex-row items-center justify-between py-3">
           <Text className="font-inter text-body-lg text-on-surface">
             Бюджетни сигнали
           </Text>
           <Switch
             value={budgetAlerts}
-            onValueChange={setBudgetAlerts}
+            onValueChange={onBudgetAlertsChange}
             trackColor={{ false: '#44474f', true: '#adc7ff' }}
             thumbColor={budgetAlerts ? '#112f5e' : '#e3e2e6'}
           />
