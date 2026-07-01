@@ -54,7 +54,8 @@
         {
           "cameraPermission": "Teftera използва камерата за сканиране на бележки."
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,
