@@ -47,6 +47,13 @@ describe('buildReportHtml', () => {
     expect(html).not.toContain('AI обобщение');
   });
 
+  it('renders a neutral flat indicator with no arrow when pct is exactly 0', () => {
+    const html = buildReportHtml({ ...data, pctVsPrevMonth: 0 }, 'x');
+    expect(html).toContain('0% спрямо');
+    expect(html).not.toContain('▲');
+    expect(html).not.toContain('▼');
+  });
+
   it('neutralizes a malformed category color instead of interpolating it raw', () => {
     const maliciousData: ReportData = {
       ...data,

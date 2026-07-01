@@ -4,12 +4,28 @@ import type { Transaction } from '@/features/transactions/types';
 const mockGenerateReportPdf = jest.fn();
 const mockIsAvailableAsync = jest.fn();
 const mockShareAsync = jest.fn();
+const mockCopyAsync = jest.fn();
 
 jest.mock('./generatePdf', () => ({ generateReportPdf: (d: unknown) => mockGenerateReportPdf(d) }));
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: () => mockIsAvailableAsync(),
   shareAsync: (...a: unknown[]) => mockShareAsync(...a),
 }));
+// New expo-file-system object API (matches features/receipts/storage.ts): `File` instances with a
+// `.copy()` method, and `Paths.cache` for the cache directory — no legacy `copyAsync`/`cacheDirectory`.
+jest.mock('expo-file-system', () => {
+  class MockFile {
+    uri: string;
+    constructor(...args: unknown[]) {
+      this.uri =
+        args.length === 1 && typeof args[0] === 'string' ? (args[0] as string) : `${args[0]}${args[1]}`;
+    }
+    copy(...a: unknown[]) {
+      return mockCopyAsync(...a);
+    }
+  }
+  return { Paths: { cache: 'file:///cache/' }, File: MockFile };
+});
 
 import { exportMonthlyReport, EmptyMonthError } from './export';
 
@@ -31,6 +47,7 @@ beforeEach(() => {
   mockGenerateReportPdf.mockReset().mockResolvedValue('file:///report.pdf');
   mockIsAvailableAsync.mockReset().mockResolvedValue(true);
   mockShareAsync.mockReset().mockResolvedValue(undefined);
+  mockCopyAsync.mockReset().mockResolvedValue(undefined);
 });
 
 describe('exportMonthlyReport', () => {
@@ -40,18 +57,30 @@ describe('exportMonthlyReport', () => {
     expect(mockShareAsync).not.toHaveBeenCalled();
   });
 
-  it('generates and shares the PDF for a month with data', async () => {
+  it('generates and shares the PDF under a branded Teftera-<month>.pdf name', async () => {
     await exportMonthlyReport({ ...baseInput, transactions: [tx({})] });
     expect(mockGenerateReportPdf).toHaveBeenCalledTimes(1);
+    expect(mockCopyAsync).toHaveBeenCalledTimes(1);
+    expect(mockShareAsync).toHaveBeenCalledWith(
+      'file:///cache/Teftera-2026-06.pdf',
+      expect.objectContaining({ mimeType: 'application/pdf' }),
+    );
+  });
+
+  it('falls back to the original temp uri when the branded copy fails', async () => {
+    mockCopyAsync.mockRejectedValue(new Error('disk full'));
+    await exportMonthlyReport({ ...baseInput, transactions: [tx({})] });
     expect(mockShareAsync).toHaveBeenCalledWith(
       'file:///report.pdf',
       expect.objectContaining({ mimeType: 'application/pdf' }),
     );
   });
 
-  it('throws with the file path when sharing is unavailable', async () => {
+  it('throws with the branded file path when sharing is unavailable', async () => {
     mockIsAvailableAsync.mockResolvedValue(false);
-    await expect(exportMonthlyReport({ ...baseInput, transactions: [tx({})] })).rejects.toThrow('file:///report.pdf');
+    await expect(exportMonthlyReport({ ...baseInput, transactions: [tx({})] })).rejects.toThrow(
+      'file:///cache/Teftera-2026-06.pdf',
+    );
     expect(mockShareAsync).not.toHaveBeenCalled();
   });
 });

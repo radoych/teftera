@@ -27,10 +27,10 @@ function donutGradient(cats: ReportCategory[]): string {
 
 function pctLine(pct: number | null): string {
   if (pct === null) return '';
-  const up = pct > 0;
-  const color = up ? '#ffb4ab' : '#adc7ff';
-  const arrow = up ? '▲' : '▼';
-  return `<div class="pct" style="color:${color}">${arrow} ${Math.abs(pct)}% спрямо миналия месец</div>`;
+  const dir = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+  const color = dir === 'up' ? '#ffb4ab' : dir === 'down' ? '#adc7ff' : '#c4c6d0';
+  const arrow = dir === 'up' ? '▲ ' : dir === 'down' ? '▼ ' : '';
+  return `<div class="pct" style="color:${color}">${arrow}${Math.abs(pct)}% спрямо миналия месец</div>`;
 }
 
 export function buildReportHtml(data: ReportData, logoDataUri: string): string {
