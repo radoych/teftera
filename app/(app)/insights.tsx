@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { BottomSheet } from '@/components/BottomSheet';
 import { Comparison } from '@/components/Comparison';
 import { EmptyState } from '@/components/EmptyState';
 import { HairlineDivider } from '@/components/HairlineDivider';
@@ -25,6 +26,9 @@ import { refreshTransactions } from '@/features/transactions/sync';
 import { useBudgetsStore } from '@/features/budgets/store';
 import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
 import { budgetProgress } from '@/features/budgets/progress';
+import { exportMonthlyReport, EmptyMonthError } from '@/features/reports/export';
+import { monthPickerOptions } from '@/features/reports/reportData';
+import type { MonthOption } from '@/features/reports/types';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { firstOfMonth } from '@/lib/dates';
 import type { MaterialIconName } from '@/lib/categories';
@@ -48,7 +52,37 @@ export default function InsightsScreen() {
   const [range, setRange] = useState<TimeRange>('this_month');
   const [scope, setScope] = useState<Scope>('household');
 
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
   const now = useMemo(() => new Date(), []);
+  const monthOptions = useMemo(() => monthPickerOptions(now), [now]);
+
+  const onPickMonth = async (opt: MonthOption) => {
+    setPickerVisible(false);
+    setExporting(true);
+    try {
+      const s = useTransactionsStore.getState();
+      await exportMonthlyReport({
+        transactions: s.transactions,
+        categories: s.categories,
+        budgetRows: useBudgetsStore.getState().rows,
+        openAnomalies: s.openAnomalies,
+        month: opt.date,
+        now,
+        aiSummaryText: useSummaryStore.getState().text,
+      });
+    } catch (e) {
+      if (e instanceof EmptyMonthError) {
+        Alert.alert('Няма данни', 'Няма транзакции за този месец.');
+      } else {
+        Alert.alert('Грешка', 'Неуспешно генериране на PDF.');
+      }
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const personFiltered = useMemo(
     () => filterByUser(transactions, scope === 'me' ? userId : null),
     [transactions, scope, userId],
@@ -142,9 +176,23 @@ export default function InsightsScreen() {
 
   return (
     <Screen withTabBar refreshing={refreshing} onRefresh={onRefresh}>
-      <Text className="mb-lg mt-md font-jakarta-semibold text-headline-xl text-on-surface">
-        Анализи
-      </Text>
+      <View className="mb-lg mt-md flex-row items-center justify-between">
+        <Text className="font-jakarta-semibold text-headline-xl text-on-surface">Анализи</Text>
+        {!showEmpty && !showSkeleton ? (
+          <Pressable
+            onPress={() => setPickerVisible(true)}
+            disabled={exporting}
+            hitSlop={8}
+            className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-high"
+            style={{ opacity: exporting ? 0.5 : 1 }}>
+            {exporting ? (
+              <ActivityIndicator size="small" color="#adc7ff" />
+            ) : (
+              <MaterialIcons name="ios-share" size={20} color="#adc7ff" />
+            )}
+          </Pressable>
+        ) : null}
+      </View>
 
       {showSkeleton ? (
         <View className="gap-xl pt-md">
@@ -397,6 +445,21 @@ export default function InsightsScreen() {
           ) : null}
         </>
       )}
+
+      <BottomSheet visible={pickerVisible} onClose={() => setPickerVisible(false)}>
+        <View className="px-lg pb-lg pt-sm">
+          <SectionLabel className="mb-md">Изтегли отчет за месец</SectionLabel>
+          {monthOptions.map((opt) => (
+            <Pressable
+              key={opt.monthISO}
+              onPress={() => onPickMonth(opt)}
+              className="flex-row items-center justify-between py-md">
+              <Text className="font-inter text-body-lg text-on-surface">{opt.label}</Text>
+              <MaterialIcons name="picture-as-pdf" size={20} color="#8e909a" />
+            </Pressable>
+          ))}
+        </View>
+      </BottomSheet>
     </Screen>
   );
 }
