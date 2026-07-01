@@ -1,6 +1,13 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Comparison } from '@/components/Comparison';
 import { EmptyState } from '@/components/EmptyState';
@@ -20,7 +27,12 @@ import {
   filterByRange,
   type TimeRange,
 } from '@/features/insights/range';
-import { categoryBreakdown, filterByUser, pctChange, spendingByCategory } from '@/features/transactions/dashboard';
+import {
+  categoryBreakdown,
+  filterByUser,
+  pctChange,
+  spendingByCategory,
+} from '@/features/transactions/dashboard';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { useBudgetsStore } from '@/features/budgets/store';
@@ -76,7 +88,13 @@ export default function InsightsScreen() {
       if (e instanceof EmptyMonthError) {
         Alert.alert('Няма данни', 'Няма транзакции за този месец.');
       } else {
-        Alert.alert('Грешка', 'Неуспешно генериране на PDF.');
+        console.error('[reports] PDF export failed:', e);
+        Alert.alert(
+          'Грешка',
+          __DEV__
+            ? `Неуспешно генериране на PDF.\n\n${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`
+            : 'Неуспешно генериране на PDF.',
+        );
       }
     } finally {
       setExporting(false);
@@ -95,15 +113,22 @@ export default function InsightsScreen() {
   const heroTotal = useMemo(() => sumCents(rangeFiltered), [rangeFiltered]);
   const comparison = useMemo(() => {
     const c = comparisonRange(range, now);
-    return pctChange(heroTotal, sumCents(filterByDateBounds(personFiltered, c.startISO, c.endISO)));
+    return pctChange(
+      heroTotal,
+      sumCents(filterByDateBounds(personFiltered, c.startISO, c.endISO)),
+    );
   }, [heroTotal, personFiltered, range, now]);
-  const comparisonLabel = range === 'this_month' ? 'спрямо миналия месец' : 'спрямо предходния период';
+  const comparisonLabel =
+    range === 'this_month' ? 'спрямо миналия месец' : 'спрямо предходния период';
 
   const categoryRows = useMemo(
     () => categoryBreakdown(rangeFiltered, categories),
     [rangeFiltered, categories],
   );
-  const trend = useMemo(() => monthlyTrend(personFiltered, 6, now), [personFiltered, now]);
+  const trend = useMemo(
+    () => monthlyTrend(personFiltered, 6, now),
+    [personFiltered, now],
+  );
   const merchants = useMemo(() => topMerchants(rangeFiltered, 5), [rangeFiltered]);
 
   const anomalyCards = useMemo(() => {
@@ -154,7 +179,11 @@ export default function InsightsScreen() {
   // Generate once per session on first view with data (status leaves 'idle' after,
   // so transaction/realtime changes never re-trigger — manual refresh only).
   useEffect(() => {
-    if (loaded && transactions.length > 0 && useSummaryStore.getState().status === 'idle') {
+    if (
+      loaded &&
+      transactions.length > 0 &&
+      useSummaryStore.getState().status === 'idle'
+    ) {
       void refreshSummary(filterByUser(transactions, null), categories);
     }
   }, [loaded, transactions, categories]);
@@ -177,14 +206,17 @@ export default function InsightsScreen() {
   return (
     <Screen withTabBar refreshing={refreshing} onRefresh={onRefresh}>
       <View className="mb-lg mt-md flex-row items-center justify-between">
-        <Text className="font-jakarta-semibold text-headline-xl text-on-surface">Анализи</Text>
+        <Text className="font-jakarta-semibold text-headline-xl text-on-surface">
+          Анализи
+        </Text>
         {!showEmpty && !showSkeleton ? (
           <Pressable
             onPress={() => setPickerVisible(true)}
             disabled={exporting}
             hitSlop={8}
             className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-high"
-            style={{ opacity: exporting ? 0.5 : 1 }}>
+            style={{ opacity: exporting ? 0.5 : 1 }}
+          >
             {exporting ? (
               <ActivityIndicator size="small" color="#adc7ff" />
             ) : (
@@ -277,8 +309,13 @@ export default function InsightsScreen() {
                 <View key={c.id} className="gap-sm">
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center gap-md">
-                      <View className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />
-                      <Text className="font-inter text-body-md text-on-surface">{c.name}</Text>
+                      <View
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: c.color }}
+                      />
+                      <Text className="font-inter text-body-md text-on-surface">
+                        {c.name}
+                      </Text>
                     </View>
                     <Text className="font-inter-semibold text-data-mono text-on-surface">
                       {formatCurrency(c.totalCents)}
@@ -287,7 +324,10 @@ export default function InsightsScreen() {
                   <View className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
                     <View
                       className="h-full rounded-full"
-                      style={{ width: `${Math.max(c.fraction * 100, 2)}%`, backgroundColor: c.color }}
+                      style={{
+                        width: `${Math.max(c.fraction * 100, 2)}%`,
+                        backgroundColor: c.color,
+                      }}
                     />
                   </View>
                 </View>
@@ -307,7 +347,8 @@ export default function InsightsScreen() {
                   style={{ height: `${Math.max(m.fraction * 100, 2)}%` }}
                 />
                 <Text
-                  className={`font-inter text-[10px] ${m.isCurrent ? 'text-primary' : 'text-on-surface-variant opacity-60'}`}>
+                  className={`font-inter text-[10px] ${m.isCurrent ? 'text-primary' : 'text-on-surface-variant opacity-60'}`}
+                >
                   {m.label}
                 </Text>
               </View>
@@ -331,7 +372,9 @@ export default function InsightsScreen() {
                       <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-high">
                         <MaterialIcons name="store" size={20} color="#c4c6d0" />
                       </View>
-                      <Text className="font-inter text-body-md text-on-surface">{m.merchant}</Text>
+                      <Text className="font-inter text-body-md text-on-surface">
+                        {m.merchant}
+                      </Text>
                     </View>
                     <Text className="font-inter-semibold text-data-mono text-on-surface">
                       {formatCurrency(m.totalCents)}
@@ -370,7 +413,9 @@ export default function InsightsScreen() {
                     <View className="flex-row items-center justify-between">
                       <View className="flex-row items-center gap-md">
                         <MaterialIcons name={icon} size={16} color={iconColor} />
-                        <Text className="font-inter text-body-md text-on-surface">{name}</Text>
+                        <Text className="font-inter text-body-md text-on-surface">
+                          {name}
+                        </Text>
                       </View>
                       <Text className="font-inter-semibold text-data-mono text-on-surface">
                         {formatCurrency(p.spentCents)} / {formatCurrency(p.budgetCents)}
@@ -378,7 +423,8 @@ export default function InsightsScreen() {
                     </View>
                     <View
                       className="h-1.5 overflow-hidden bg-surface-container"
-                      style={{ borderRadius: 9999 }}>
+                      style={{ borderRadius: 9999 }}
+                    >
                       <View
                         className="h-full"
                         style={{
@@ -390,7 +436,8 @@ export default function InsightsScreen() {
                     </View>
                     <Text
                       className="font-inter text-label-md"
-                      style={{ color: remaining < 0 ? '#ffb4ab' : '#c4c6d0' }}>
+                      style={{ color: remaining < 0 ? '#ffb4ab' : '#c4c6d0' }}
+                    >
                       {remaining < 0
                         ? `Над бюджета с ${formatCurrency(-remaining)}`
                         : `Остава ${formatCurrency(remaining)}`}
@@ -409,7 +456,8 @@ export default function InsightsScreen() {
                 {anomalyCards.map((a) => (
                   <View
                     key={a.id}
-                    className="flex-row items-center justify-between rounded-xl border border-secondary-fixed/20 bg-secondary-fixed/5 p-md">
+                    className="flex-row items-center justify-between rounded-xl border border-secondary-fixed/20 bg-secondary-fixed/5 p-md"
+                  >
                     <View className="flex-1 flex-row items-center gap-md">
                       <View className="relative">
                         <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-high">
@@ -420,12 +468,14 @@ export default function InsightsScreen() {
                       <View className="flex-1">
                         <Text
                           numberOfLines={1}
-                          className="font-inter-semibold text-body-md text-on-surface">
+                          className="font-inter-semibold text-body-md text-on-surface"
+                        >
                           {a.merchant}
                         </Text>
                         <Text
                           numberOfLines={1}
-                          className="font-inter text-[10px] uppercase text-secondary-fixed">
+                          className="font-inter text-[10px] uppercase text-secondary-fixed"
+                        >
                           {a.reason}
                         </Text>
                       </View>
@@ -434,8 +484,13 @@ export default function InsightsScreen() {
                       <Text className="font-inter-semibold text-data-mono text-secondary-fixed">
                         {formatCurrency(a.amountCents)}
                       </Text>
-                      <Pressable onPress={() => onReview(a.id, a.transactionId)} hitSlop={6}>
-                        <Text className="font-inter-semibold text-label-md text-primary">Прегледай</Text>
+                      <Pressable
+                        onPress={() => onReview(a.id, a.transactionId)}
+                        hitSlop={6}
+                      >
+                        <Text className="font-inter-semibold text-label-md text-primary">
+                          Прегледай
+                        </Text>
                       </Pressable>
                     </View>
                   </View>
@@ -453,7 +508,8 @@ export default function InsightsScreen() {
             <Pressable
               key={opt.monthISO}
               onPress={() => onPickMonth(opt)}
-              className="flex-row items-center justify-between py-md">
+              className="flex-row items-center justify-between py-md"
+            >
               <Text className="font-inter text-body-lg text-on-surface">{opt.label}</Text>
               <MaterialIcons name="picture-as-pdf" size={20} color="#8e909a" />
             </Pressable>

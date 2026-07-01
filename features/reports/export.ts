@@ -1,5 +1,4 @@
 // features/reports/export.ts
-import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { buildReportData } from './reportData';
 import { generateReportPdf } from './generatePdf';
@@ -17,22 +16,16 @@ export async function exportMonthlyReport(input: BuildReportInput): Promise<void
   const data = buildReportData(input);
   if (data.categories.length === 0) throw new EmptyMonthError();
 
+  // Share the file expo-print wrote directly — this is the location the OS share
+  // sheet is allowed to read. (Copying it to a branded name under Paths.cache
+  // produced a URL that ExpoSharing rejects with "Not allowed to read file
+  // under given URL", so the month is conveyed via dialogTitle instead.)
   const uri = await generateReportPdf(data);
 
-  // Best-effort rename to a branded filename — a copy failure must never break a working share.
-  let shareUri = uri;
-  try {
-    const named = new File(Paths.cache, `Teftera-${data.monthISO}.pdf`);
-    await new File(uri).copy(named, { overwrite: true });
-    shareUri = named.uri;
-  } catch {
-    // fall back to the original temp uri
-  }
-
   if (!(await Sharing.isAvailableAsync())) {
-    throw new Error(`Файлът е запазен: ${shareUri}`);
+    throw new Error(`Файлът е запазен: ${uri}`);
   }
-  await Sharing.shareAsync(shareUri, {
+  await Sharing.shareAsync(uri, {
     mimeType: 'application/pdf',
     UTI: 'com.adobe.pdf',
     dialogTitle: `Отчет ${data.monthLabel}`,
