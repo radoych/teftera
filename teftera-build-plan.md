@@ -274,12 +274,16 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ### Day 16 — PDF Monthly Report
 
-- [ ] FastAPI micro-service on GCP Cloud Run (first time the optional backend is built):
-  - Receives monthly aggregated data as JSON
-  - Generates PDF with: total spend, category breakdown pie chart, top merchants, budget vs actual, Teftera logo
-  - Returns PDF as binary response
-- [ ] "Export" button on Insights screen calls the service, downloads PDF via `expo-sharing`
-- [ ] Alternatively: generate PDF client-side with `react-native-html-to-pdf` if Cloud Run feels premature
+- [x] "Export" button on Insights screen calls the generator, shares PDF via `expo-sharing`
+- [x] Client-side PDF via `expo-print` (dark-themed HTML + CSS donut; month picker, last 12 months; household-scoped)
+- [ ] FastAPI micro-service on GCP Cloud Run — **deferred** (isolated behind the `generateReportPdf` seam; see spec)
+- [ ] Scheduled monthly auto-generation — **deferred** to the Cloud Run phase
+
+> Implemented on branch `worktree-day16-pdf-report`. New pure `features/reports/`
+> slice (`buildReportData`, `buildReportHtml`, `monthPickerOptions`) is unit-tested;
+> the `generateReportPdf` seam keeps the Cloud Run swap a one-file change. AI summary
+> is included only for the current month (reuses the cached Day 14 text — no extra
+> Gemini call). Spec: `docs/superpowers/specs/2026-07-01-day16-pdf-report-design.md`.
 
 **Checkpoint:** Tap Export on Insights. Receive a branded PDF with real data for the month.
 
