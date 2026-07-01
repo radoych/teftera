@@ -46,4 +46,16 @@ describe('buildReportHtml', () => {
     expect(html).not.toContain('Аномалии');
     expect(html).not.toContain('AI обобщение');
   });
+
+  it('neutralizes a malformed category color instead of interpolating it raw', () => {
+    const maliciousData: ReportData = {
+      ...data,
+      categories: [{ name: 'Хранителни', color: 'red}</style><script>', totalCents: 4000, share: 1 }],
+    };
+    const html = buildReportHtml(maliciousData, 'x');
+    expect(html).not.toContain('</style><script>');
+    // Falls back to the safe default color in both the donut gradient and the legend dot.
+    expect(html).toContain('#8e909a 0.00% 100.00%');
+    expect(html).toContain('style="background:#8e909a"');
+  });
 });

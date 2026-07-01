@@ -7,6 +7,11 @@ function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ESC[c]!);
 }
 
+const SAFE_COLOR_FALLBACK = '#8e909a';
+function safeColor(color: string): string {
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? color : SAFE_COLOR_FALLBACK;
+}
+
 function donutGradient(cats: ReportCategory[]): string {
   if (cats.length === 0) return '#343538';
   let acc = 0;
@@ -15,7 +20,7 @@ function donutGradient(cats: ReportCategory[]): string {
     acc += c.share;
     // Force the last segment to end at exactly 100.00% (guards float drift).
     const end = i === cats.length - 1 ? 100 : acc * 100;
-    return `${c.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
+    return `${safeColor(c.color)} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
   });
   return `conic-gradient(${stops.join(', ')})`;
 }
@@ -32,7 +37,7 @@ export function buildReportHtml(data: ReportData, logoDataUri: string): string {
   const legend = data.categories
     .map(
       (c) => `<div class="row">
-        <span class="dot" style="background:${c.color}"></span>
+        <span class="dot" style="background:${safeColor(c.color)}"></span>
         <span class="grow">${esc(c.name)}</span>
         <span class="mono">${formatCurrency(c.totalCents)}</span>
       </div>`,
