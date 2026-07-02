@@ -4,20 +4,18 @@ import type { Transaction } from '@/features/transactions/types';
 const mockGenerateReportPdf = jest.fn();
 const mockIsAvailableAsync = jest.fn();
 const mockShareAsync = jest.fn();
-const mockCopyAsync = jest.fn();
-const mockDeleteAsync = jest.fn();
+const mockWriteAsStringAsync = jest.fn();
 
 jest.mock('./generatePdf', () => ({ generateReportPdf: (d: unknown) => mockGenerateReportPdf(d) }));
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: () => mockIsAvailableAsync(),
   shareAsync: (...a: unknown[]) => mockShareAsync(...a),
 }));
-// The PDF must be copied into the scoped document dir before sharing (ExpoSharing's
-// FilePermissionService refuses paths outside it — e.g. expo-print's output in Expo Go).
+// The PDF base64 must be written into the scoped document dir before sharing —
+// expo-print's own file lives outside it and Expo Go can't read it back.
 jest.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///doc/',
-  copyAsync: (...a: unknown[]) => mockCopyAsync(...a),
-  deleteAsync: (...a: unknown[]) => mockDeleteAsync(...a),
+  writeAsStringAsync: (...a: unknown[]) => mockWriteAsStringAsync(...a),
 }));
 
 import { exportMonthlyReport, EmptyMonthError } from './export';
@@ -37,11 +35,10 @@ const baseInput: BuildReportInput = {
 };
 
 beforeEach(() => {
-  mockGenerateReportPdf.mockReset().mockResolvedValue('file:///print/report.pdf');
+  mockGenerateReportPdf.mockReset().mockResolvedValue('BASE64PDFDATA');
   mockIsAvailableAsync.mockReset().mockResolvedValue(true);
   mockShareAsync.mockReset().mockResolvedValue(undefined);
-  mockCopyAsync.mockReset().mockResolvedValue(undefined);
-  mockDeleteAsync.mockReset().mockResolvedValue(undefined);
+  mockWriteAsStringAsync.mockReset().mockResolvedValue(undefined);
 });
 
 describe('exportMonthlyReport', () => {
@@ -51,13 +48,14 @@ describe('exportMonthlyReport', () => {
     expect(mockShareAsync).not.toHaveBeenCalled();
   });
 
-  it('copies the PDF into the scoped document dir and shares that branded path', async () => {
+  it('writes the PDF base64 into the scoped document dir and shares that branded path', async () => {
     await exportMonthlyReport({ ...baseInput, transactions: [tx({})] });
     expect(mockGenerateReportPdf).toHaveBeenCalledTimes(1);
-    expect(mockCopyAsync).toHaveBeenCalledWith({
-      from: 'file:///print/report.pdf',
-      to: 'file:///doc/Teftera-2026-06.pdf',
-    });
+    expect(mockWriteAsStringAsync).toHaveBeenCalledWith(
+      'file:///doc/Teftera-2026-06.pdf',
+      'BASE64PDFDATA',
+      { encoding: 'base64' },
+    );
     expect(mockShareAsync).toHaveBeenCalledWith(
       'file:///doc/Teftera-2026-06.pdf',
       expect.objectContaining({ mimeType: 'application/pdf' }),
