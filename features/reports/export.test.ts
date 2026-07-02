@@ -4,11 +4,20 @@ import type { Transaction } from '@/features/transactions/types';
 const mockGenerateReportPdf = jest.fn();
 const mockIsAvailableAsync = jest.fn();
 const mockShareAsync = jest.fn();
+const mockCopyAsync = jest.fn();
+const mockDeleteAsync = jest.fn();
 
 jest.mock('./generatePdf', () => ({ generateReportPdf: (d: unknown) => mockGenerateReportPdf(d) }));
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: () => mockIsAvailableAsync(),
   shareAsync: (...a: unknown[]) => mockShareAsync(...a),
+}));
+// The PDF must be copied into the scoped document dir before sharing (ExpoSharing's
+// FilePermissionService refuses paths outside it — e.g. expo-print's output in Expo Go).
+jest.mock('expo-file-system/legacy', () => ({
+  documentDirectory: 'file:///doc/',
+  copyAsync: (...a: unknown[]) => mockCopyAsync(...a),
+  deleteAsync: (...a: unknown[]) => mockDeleteAsync(...a),
 }));
 
 import { exportMonthlyReport, EmptyMonthError } from './export';
@@ -28,9 +37,11 @@ const baseInput: BuildReportInput = {
 };
 
 beforeEach(() => {
-  mockGenerateReportPdf.mockReset().mockResolvedValue('file:///report.pdf');
+  mockGenerateReportPdf.mockReset().mockResolvedValue('file:///print/report.pdf');
   mockIsAvailableAsync.mockReset().mockResolvedValue(true);
   mockShareAsync.mockReset().mockResolvedValue(undefined);
+  mockCopyAsync.mockReset().mockResolvedValue(undefined);
+  mockDeleteAsync.mockReset().mockResolvedValue(undefined);
 });
 
 describe('exportMonthlyReport', () => {
@@ -40,19 +51,23 @@ describe('exportMonthlyReport', () => {
     expect(mockShareAsync).not.toHaveBeenCalled();
   });
 
-  it('generates and shares the PDF straight from the expo-print uri', async () => {
+  it('copies the PDF into the scoped document dir and shares that branded path', async () => {
     await exportMonthlyReport({ ...baseInput, transactions: [tx({})] });
     expect(mockGenerateReportPdf).toHaveBeenCalledTimes(1);
+    expect(mockCopyAsync).toHaveBeenCalledWith({
+      from: 'file:///print/report.pdf',
+      to: 'file:///doc/Teftera-2026-06.pdf',
+    });
     expect(mockShareAsync).toHaveBeenCalledWith(
-      'file:///report.pdf',
+      'file:///doc/Teftera-2026-06.pdf',
       expect.objectContaining({ mimeType: 'application/pdf' }),
     );
   });
 
-  it('throws with the file path when sharing is unavailable', async () => {
+  it('throws with the scoped file path when sharing is unavailable', async () => {
     mockIsAvailableAsync.mockResolvedValue(false);
     await expect(exportMonthlyReport({ ...baseInput, transactions: [tx({})] })).rejects.toThrow(
-      'file:///report.pdf',
+      'file:///doc/Teftera-2026-06.pdf',
     );
     expect(mockShareAsync).not.toHaveBeenCalled();
   });
