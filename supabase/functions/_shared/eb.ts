@@ -50,9 +50,11 @@ const b64url = (bytes: Uint8Array): string =>
   btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
 async function hmacKey(usage: KeyUsage): Promise<CryptoKey> {
+  const secret = Deno.env.get('EB_STATE_SECRET');
+  if (!secret) throw new Error('EB_STATE_SECRET is not set');
   return await crypto.subtle.importKey(
     'raw',
-    enc.encode(Deno.env.get('EB_STATE_SECRET')!),
+    enc.encode(secret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     [usage],
@@ -102,6 +104,7 @@ export async function getCallerHousehold(
     .from('household_members')
     .select('household_id')
     .eq('user_id', userData.user.id)
+    .order('joined_at', { ascending: true })
     .limit(1)
     .maybeSingle();
   if (!member) return null;
