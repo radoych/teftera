@@ -1,0 +1,113 @@
+[
+  {
+    "entry_reference": "a9mzn",
+    "merchant_category_code": null,
+    "transaction_amount": {
+      "currency": "EUR",
+      "amount": "6.48"
+    },
+    "creditor": {
+      "name": "Onni Mäkinen",
+      "postal_address": null,
+      "organisation_id": null,
+      "private_id": null,
+      "contact_details": null
+    },
+    "creditor_account": null,
+    "creditor_agent": null,
+    "debtor": null,
+    "debtor_account": null,
+    "debtor_agent": null,
+    "bank_transaction_code": null,
+    "credit_debit_indicator": "CRDT",
+    "status": "BOOK",
+    "booking_date": "2026-07-03",
+    "value_date": "2026-06-30",
+    "transaction_date": null,
+    "balance_after_transaction": null,
+    "reference_number": null,
+    "reference_number_schema": null,
+    "remittance_information": [
+      "Onni Mäkinen-CRDT-6.48-a9mzn"
+    ],
+    "debtor_account_additional_identification": null,
+    "creditor_account_additional_identification": null,
+    "exchange_rate": null,
+    "note": null,
+    "transaction_id": null
+  },
+  {
+    "entry_reference": "jsq4k",
+    "merchant_category_code": null,
+    "transaction_amount": {
+      "currency": "EUR",
+      "amount": "6.09"
+    },
+    "creditor": {
+      "name": "Oliver Virtanen",
+      "postal_address": null,
+      "organisation_id": null,
+      "private_id": null,
+      "contact_details": null
+    },
+    "creditor_account": null,
+    "creditor_agent": null,
+    "debtor": null,
+    "debtor_account": null,
+    "debtor_agent": null,
+    "bank_transaction_code": null,
+    "credit_debit_indicator": "DBIT",
+    "status": "BOOK",
+    "booking_date": "2026-07-03",
+    "value_date": "2026-07-01",
+    "transaction_date": null,
+    "balance_after_transaction": null,
+    "reference_number": null,
+    "reference_number_schema": null,
+    "remittance_information": [
+      "Oliver Virtanen-DBIT-6.09-jsq4k"
+    ],
+    "debtor_account_additional_identification": null,
+    "creditor_account_additional_identification": null,
+    "exchange_rate": null,
+    "note": null,
+    "transaction_id": null
+  },
+  {
+    "entry_reference": "p6611",
+    "merchant_category_code": null,
+    "transaction_amount": {
+      "currency": "EUR",
+      "amount": "0.82"
+    },
+    "creditor": {
+      "name": "Oliver Nieminen",
+      "postal_address": null,
+      "organisation_id": null,
+      "private_id": null,
+      "contact_details": null
+    },
+    "creditor_account": null,
+    "creditor_agent": null,
+    "debtor": null,
+    "debtor_account": null,
+    "debtor_agent": null,
+    "bank_transaction_code": null,
+    "credit_debit_indicator": "CRDT",
+    "status": "BOOK",
+    "booking_date": "2026-07-03",
+    "value_date": "2026-06-30",
+    "transaction_date": null,
+    "balance_after_transaction": null,
+    "reference_number": null,
+    "reference_number_schema": null,
+    "remittance_information": [
+      "Oliver Nieminen-CRDT-0.82-p6611"
+    ],
+    "debtor_account_additional_identification": null,
+    "creditor_account_additional_identification": null,
+    "exchange_rate": null,
+    "note": null,
+    "transaction_id": null
+  }
+]

@@ -16,6 +16,23 @@ jest.mock('@/services/supabase', () => ({
   supabase: { auth: { getSession: jest.fn() }, from: jest.fn() },
 }));
 
+// Recorded from the EB sandbox via the deployed bank-sync-transactions function.
+import sandboxFixture from './__fixtures__/eb-sandbox-transactions.json';
+
+describe('normalizeEbTransaction against recorded sandbox data', () => {
+  it('normalizes every recorded row with the expected kinds', () => {
+    const rows = (sandboxFixture as EbTransaction[]).map(normalizeEbTransaction);
+    expect(rows).not.toContain(null);
+    const kinds = rows.map((r) => r?.kind).sort();
+    expect(kinds).toEqual(['expense', 'income', 'income']);
+    for (const r of rows) {
+      expect(Number.isInteger(r?.amountEurCents)).toBe(true);
+      expect(r?.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(r?.merchant).toBeTruthy();
+    }
+  });
+});
+
 const base: EbTransaction = {
   transaction_amount: { amount: '12.34', currency: 'EUR' },
   credit_debit_indicator: 'DBIT',
