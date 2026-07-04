@@ -412,3 +412,14 @@ enabled = true
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+[functions.bank-sync-start]
+verify_jwt = true
+
+# The callback is hit by the bank's browser redirect — no Supabase JWT.
+# It authenticates via the HMAC-signed `state` instead.
+[functions.bank-sync-callback]
+verify_jwt = false
+
+[functions.bank-sync-transactions]
+verify_jwt = true
