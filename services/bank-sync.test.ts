@@ -121,4 +121,14 @@ describe('fetchBankTransactions error mapping', () => {
     mockFetch(200, { transactions: [{ x: 1 }], validUntil: '2026-10-01T00:00:00Z' });
     await expect(fetchBankTransactions()).resolves.toEqual([{ x: 1 }]);
   });
+
+  it('sends the right URL, method, and auth headers', async () => {
+    mockFetch(200, { transactions: [], validUntil: 'x' });
+    await fetchBankTransactions();
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(String(url)).toMatch(/\/functions\/v1\/bank-sync-transactions$/);
+    expect(init.method).toBe('POST');
+    expect(init.headers.Authorization).toBe('Bearer tok');
+    expect(typeof init.headers.apikey).toBe('string');
+  });
 });

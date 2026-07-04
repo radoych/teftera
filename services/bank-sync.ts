@@ -102,7 +102,12 @@ export async function startBankSync(returnUrl: string): Promise<string> {
 export async function fetchBankTransactions(): Promise<EbTransaction[]> {
   const res = await callBankSyncFn('bank-sync-transactions');
   if (res.status === 409) {
-    const { error } = (await res.json()) as { error?: string };
+    let error: string | undefined;
+    try {
+      ({ error } = (await res.json()) as { error?: string });
+    } catch {
+      throw new Error('bank-sync-transactions: malformed 409 response');
+    }
     if (error === 'not_connected') throw new NotConnectedError(error);
     throw new ConsentExpiredError(error ?? 'consent_expired');
   }
