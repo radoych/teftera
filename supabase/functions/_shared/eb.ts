@@ -14,9 +14,20 @@ export function json(status: number, body: unknown): Response {
   });
 }
 
+/**
+ * The private key secret is stored base64-encoded (single line — multi-line
+ * secret values get truncated by the CLI on Windows). A raw PEM still works.
+ */
+function privateKeyPem(): string {
+  const raw = Deno.env.get('EB_PRIVATE_KEY');
+  if (!raw) throw new Error('EB_PRIVATE_KEY is not set');
+  if (raw.includes('BEGIN')) return raw;
+  return new TextDecoder().decode(Uint8Array.from(atob(raw), (c) => c.charCodeAt(0)));
+}
+
 /** Mint a short-lived EB API JWT (RS256, kid = application id). */
 async function mintEbJwt(): Promise<string> {
-  const key = await jose.importPKCS8(Deno.env.get('EB_PRIVATE_KEY')!, 'RS256');
+  const key = await jose.importPKCS8(privateKeyPem(), 'RS256');
   return await new jose.SignJWT({})
     .setProtectedHeader({ typ: 'JWT', alg: 'RS256', kid: Deno.env.get('EB_APP_ID')! })
     .setIssuer('enablebanking.com')
