@@ -1,7 +1,9 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { File } from 'expo-file-system';
+import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { HairlineDivider } from '@/components/HairlineDivider';
@@ -13,6 +15,15 @@ import { bulkInsertImported, type ImportedTransaction } from '@/features/transac
 import { dedupeImport } from '@/features/transactions/dedup';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
+import {
+  ConsentExpiredError,
+  NotConnectedError,
+  RateLimitedError,
+  fetchBankTransactions,
+  getBankConnection,
+  normalizeEbTransaction,
+  startBankSync,
+} from '@/services/bank-sync';
 import { normalizeDskRow, parseDskCsv, type NormalizedTransaction } from '@/services/dsk-import';
 import { resolveCategoryId } from '@/lib/categories';
 import { formatCurrency } from '@/lib/formatCurrency';
@@ -24,7 +35,7 @@ interface Preview {
   fileName: string;
 }
 
-type Status = 'idle' | 'reading' | 'ready' | 'importing' | 'done';
+type Status = 'idle' | 'reading' | 'syncing' | 'ready' | 'importing' | 'done';
 
 interface ImportSummary {
   imported: number;
@@ -80,8 +91,18 @@ export default function ImportDskScreen() {
   const [status, setStatus] = useState<Status>('idle');
   const [preview, setPreview] = useState<Preview | null>(null);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
+  const [connection, setConnection] = useState<{ bankName: string; validUntil: string } | null>(
+    null,
+  );
+  const [needsReconnect, setNeedsReconnect] = useState(false);
   const transactions = useTransactionsStore((s) => s.transactions);
   const categories = useTransactionsStore((s) => s.categories);
+  const householdId = useAuthStore((s) => s.householdId);
+
+  useEffect(() => {
+    if (!householdId) return;
+    getBankConnection(householdId).then(setConnection).catch(() => {});
+  }, [householdId]);
 
   const pickAndParse = async () => {
     try {
@@ -108,6 +129,60 @@ export default function ImportDskScreen() {
       if (__DEV__) console.warn('[dsk-import] parse failed', err);
       setStatus('idle');
       Alert.alert('Грешка', 'Файлът не можа да бъде прочетен. Опитай с друг CSV.');
+    }
+  };
+
+  const runConsentFlow = async (): Promise<boolean> => {
+    const returnUrl = Linking.createURL('bank-sync'); // teftera://bank-sync (dev client) or exp://…/--/bank-sync (Expo Go)
+    const authUrl = await startBankSync(returnUrl);
+    const result = await WebBrowser.openAuthSessionAsync(authUrl, returnUrl);
+    return result.type === 'success' && result.url.includes('status=ok');
+  };
+
+  const syncFromBank = async () => {
+    if (status === 'syncing') return;
+    setStatus('syncing');
+    try {
+      let ebRows;
+      try {
+        ebRows = await fetchBankTransactions();
+      } catch (err) {
+        if (err instanceof NotConnectedError || err instanceof ConsentExpiredError) {
+          const consented = await runConsentFlow();
+          if (!consented) {
+            setStatus('idle');
+            setNeedsReconnect(err instanceof ConsentExpiredError);
+            Alert.alert('Синхронизация', 'Свързването с банката не беше завършено.');
+            return;
+          }
+          setNeedsReconnect(false);
+          if (householdId) getBankConnection(householdId).then(setConnection).catch(() => {});
+          ebRows = await fetchBankTransactions();
+        } else {
+          throw err;
+        }
+      }
+
+      const rows = ebRows
+        .map(normalizeEbTransaction)
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+      const expenses = rows.filter((r) => r.kind === 'expense');
+      const income = rows.filter((r) => r.kind === 'income');
+      const { toImport, duplicates } = dedupeImport(expenses, transactions);
+
+      setPreview({ toImport, duplicates, income, fileName: 'Синхронизация с ДСК' });
+      setStatus('ready');
+    } catch (err) {
+      if (__DEV__) console.warn('[bank-sync] failed', err);
+      setStatus('idle');
+      if (err instanceof RateLimitedError) {
+        Alert.alert('Синхронизация', 'Лимитът на банката е достигнат — опитайте по-късно.');
+      } else if (err instanceof ConsentExpiredError) {
+        setNeedsReconnect(true);
+        Alert.alert('Синхронизация', 'Достъпът до банката е изтекъл. Свържете се отново.');
+      } else {
+        Alert.alert('Грешка', 'Синхронизацията не успя. Опитай отново.');
+      }
     }
   };
 
@@ -186,25 +261,49 @@ export default function ImportDskScreen() {
     );
   }
 
-  // Initial / reading states
+  // Initial / reading / syncing states
   if (!preview) {
+    const busy = status === 'reading' || status === 'syncing';
     return (
-      <Screen>
+      <Screen
+        floatingAboveTabBar={
+          busy ? undefined : (
+            <FloatingActionBar
+              actions={[
+                {
+                  label: needsReconnect ? 'Повторно свързване с ДСК' : 'Синхронизирай с ДСК',
+                  icon: 'sync',
+                  variant: 'filled',
+                  onPress: syncFromBank,
+                },
+                { label: 'Избери CSV файл', icon: 'folder-open', variant: 'ghost', onPress: pickAndParse },
+              ]}
+            />
+          )
+        }>
         <Header />
-        {status === 'reading' ? (
+        {busy ? (
           <View className="items-center py-xxl">
             <ActivityIndicator color="#adc7ff" />
             <Text className="mt-md font-inter text-body-md text-on-surface-variant opacity-70">
-              Обработка на файла…
+              {status === 'syncing' ? 'Синхронизиране с банката…' : 'Обработка на файла…'}
             </Text>
           </View>
         ) : (
-          <EmptyState
-            icon="upload-file"
-            title="Избери извлечение"
-            message="Импортирай CSV извлечение, изтеглено от онлайн банкирането на DSK."
-            cta={{ label: 'Избери CSV файл', onPress: pickAndParse }}
-          />
+          <>
+            <EmptyState
+              icon="account-balance"
+              title="Добави транзакции"
+              message="Синхронизирай директно с ДСК или импортирай CSV извлечение от онлайн банкирането."
+            />
+            {connection ? (
+              <Text className="text-center font-inter text-label-md text-on-surface-variant opacity-60">
+                {`Свързано с ${connection.bankName} · валидно до ${new Date(
+                  connection.validUntil,
+                ).toLocaleDateString('bg-BG')}`}
+              </Text>
+            ) : null}
+          </>
         )}
       </Screen>
     );
@@ -219,10 +318,10 @@ export default function ImportDskScreen() {
         <FloatingActionBar
           actions={[
             {
-              label: 'Друг файл',
-              icon: 'folder-open',
+              label: fileName === 'Синхронизация с ДСК' ? 'Синхронизирай пак' : 'Друг файл',
+              icon: fileName === 'Синхронизация с ДСК' ? 'sync' : 'folder-open',
               variant: 'ghost',
-              onPress: pickAndParse,
+              onPress: fileName === 'Синхронизация с ДСК' ? syncFromBank : pickAndParse,
             },
             {
               label: nothing ? 'Няма нови' : `Импортирай ${toImport.length}`,
