@@ -2,7 +2,7 @@
 create table public.bank_connections (
   id            uuid primary key default gen_random_uuid(),
   household_id  uuid not null references public.households (id) on delete cascade,
-  created_by    uuid not null references auth.users (id),
+  created_by    uuid not null references auth.users (id) on delete cascade,
   provider      text not null default 'enable_banking',
   session_id    text not null,
   account_uid   text not null,
