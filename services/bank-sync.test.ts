@@ -1,4 +1,20 @@
-import { normalizeEbTransaction, type EbTransaction } from './bank-sync';
+import {
+  ConsentExpiredError,
+  NotConnectedError,
+  RateLimitedError,
+  fetchBankTransactions,
+  normalizeEbTransaction,
+  type EbTransaction,
+} from './bank-sync';
+import { supabase } from '@/services/supabase';
+
+declare const global: {
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+};
+
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: { getSession: jest.fn() }, from: jest.fn() },
+}));
 
 const base: EbTransaction = {
   transaction_amount: { amount: '12.34', currency: 'EUR' },
@@ -67,5 +83,42 @@ describe('normalizeEbTransaction', () => {
       transaction_amount: { amount: '-7.50', currency: 'EUR' },
     });
     expect(r?.amountEurCents).toBe(750);
+  });
+});
+
+describe('fetchBankTransactions error mapping', () => {
+  const mockSession = () =>
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({
+      data: { session: { access_token: 'tok' } },
+    });
+
+  const mockFetch = (status: number, body: unknown) => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: status < 400,
+      status,
+      json: async () => body,
+    }) as unknown as typeof fetch;
+  };
+
+  beforeEach(() => mockSession());
+
+  it('maps 409 not_connected', async () => {
+    mockFetch(409, { error: 'not_connected' });
+    await expect(fetchBankTransactions()).rejects.toBeInstanceOf(NotConnectedError);
+  });
+
+  it('maps 409 consent_expired', async () => {
+    mockFetch(409, { error: 'consent_expired' });
+    await expect(fetchBankTransactions()).rejects.toBeInstanceOf(ConsentExpiredError);
+  });
+
+  it('maps 429 to RateLimitedError', async () => {
+    mockFetch(429, { error: 'rate_limited' });
+    await expect(fetchBankTransactions()).rejects.toBeInstanceOf(RateLimitedError);
+  });
+
+  it('returns the transactions array on 200', async () => {
+    mockFetch(200, { transactions: [{ x: 1 }], validUntil: '2026-10-01T00:00:00Z' });
+    await expect(fetchBankTransactions()).resolves.toEqual([{ x: 1 }]);
   });
 });

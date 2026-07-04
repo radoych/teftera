@@ -14,6 +14,7 @@ import {
   occurredAtISO,
   type NormalizedTransaction,
 } from '@/services/dsk-import';
+import { supabase } from '@/services/supabase';
 
 /** The subset of Enable Banking's transaction resource we consume. */
 export interface EbTransaction {
@@ -65,4 +66,61 @@ export function normalizeEbTransaction(tx: EbTransaction): NormalizedTransaction
     };
   }
   return { ...base, amountEurCents: rawCents, originalAmountCents: null, originalCurrency: null };
+}
+
+const FUNCTIONS_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL ?? ''}/functions/v1`;
+
+export class NotConnectedError extends Error {}
+export class ConsentExpiredError extends Error {}
+export class RateLimitedError extends Error {}
+
+async function callBankSyncFn(name: string, body?: unknown): Promise<Response> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('not signed in');
+  return await fetch(`${FUNCTIONS_URL}/${name}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+      'Content-Type': 'application/json',
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+/** Begin the consent flow; returns the bank authorization URL to open. */
+export async function startBankSync(returnUrl: string): Promise<string> {
+  const res = await callBankSyncFn('bank-sync-start', { returnUrl });
+  if (!res.ok) throw new Error(`bank-sync-start failed (${res.status})`);
+  const data = (await res.json()) as { url?: string };
+  if (typeof data.url !== 'string') throw new Error('bank-sync-start: malformed response');
+  return data.url;
+}
+
+/** Pull the last 90 days of raw EB transactions for this household. */
+export async function fetchBankTransactions(): Promise<EbTransaction[]> {
+  const res = await callBankSyncFn('bank-sync-transactions');
+  if (res.status === 409) {
+    const { error } = (await res.json()) as { error?: string };
+    if (error === 'not_connected') throw new NotConnectedError(error);
+    throw new ConsentExpiredError(error ?? 'consent_expired');
+  }
+  if (res.status === 429) throw new RateLimitedError('rate_limited');
+  if (!res.ok) throw new Error(`bank-sync-transactions failed (${res.status})`);
+  const data = (await res.json()) as { transactions?: EbTransaction[] };
+  return data.transactions ?? [];
+}
+
+/** The household's connection metadata (secret column is not even readable). */
+export async function getBankConnection(
+  householdId: string,
+): Promise<{ bankName: string; validUntil: string } | null> {
+  const { data, error } = await supabase
+    .from('bank_connections')
+    .select('bank_name, valid_until')
+    .eq('household_id', householdId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return { bankName: data.bank_name as string, validUntil: data.valid_until as string };
 }
