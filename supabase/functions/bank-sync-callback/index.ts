@@ -5,15 +5,24 @@ import { adminClient, ebFetch, verifyState } from '../_shared/eb.ts';
 
 /** Tiny page that jumps back into the app; visible link as fallback. */
 function deepLinkPage(target: string): Response {
-  const safe = target.replace(/"/g, '&quot;');
+  // Context-correct escaping: JSON string for the <script> block (with < escaped
+  // so a crafted target cannot contain a literal </script>), full HTML-entity
+  // escape for the href attribute.
+  const jsSafe = JSON.stringify(target).replace(/</g, '\\u003c');
+  const attrSafe = target
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
   const html = `<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <body style="background:#121316;color:#e3e2e6;font-family:sans-serif;display:grid;place-items:center;height:100vh;margin:0">
 <div style="text-align:center">
 <p>Връщане към Teftera…</p>
-<a href="${safe}" style="color:#adc7ff">Отвори Teftera</a>
+<a href="${attrSafe}" style="color:#adc7ff">Отвори Teftera</a>
 </div>
-<script>location.href = "${safe}";</script>
+<script>location.href = ${jsSafe};</script>
 </body>`;
   return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
@@ -34,7 +43,7 @@ Deno.serve(async (req) => {
   const back = (status: string, reason?: string) => {
     const base = state?.r ?? FALLBACK_RETURN;
     const sep = base.includes('?') ? '&' : '?';
-    return deepLinkPage(`${base}${sep}status=${status}${reason ? `&reason=${reason}` : ''}`);
+    return deepLinkPage(`${base}${sep}status=${status}${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`);
   };
 
   if (!state) return back('error', 'bad_state');
