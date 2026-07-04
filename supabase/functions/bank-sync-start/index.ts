@@ -3,20 +3,27 @@ import { ebFetch, getCallerHousehold, json, signState } from '../_shared/eb.ts';
 
 const STATE_TTL_SECONDS = 600; // consent must start within 10 minutes
 const CONSENT_DAYS = 90;
+const APP_SCHEME_RE = /^(teftera|exp(\+[\w.-]+)?):\/\//i;
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
+
+  const redirectUrl = Deno.env.get('EB_REDIRECT_URL');
+  if (!redirectUrl) {
+    console.error('[bank-sync-start] EB_REDIRECT_URL is not set');
+    return json(500, { error: 'misconfigured' });
+  }
 
   const caller = await getCallerHousehold(req);
   if (!caller) return json(401, { error: 'unauthorized' });
 
   // The app tells us where to deep-link back to (dev client vs Expo Go URLs
-  // differ). Only app schemes are accepted — never http(s).
+  // differ). Only known app schemes are accepted (teftera:// in builds, exp:// / exp+…:// in Expo dev) —
+  // never http(s) or anything else; the callback deep-links the browser to this value.
   let returnUrl = 'teftera://bank-sync';
   try {
     const body = await req.json();
-    if (typeof body?.returnUrl === 'string' && /^[a-z][a-z0-9+.-]*:\/\//i.test(body.returnUrl)
-        && !/^https?:/i.test(body.returnUrl)) {
+    if (typeof body?.returnUrl === 'string' && APP_SCHEME_RE.test(body.returnUrl)) {
       returnUrl = body.returnUrl;
     }
   } catch {
@@ -40,7 +47,7 @@ Deno.serve(async (req) => {
         country: Deno.env.get('EB_ASPSP_COUNTRY') ?? 'FI',
       },
       state,
-      redirect_url: Deno.env.get('EB_REDIRECT_URL')!,
+      redirect_url: redirectUrl,
       psu_type: 'personal',
     }),
   });
@@ -49,7 +56,13 @@ Deno.serve(async (req) => {
     console.error('[bank-sync-start] EB /auth failed', res.status, await res.text());
     return json(502, { error: 'eb_error' });
   }
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    console.error('[bank-sync-start] EB /auth non-JSON response');
+    return json(502, { error: 'eb_error' });
+  }
   if (typeof data?.url !== 'string') {
     console.error('[bank-sync-start] EB /auth malformed response');
     return json(502, { error: 'eb_error' });
