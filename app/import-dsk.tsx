@@ -33,6 +33,7 @@ interface Preview {
   duplicates: NormalizedTransaction[];
   income: NormalizedTransaction[];
   fileName: string;
+  source: 'csv' | 'bank';
 }
 
 type Status = 'idle' | 'reading' | 'syncing' | 'ready' | 'importing' | 'done';
@@ -105,6 +106,7 @@ export default function ImportDskScreen() {
   }, [householdId]);
 
   const pickAndParse = async () => {
+    if (status === 'reading' || status === 'syncing') return;
     try {
       // Pick via expo-file-system's own picker: it returns a module-owned File
       // that is readable in Expo Go, unlike an external DocumentPicker cache URI
@@ -123,7 +125,7 @@ export default function ImportDskScreen() {
       const income = rows.filter((r) => r.kind === 'income');
       const { toImport, duplicates } = dedupeImport(expenses, transactions);
 
-      setPreview({ toImport, duplicates, income, fileName: file.name });
+      setPreview({ toImport, duplicates, income, fileName: file.name, source: 'csv' });
       setStatus('ready');
     } catch (err) {
       if (__DEV__) console.warn('[dsk-import] parse failed', err);
@@ -136,7 +138,9 @@ export default function ImportDskScreen() {
     const returnUrl = Linking.createURL('bank-sync'); // teftera://bank-sync (dev client) or exp://…/--/bank-sync (Expo Go)
     const authUrl = await startBankSync(returnUrl);
     const result = await WebBrowser.openAuthSessionAsync(authUrl, returnUrl);
-    return result.type === 'success' && result.url.includes('status=ok');
+    if (result.type !== 'success') return false;
+    const { queryParams } = Linking.parse(result.url);
+    return queryParams?.status === 'ok';
   };
 
   const syncFromBank = async () => {
@@ -170,16 +174,16 @@ export default function ImportDskScreen() {
       const income = rows.filter((r) => r.kind === 'income');
       const { toImport, duplicates } = dedupeImport(expenses, transactions);
 
-      setPreview({ toImport, duplicates, income, fileName: 'Синхронизация с ДСК' });
+      setPreview({ toImport, duplicates, income, fileName: 'Синхронизация с ДСК', source: 'bank' });
       setStatus('ready');
     } catch (err) {
       if (__DEV__) console.warn('[bank-sync] failed', err);
       setStatus('idle');
       if (err instanceof RateLimitedError) {
-        Alert.alert('Синхронизация', 'Лимитът на банката е достигнат — опитайте по-късно.');
+        Alert.alert('Синхронизация', 'Лимитът на банката е достигнат — опитай по-късно.');
       } else if (err instanceof ConsentExpiredError) {
         setNeedsReconnect(true);
-        Alert.alert('Синхронизация', 'Достъпът до банката е изтекъл. Свържете се отново.');
+        Alert.alert('Синхронизация', 'Достъпът до банката е изтекъл. Свържи се отново.');
       } else {
         Alert.alert('Грешка', 'Синхронизацията не успя. Опитай отново.');
       }
@@ -187,7 +191,8 @@ export default function ImportDskScreen() {
   };
 
   const onImport = async () => {
-    if (!preview || preview.toImport.length === 0 || status === 'importing') return;
+    if (!preview || preview.toImport.length === 0 || status === 'importing' || status === 'syncing')
+      return;
     const { householdId, session } = useAuthStore.getState();
     if (!householdId) {
       Alert.alert('Грешка', 'Няма активно домакинство.');
@@ -309,7 +314,7 @@ export default function ImportDskScreen() {
     );
   }
 
-  const { toImport, duplicates, income, fileName } = preview;
+  const { toImport, duplicates, income, fileName, source } = preview;
   const nothing = toImport.length === 0;
 
   return (
@@ -318,16 +323,18 @@ export default function ImportDskScreen() {
         <FloatingActionBar
           actions={[
             {
-              label: fileName === 'Синхронизация с ДСК' ? 'Синхронизирай пак' : 'Друг файл',
-              icon: fileName === 'Синхронизация с ДСК' ? 'sync' : 'folder-open',
+              label: source === 'bank' ? 'Синхронизирай пак' : 'Друг файл',
+              icon: source === 'bank' ? 'sync' : 'folder-open',
               variant: 'ghost',
-              onPress: fileName === 'Синхронизация с ДСК' ? syncFromBank : pickAndParse,
+              loading: status === 'syncing',
+              disabled: status === 'importing',
+              onPress: source === 'bank' ? syncFromBank : pickAndParse,
             },
             {
               label: nothing ? 'Няма нови' : `Импортирай ${toImport.length}`,
               icon: 'check',
               variant: 'filled',
-              disabled: nothing,
+              disabled: nothing || status === 'syncing',
               loading: status === 'importing',
               onPress: onImport,
             },
