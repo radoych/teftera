@@ -289,15 +289,22 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ---
 
-### Day 17 — GoCardless DSK Live Sync (Optional Upgrade)
+### Day 17 — DSK Live Bank Sync (Enable Banking)
 
-- [ ] Replace or supplement CSV import with GoCardless Bank Account Data API
-- [ ] OAuth consent flow: user authorizes DSK → GoCardless → Teftera (90-day re-auth cycle)
-- [ ] Pull last 90 days of transactions as JSON → run through same ETL normalizer as CSV import
-- [ ] "Sync with DSK" button triggers a GoCardless pull, not a CSV file picker
-- [ ] Graceful handling of expired consent (prompt to re-authenticate)
+- [x] Supplement CSV import with live PSD2 pulls — **Enable Banking**, not GoCardless (GoCardless BAD closed to new signups July 2025)
+- [x] OAuth consent flow: user authorizes bank → Enable Banking → Teftera (90-day re-auth cycle), signed-`state` handoff through the browser redirect
+- [x] Pull last 90 days as JSON → same ETL/dedup/preview pipeline as CSV import (`normalizeEbTransaction` → `dedupeImport` → confirm screen)
+- [x] "Синхронизирай с ДСК" button on the import screen alongside the CSV picker
+- [x] Graceful expired-consent handling (button flips to "Повторно свързване с ДСК" and relaunches consent)
+- [x] First server-side code: 3 Supabase Edge Functions (`bank-sync-start` / `-callback` / `-transactions`) hold the EB private key as secrets — nothing in the client bundle
+- [ ] **Production DSK consent — blocked externally:** owner's DSK Direct profile needs a signing method (mToken/certificate). Everything is sandbox-verified end-to-end (mock bank, on-device); switching to production = swapping the `EB_APP_ID`/`EB_PRIVATE_KEY`/`EB_ASPSP_NAME`/`EB_ASPSP_COUNTRY` secrets. Zero code change.
 
-> **Note:** Only build this if you want the live bank connection for the portfolio. CSV import already covers the core use case.
+> Implemented on branch `worktree-day17-bank-live-sync`. New `bank_connections` table
+> (RLS + column-level privacy on `session_id`). EB private key stored base64 as an Edge
+> Function secret. Sandbox fixture recorded into the normalizer tests.
+> Spec: `docs/superpowers/specs/2026-07-04-day17-bank-live-sync-design.md`.
+
+**Checkpoint (passed, sandbox):** Tap Синхронизирай с ДСК → mock-bank consent in browser → app resumes → preview with dedup → confirm → rows in History. Re-sync shows duplicates.
 
 ---
 
