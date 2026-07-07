@@ -13,8 +13,10 @@ interface EmptyStateProps {
 export function EmptyState({ icon, title, message, cta }: EmptyStateProps) {
   return (
     <View className="items-center px-8 py-xxl">
-      <View className="mb-md h-16 w-16 items-center justify-center rounded-full bg-surface-container">
-        <MaterialIcons name={icon} size={28} color="#8e909a" />
+      <View className="mb-md h-28 w-28 items-center justify-center rounded-full bg-primary-container/5">
+        <View className="h-20 w-20 items-center justify-center rounded-full bg-surface-container">
+          <MaterialIcons name={icon} size={32} color="#8e909a" />
+        </View>
       </View>
       <Text className="text-center font-jakarta-semibold text-headline-md text-on-surface">
         {title}

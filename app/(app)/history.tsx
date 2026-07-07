@@ -60,8 +60,8 @@ export default function HistoryScreen() {
         <EmptyState
           icon="receipt-long"
           title="Все още няма транзакции"
-          message={'Добави първата с „Ръчно" или „Сканирай".'}
-          cta={{ label: 'Ръчно', onPress: () => router.navigate('/manual-entry') }}
+          message="Добави първата ръчно, сканирай бележка или импортирай извлечение от ДСК."
+          cta={{ label: 'Добави транзакция', onPress: () => router.navigate('/manual-entry') }}
         />
       ) : (
         groups.map((group) => (

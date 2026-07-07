@@ -166,7 +166,12 @@ export default function DashboardScreen() {
         </Pressable>
       </View>
       {loaded && recent.length === 0 ? (
-        <EmptyState icon="receipt-long" title="Все още няма транзакции" />
+        <EmptyState
+          icon="receipt-long"
+          title="Все още няма транзакции"
+          message="Последните движения на домакинството ще се показват тук."
+          cta={{ label: 'Добави транзакция', onPress: () => router.navigate('/manual-entry') }}
+        />
       ) : (
         recent.map((tx, i) => (
           <TransactionRow
