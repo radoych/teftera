@@ -237,7 +237,7 @@ export default function InsightsScreen() {
         <EmptyState
           icon="insights"
           title="Няма данни за анализ"
-          message="Добави транзакции, за да видиш разбивки и тенденции."
+          message="Разбивките, тенденциите и AI обобщението се попълват с всяка добавена транзакция."
         />
       ) : (
         <>

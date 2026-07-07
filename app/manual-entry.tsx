@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { formatDigitsAsAmount } from '@/components/AmountInput';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
@@ -27,6 +28,7 @@ import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { guessCategory, resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
+import { useIsOnline } from '@/lib/useIsOnline';
 
 function FieldRow({
   label,
@@ -77,7 +79,7 @@ export default function ManualEntryScreen() {
     [existing],
   );
 
-  const [amount, setAmount] = useState(seed?.amount ?? '');
+  const [amount, setAmount] = useState(seed?.amount ? formatDigitsAsAmount(seed.amount) : '');
   const [merchant, setMerchant] = useState(seed?.merchant ?? '');
   const [note, setNote] = useState(seed?.note ?? '');
   const [date, setDate] = useState(seed?.date ?? toISODate());
@@ -86,6 +88,7 @@ export default function ManualEntryScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [errors, setErrors] = useState<{ amount?: string; merchant?: string }>({});
   const [saving, setSaving] = useState(false);
+  const online = useIsOnline();
 
   // Edit mode but the transaction is gone (deleted on another device).
   if (isEdit && !existing) {
@@ -210,10 +213,10 @@ export default function ManualEntryScreen() {
             <Text className="font-jakarta-semibold text-[64px] text-on-surface opacity-30">{'€'}</Text>
             <TextInput
               value={amount}
-              onChangeText={setAmount}
+              onChangeText={(t) => setAmount(formatDigitsAsAmount(t))}
               placeholder="0,00"
               placeholderTextColor="rgba(196,198,208,0.3)"
-              keyboardType="decimal-pad"
+              keyboardType="number-pad"
               autoFocus={!isEdit}
               className="min-w-[120px] text-center font-jakarta-semibold text-[64px] text-on-surface"
             />
@@ -267,6 +270,7 @@ export default function ManualEntryScreen() {
             icon: 'check',
             variant: 'filled',
             loading: saving,
+            disabled: !online,
             onPress: onSave,
           },
         ]}
@@ -286,3 +290,6 @@ export default function ManualEntryScreen() {
     </View>
   );
 }
+
+// Route-level crash fallback — keeps the rest of the nav tree alive.
+export { ScreenErrorFallback as ErrorBoundary } from '@/components/ScreenErrorFallback';

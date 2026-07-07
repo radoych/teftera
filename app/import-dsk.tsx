@@ -27,6 +27,7 @@ import {
 import { normalizeDskRow, parseDskCsv, type NormalizedTransaction } from '@/services/dsk-import';
 import { resolveCategoryId } from '@/lib/categories';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { useIsOnline } from '@/lib/useIsOnline';
 
 interface Preview {
   toImport: NormalizedTransaction[];
@@ -89,6 +90,7 @@ function Row({ row, muted, badge }: { row: NormalizedTransaction; muted?: boolea
 }
 
 export default function ImportDskScreen() {
+  const online = useIsOnline();
   const [status, setStatus] = useState<Status>('idle');
   const [preview, setPreview] = useState<Preview | null>(null);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
@@ -279,6 +281,7 @@ export default function ImportDskScreen() {
                   label: needsReconnect ? 'Повторно свързване с ДСК' : 'Синхронизирай с ДСК',
                   icon: 'sync',
                   variant: 'filled',
+                  disabled: !online,
                   onPress: syncFromBank,
                 },
                 { label: 'Избери CSV файл', icon: 'folder-open', variant: 'ghost', onPress: pickAndParse },
@@ -327,14 +330,14 @@ export default function ImportDskScreen() {
               icon: source === 'bank' ? 'sync' : 'folder-open',
               variant: 'ghost',
               loading: status === 'syncing',
-              disabled: status === 'importing',
+              disabled: status === 'importing' || (source === 'bank' && !online),
               onPress: source === 'bank' ? syncFromBank : pickAndParse,
             },
             {
               label: nothing ? 'Няма нови' : `Импортирай ${toImport.length}`,
               icon: 'check',
               variant: 'filled',
-              disabled: nothing || status === 'syncing',
+              disabled: nothing || status === 'syncing' || !online,
               loading: status === 'importing',
               onPress: onImport,
             },
@@ -376,3 +379,6 @@ export default function ImportDskScreen() {
     </Screen>
   );
 }
+
+// Route-level crash fallback — keeps the rest of the nav tree alive.
+export { ScreenErrorFallback as ErrorBoundary } from '@/components/ScreenErrorFallback';

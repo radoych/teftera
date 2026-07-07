@@ -47,3 +47,8 @@ coverage/
 
 # SDD scratch — local only
 .superpowers/
+
+# personal data — bank statements (IBAN in filename), photos, design sources
+assets/*.csv
+assets/*.jpg
+assets/illustrator files/

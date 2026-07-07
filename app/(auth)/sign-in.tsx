@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { AuthShell } from '@/components/AuthShell';
 import { FlatInput } from '@/components/FlatInput';
-import { GoogleGlyph } from '@/components/GoogleGlyph';
 import { signInWithPassword } from '@/features/auth/api';
 
 export default function SignInScreen() {
@@ -26,8 +25,8 @@ export default function SignInScreen() {
     <AuthShell>
       <View className="flex-[2] items-center justify-center">
         <Image
-          source={require('../../assets/1781690652688.png')}
-          style={{ width: 140, height: 140 }}
+          source={require('../../assets/logo.png')}
+          style={{ width: 140, height: 118 }}
           contentFit="contain"
         />
         <Text className="mt-md font-jakarta-bold text-headline-lg text-primary">Teftera</Text>
@@ -66,12 +65,6 @@ export default function SignInScreen() {
             onPress={() => router.push('/(auth)/sign-up')}
             className="flex-1 items-center py-3">
             <Text className="font-inter text-body-md text-on-surface-variant">Регистрация</Text>
-          </Pressable>
-          <Pressable
-            disabled
-            accessibilityLabel="Вход с Google"
-            className="mx-1 h-12 w-12 items-center justify-center rounded-full bg-surface-container-highest opacity-40">
-            <GoogleGlyph size={20} />
           </Pressable>
           <Pressable
             onPress={onLogin}

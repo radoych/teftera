@@ -201,9 +201,9 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 > **Notes.** Both builds point at the **live production Supabase** (real household data, not a sandbox). Receipt scanning runs on `gemini-2.5-flash` with a manual-entry fallback (preview models 503'd too often). Future updates: a new `eas build` per version (credentials already saved); wiring `expo-updates` would let JS-only changes ship over-the-air via `eas update` without a reinstall. The original distribution step (EAS preview build on both phones) remains listed under **Day 18**, now partially satisfied here.
 
 **Polish fixes found in the internal build (TODO):**
-- [ ] Fix the logo on the login (sign-in) page — it renders wrong / broken.
-- [ ] Remove the "Sign in with Google" control from the login page nav/header (Google OAuth is deferred — see Day 4; don't show a dead button).
-- [ ] Amount inputs (manual-entry total, confirm-receipt total + item amounts): auto-place the decimal separator as digits are typed (cents-based entry — typing `1234` shows `12,34`), instead of requiring the user to type the `,`/`.` manually.
+- [x] Fix the logo on the login (sign-in) page — it renders wrong / broken. *(Day 18: transparent `logo.png`)*
+- [x] Remove the "Sign in with Google" control from the login page nav/header (Google OAuth is deferred — see Day 4; don't show a dead button). *(Day 18: removed from sign-in + sign-up)*
+- [x] Amount inputs (manual-entry total, confirm-receipt total + item amounts): auto-place the decimal separator as digits are typed (cents-based entry — typing `1234` shows `12,34`), instead of requiring the user to type the `,`/`.` manually. *(Day 18: `formatDigitsAsAmount` live formatter)*
 
 **Checkpoint:** App installed and running on the Android phone from the EAS APK; iOS path documented and ready to run (pending the one-time interactive build + AltStore install).
 
@@ -310,16 +310,22 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 ### Day 18 — Final Polish & Portfolio Prep
 
-- [ ] Error boundaries on every screen
-- [ ] Network offline state (Expo NetInfo) — show a banner, disable sync actions
-- [ ] Empty state illustrations on all 3 main screens
-- [ ] App icon: import the anthemion logo PNG, export all sizes via appicon.co, configure in `app.json`
-- [ ] Splash screen using the logo
-- [ ] `README.md` complete: architecture diagram, screenshots of all screens, env var list, setup instructions
-- [ ] EAS `preview` build — install on both phones via QR code (no app store needed)
-- [ ] Portfolio write-up text (use the framing from earlier: receipt OCR pipeline, anomaly detection, ETL pipeline, Cloud Run, Supabase Realtime)
+- [x] Error boundaries on every screen (shared `ScreenErrorFallback`, exported per route — layouts + standalone screens)
+- [x] Network offline state — banner + disabled network actions (`expo-network`, not NetInfo: first-party, same capability; PDF export stays enabled — it's fully local)
+- [x] Empty state illustrations on all 3 main screens (glow-ringed icon treatment + per-screen copy/CTAs; no art assets, per design decision)
+- [x] App icon: anthemion logo composed on `#121316` by `scripts/generate-app-icons.mjs` (sharp) — no appicon.co needed, Expo generates sizes from 1024²
+- [x] Splash screen using the logo (same generator)
+- [x] `README.md` complete: architecture diagram, env var list, setup instructions — **screenshots pending** (human: fill `assets/screenshots/`)
+- [ ] EAS `preview` build v1.0.1 — install on both phones via QR code (no app store needed); iOS first build needs the interactive Apple ID login
+- [x] Portfolio write-up text — `docs/portfolio-writeup.md` (receipt OCR pipeline, PSD2 sync, ETL, anomaly detection, integer-cents model)
 
-**Checkpoint:** App installs from EAS on both phones. README has screenshots. You can walk through the whole app in a demo without hitting any crashes or missing states.
+> Implemented on branch `feat/day18-final-polish` (plan
+> `docs/superpowers/plans/2026-07-07-day18-final-polish-portfolio.md`). Also:
+> repo hygiene — personal bank CSVs / photos / design sources gitignored,
+> skills-exercise fixtures removed, stock Expo template assets deleted.
+> Spec: `docs/superpowers/specs/2026-07-07-day18-final-polish-portfolio-design.md`.
+
+**Checkpoint:** App installs from EAS on both phones. README has screenshots. You can walk through the whole app in a demo without hitting any crashes or missing states. *(Doubles as the pending Day 15 budget-notification check; also verify the error fallback and the airplane-mode banner on device.)*
 
 ---
 
