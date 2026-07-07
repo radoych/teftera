@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { AuthShell } from '@/components/AuthShell';
 import { FlatInput } from '@/components/FlatInput';
-import { GoogleGlyph } from '@/components/GoogleGlyph';
 import { PillButton } from '@/components/PillButton';
 import { signUpWithPassword } from '@/features/auth/api';
 
@@ -64,15 +63,7 @@ export default function SignUpScreen() {
           {error ? <Text className="font-inter text-body-md text-error">{error}</Text> : null}
         </View>
 
-        <View className="gap-md">
-          <PillButton label="Регистрация" onPress={onRegister} loading={loading} block />
-          <Pressable disabled className="h-12 flex-row items-center justify-center gap-3 rounded-full border border-white/10 opacity-40">
-            <GoogleGlyph size={20} />
-            <Text className="font-jakarta-semibold text-headline-md text-on-surface">
-              Продължи с Google
-            </Text>
-          </Pressable>
-        </View>
+        <PillButton label="Регистрация" onPress={onRegister} loading={loading} block />
 
         <Pressable onPress={() => router.back()} className="items-center">
           <Text className="font-inter text-label-md text-on-surface-variant">
