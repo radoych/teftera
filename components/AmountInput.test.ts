@@ -20,3 +20,20 @@ describe('formatDigitsAsAmount', () => {
     expect(formatDigitsAsAmount('100000')).toBe('1000,00');
   });
 });
+
+// The screens pipe raw TextInput text through formatDigitsAsAmount on every
+// keystroke; these pin the live-typing contract (digits shift through cents).
+describe('formatDigitsAsAmount as a live text formatter', () => {
+  it('is idempotent on its own output: "12,34" -> "12,34"', () => {
+    expect(formatDigitsAsAmount('12,34')).toBe('12,34');
+  });
+  it('normalizes dot input: "12.34" -> "12,34"', () => {
+    expect(formatDigitsAsAmount('12.34')).toBe('12,34');
+  });
+  it('appending a digit shifts cents left: "12,345" -> "123,45"', () => {
+    expect(formatDigitsAsAmount('12,345')).toBe('123,45');
+  });
+  it('backspacing the last digit shifts right: "12,3" -> "1,23"', () => {
+    expect(formatDigitsAsAmount('12,3')).toBe('1,23');
+  });
+});

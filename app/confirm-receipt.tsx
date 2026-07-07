@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { formatDigitsAsAmount } from '@/components/AmountInput';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { PillButton } from '@/components/PillButton';
@@ -72,9 +73,9 @@ export default function ConfirmReceiptScreen() {
       if (result.ok) {
         const seed = extractionToForm(result.data);
         setMerchant(seed.merchant);
-        setTotal(seed.total);
+        setTotal(formatDigitsAsAmount(seed.total));
         setDate(seed.date);
-        setItems(seed.items);
+        setItems(seed.items.map((i) => ({ ...i, amount: formatDigitsAsAmount(i.amount) })));
         setRawGeminiJson(result.raw);
       }
     } catch (err) {
@@ -234,10 +235,10 @@ export default function ConfirmReceiptScreen() {
                   </Text>
                   <TextInput
                     value={total}
-                    onChangeText={setTotal}
+                    onChangeText={(t) => setTotal(formatDigitsAsAmount(t))}
                     placeholder="0,00"
                     placeholderTextColor="rgba(142,144,154,0.5)"
-                    keyboardType="decimal-pad"
+                    keyboardType="number-pad"
                     className="flex-1 font-jakarta-semibold text-headline-xl text-on-surface"
                   />
                 </View>
@@ -294,10 +295,12 @@ export default function ConfirmReceiptScreen() {
                           value={item.amount}
                           onChangeText={(t) =>
                             setItems((prev) =>
-                              prev.map((i) => (i.id === item.id ? { ...i, amount: t } : i)),
+                              prev.map((i) =>
+                                i.id === item.id ? { ...i, amount: formatDigitsAsAmount(t) } : i,
+                              ),
                             )
                           }
-                          keyboardType="decimal-pad"
+                          keyboardType="number-pad"
                           className="w-16 text-right font-inter-semibold text-data-mono text-on-surface"
                         />
                       </View>

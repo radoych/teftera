@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { formatDigitsAsAmount } from '@/components/AmountInput';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
@@ -77,7 +78,7 @@ export default function ManualEntryScreen() {
     [existing],
   );
 
-  const [amount, setAmount] = useState(seed?.amount ?? '');
+  const [amount, setAmount] = useState(seed?.amount ? formatDigitsAsAmount(seed.amount) : '');
   const [merchant, setMerchant] = useState(seed?.merchant ?? '');
   const [note, setNote] = useState(seed?.note ?? '');
   const [date, setDate] = useState(seed?.date ?? toISODate());
@@ -210,10 +211,10 @@ export default function ManualEntryScreen() {
             <Text className="font-jakarta-semibold text-[64px] text-on-surface opacity-30">{'€'}</Text>
             <TextInput
               value={amount}
-              onChangeText={setAmount}
+              onChangeText={(t) => setAmount(formatDigitsAsAmount(t))}
               placeholder="0,00"
               placeholderTextColor="rgba(196,198,208,0.3)"
-              keyboardType="decimal-pad"
+              keyboardType="number-pad"
               autoFocus={!isEdit}
               className="min-w-[120px] text-center font-jakarta-semibold text-[64px] text-on-surface"
             />
