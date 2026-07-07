@@ -24,6 +24,7 @@ import { monthTotalCents, toTransactionView } from '@/features/transactions/grou
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { useIsOnline } from '@/lib/useIsOnline';
 import { useBudgetsStore } from '@/features/budgets/store';
 import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
 import { budgetProgress } from '@/features/budgets/progress';
@@ -43,6 +44,7 @@ export default function DashboardScreen() {
   const openAnomalies = useTransactionsStore((s) => s.openAnomalies);
   const loaded = useTransactionsStore((s) => s.loaded);
   const householdId = useAuthStore((s) => s.householdId);
+  const online = useIsOnline();
   const userId = useAuthStore((s) => s.session?.user.id ?? null);
 
   const dashboardSections = usePreferencesStore((s) => s.preferences.dashboardSections);
@@ -201,6 +203,7 @@ export default function DashboardScreen() {
               label: 'Сканирай',
               icon: 'photo-camera',
               variant: 'filled',
+              disabled: !online,
               onPress: () => router.navigate('/scanner'),
             },
           ]}

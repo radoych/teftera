@@ -37,6 +37,7 @@ import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
+import { useIsOnline } from '@/lib/useIsOnline';
 import { extractReceipt } from '@/services/gemini';
 import { formatCurrency, parseAmountToCents } from '@/lib/formatCurrency';
 
@@ -61,6 +62,7 @@ export default function ConfirmReceiptScreen() {
   const [errors, setErrors] = useState<{ amount?: string; merchant?: string }>({});
   const [saving, setSaving] = useState(false);
   const started = useRef(false);
+  const online = useIsOnline();
 
   const runExtraction = useCallback(async () => {
     if (!previewUri) {
@@ -341,6 +343,7 @@ export default function ConfirmReceiptScreen() {
               uppercase
               block
               loading={saving}
+              disabled={!online}
               onPress={onSave}
             />
           </View>

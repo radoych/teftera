@@ -17,6 +17,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { useAuthStore } from '@/features/auth/store';
 import { useAuthBootstrap, useProtectedRoute } from '@/features/auth/bootstrap';
 
@@ -70,6 +71,7 @@ export default function RootLayout() {
         <Stack.Screen name="transaction/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="import-dsk" options={{ animation: 'slide_from_right' }} />
       </Stack>
+      <OfflineBanner />
     </GestureHandlerRootView>
   );
 }

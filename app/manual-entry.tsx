@@ -28,6 +28,7 @@ import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { guessCategory, resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
+import { useIsOnline } from '@/lib/useIsOnline';
 
 function FieldRow({
   label,
@@ -87,6 +88,7 @@ export default function ManualEntryScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [errors, setErrors] = useState<{ amount?: string; merchant?: string }>({});
   const [saving, setSaving] = useState(false);
+  const online = useIsOnline();
 
   // Edit mode but the transaction is gone (deleted on another device).
   if (isEdit && !existing) {
@@ -268,6 +270,7 @@ export default function ManualEntryScreen() {
             icon: 'check',
             variant: 'filled',
             loading: saving,
+            disabled: !online,
             onPress: onSave,
           },
         ]}
