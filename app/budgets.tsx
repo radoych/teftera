@@ -189,3 +189,6 @@ export default function BudgetsScreen() {
     </Screen>
   );
 }
+
+// Route-level crash fallback — keeps the rest of the nav tree alive.
+export { ScreenErrorFallback as ErrorBoundary } from '@/components/ScreenErrorFallback';
