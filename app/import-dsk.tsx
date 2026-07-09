@@ -280,7 +280,7 @@ export default function ImportDskScreen() {
               compact
               actions={[
                 {
-                  label: needsReconnect ? 'Повторно свързване с ДСК' : 'Синхронизирай с ДСК',
+                  label: needsReconnect ? 'Свържи отново' : 'Синхронизирай',
                   icon: 'sync',
                   variant: 'filled',
                   disabled: !online,
