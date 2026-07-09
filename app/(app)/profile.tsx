@@ -2,9 +2,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, Share, Switch, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
+import { FlatInput } from '@/components/FlatInput';
 import { HairlineDivider } from '@/components/HairlineDivider';
+import { SheetActions } from '@/components/SheetActions';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { signOut } from '@/features/auth/api';
@@ -12,6 +14,7 @@ import { useAuthStore } from '@/features/auth/store';
 import {
   getMembers,
   getMyHousehold,
+  updateMyDisplayName,
   type HouseholdMember,
 } from '@/features/household/api';
 import { formatInviteCode } from '@/features/household/inviteCode';
@@ -34,6 +37,7 @@ function Pill({ label }: { label: string }) {
 export default function ProfileScreen() {
   const session = useAuthStore((s) => s.session);
   const householdId = useAuthStore((s) => s.householdId);
+  const setHousehold = useAuthStore((s) => s.setHousehold);
   const displayName = useAuthStore((s) => s.displayName) ?? '';
   const preferences = usePreferencesStore((s) => s.preferences);
   const setPreferences = usePreferencesStore((s) => s.setPreferences);
@@ -85,6 +89,36 @@ export default function ProfileScreen() {
 
   const [anomalyAlerts, setAnomalyAlerts] = useState(false);
   const [layoutSheetOpen, setLayoutSheetOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [savingName, setSavingName] = useState(false);
+
+  const onInvite = async () => {
+    if (!inviteCode) return;
+    try {
+      await Share.share({
+        message: `Присъедини се към домакинството ми в Teftera с код: ${formatInviteCode(inviteCode)}`,
+      });
+    } catch {
+      // User dismissed the share sheet — nothing to do.
+    }
+  };
+
+  const onSaveName = async () => {
+    const name = nameDraft.trim();
+    if (!name || savingName) return;
+    setSavingName(true);
+    try {
+      await updateMyDisplayName(name);
+      setHousehold(householdId, name);
+      if (householdId) getMembers(householdId).then(setMembers);
+      setEditOpen(false);
+    } catch {
+      Alert.alert('Грешка', 'Името не можа да бъде записано. Опитай отново.');
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   const lastSyncLabel = useMemo(() => {
     const iso = lastDskSyncAt(transactions);
@@ -120,7 +154,12 @@ export default function ProfileScreen() {
             </Text>
           </View>
         </View>
-        <Pressable className="shrink-0 rounded-full border border-primary-container px-6 py-2 active:bg-primary-container/10">
+        <Pressable
+          onPress={() => {
+            setNameDraft(displayName);
+            setEditOpen(true);
+          }}
+          className="shrink-0 rounded-full border border-primary-container px-6 py-2 active:bg-primary-container/10">
           <Text className="font-inter text-label-md text-primary-container">
             Редакция
           </Text>
@@ -162,7 +201,7 @@ export default function ProfileScreen() {
             </View>
           );
         })}
-        <Pressable className="flex-row items-center gap-3 py-5 active:opacity-70">
+        <Pressable onPress={onInvite} className="flex-row items-center gap-3 py-5 active:opacity-70">
           <MaterialIcons name="person-add" size={20} color="#adc7ff" />
           <Text className="font-inter text-body-md text-primary-container">
             Покани член
@@ -188,6 +227,32 @@ export default function ProfileScreen() {
           <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
         </Pressable>
       </View>
+
+      <BottomSheet visible={editOpen} onClose={() => setEditOpen(false)}>
+        <View className="gap-lg px-6 pb-4 pt-2">
+          <Text className="font-jakarta-semibold text-headline-md text-on-surface">
+            Редакция на профила
+          </Text>
+          <FlatInput
+            value={nameDraft}
+            onChangeText={setNameDraft}
+            placeholder="Име"
+            autoCapitalize="words"
+          />
+          <SheetActions
+            actions={[
+              {
+                label: 'Запази',
+                onPress: onSaveName,
+                variant: 'filled',
+                loading: savingName,
+                disabled: nameDraft.trim() === '',
+              },
+              { label: 'Отказ', onPress: () => setEditOpen(false), variant: 'ghost' },
+            ]}
+          />
+        </View>
+      </BottomSheet>
 
       <BottomSheet visible={layoutSheetOpen} onClose={() => setLayoutSheetOpen(false)}>
         <Text className="px-6 pb-1 pt-1 font-jakarta-semibold text-headline-md text-on-surface">

@@ -70,6 +70,21 @@ export async function joinHouseholdByCode(
   return { householdId: householdId as string };
 }
 
+/** Update the current user's display name (membership row + auth metadata mirror). */
+export async function updateMyDisplayName(name: string): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('not signed in');
+  const { error } = await supabase
+    .from('household_members')
+    .update({ display_name: name })
+    .eq('user_id', user.id);
+  if (error) throw error;
+  // Best-effort: bootstrap falls back to auth metadata, keep it in sync.
+  await supabase.auth.updateUser({ data: { display_name: name } });
+}
+
 /** All members of a household, oldest first. */
 export async function getMembers(householdId: string): Promise<HouseholdMember[]> {
   const { data, error } = await supabase
