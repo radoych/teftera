@@ -1,4 +1,5 @@
 // features/budgets/notify.ts — the ONLY module that touches expo-notifications.
+// (Anomaly alerts import the generic sender from here too, preserving that invariant.)
 //
 // expo-notifications is loaded lazily (not a top-level import): in Expo Go
 // (SDK 53+) the module throws during evaluation because notification support was
@@ -27,7 +28,8 @@ export async function ensureNotificationPermission(): Promise<boolean> {
   }
 }
 
-export async function sendBudgetNotification(input: { title: string; body: string }): Promise<void> {
+/** Fire an immediate local notification (permission-aware, never throws). */
+export async function sendLocalNotification(input: { title: string; body: string }): Promise<void> {
   try {
     const granted = await ensureNotificationPermission();
     if (!granted) return;
@@ -37,6 +39,10 @@ export async function sendBudgetNotification(input: { title: string; body: strin
       trigger: null, // immediate
     });
   } catch (err) {
-    if (__DEV__) console.warn('[budgets] notify failed', err);
+    if (__DEV__) console.warn('[notify] failed', err);
   }
+}
+
+export async function sendBudgetNotification(input: { title: string; body: string }): Promise<void> {
+  await sendLocalNotification(input);
 }

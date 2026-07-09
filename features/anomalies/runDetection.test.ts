@@ -29,35 +29,57 @@ function input(amountCents: number): RunDetectionInput {
   };
 }
 
+function deps() {
+  return {
+    flagTransaction: jest.fn(async (_id: string) => {}),
+    insertAnomaly: jest.fn(async (_input: NewAnomaly) => {}),
+    notify: jest.fn(async (_input: { title: string; body: string }) => {}),
+  };
+}
+
 describe('runDetection', () => {
   it('flags and records an anomaly for an outlier', async () => {
-    const flagTransaction = jest.fn(async (_id: string) => {});
-    const insertAnomaly = jest.fn(async (_input: NewAnomaly) => {});
-    await runDetection(input(5000), { flagTransaction, insertAnomaly });
-    expect(flagTransaction).toHaveBeenCalledWith('new');
-    expect(insertAnomaly).toHaveBeenCalledTimes(1);
-    const arg = insertAnomaly.mock.calls[0]![0];
+    const d = deps();
+    await runDetection(input(5000), d);
+    expect(d.flagTransaction).toHaveBeenCalledWith('new');
+    expect(d.insertAnomaly).toHaveBeenCalledTimes(1);
+    const arg = d.insertAnomaly.mock.calls[0]![0];
     expect(arg.transactionId).toBe('new');
     expect(arg.householdId).toBe('h');
     expect(typeof arg.reason).toBe('string');
   });
 
   it('persists nothing for a normal amount', async () => {
-    const flagTransaction = jest.fn(async (_id: string) => {});
-    const insertAnomaly = jest.fn(async (_input: NewAnomaly) => {});
-    await runDetection(input(1000), { flagTransaction, insertAnomaly });
-    expect(flagTransaction).not.toHaveBeenCalled();
-    expect(insertAnomaly).not.toHaveBeenCalled();
+    const d = deps();
+    await runDetection(input(1000), d);
+    expect(d.flagTransaction).not.toHaveBeenCalled();
+    expect(d.insertAnomaly).not.toHaveBeenCalled();
   });
 
   it('swallows a persist error (never rejects)', async () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    const flagTransaction = jest.fn(async (_id: string) => {
+    const d = deps();
+    d.flagTransaction.mockImplementation(async () => {
       throw new Error('db down');
     });
-    const insertAnomaly = jest.fn(async (_input: NewAnomaly) => {});
-    await expect(runDetection(input(5000), { flagTransaction, insertAnomaly })).resolves.toBeUndefined();
-    expect(insertAnomaly).not.toHaveBeenCalled();
+    await expect(runDetection(input(5000), d)).resolves.toBeUndefined();
+    expect(d.insertAnomaly).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  it('notifies on a flagged save when alerts are enabled', async () => {
+    const d = deps();
+    await runDetection({ ...input(5000), merchant: 'Kaufland', alertsEnabled: true }, d);
+    expect(d.notify).toHaveBeenCalledTimes(1);
+    const arg = d.notify.mock.calls[0]![0];
+    expect(arg.title).toBe('Необичайна транзакция');
+    expect(arg.body).toContain('Kaufland');
+  });
+
+  it('does not notify when alerts are disabled or unset', async () => {
+    const d = deps();
+    await runDetection({ ...input(5000), merchant: 'Kaufland', alertsEnabled: false }, d);
+    await runDetection(input(5000), d);
+    expect(d.notify).not.toHaveBeenCalled();
   });
 });

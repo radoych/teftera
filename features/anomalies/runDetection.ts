@@ -1,4 +1,6 @@
+import { sendLocalNotification } from '@/features/budgets/notify';
 import type { Transaction } from '@/features/transactions/types';
+import { formatCurrency } from '@/lib/formatCurrency';
 import { evaluate, historyForCategory } from './detect';
 import { flagTransaction, insertAnomaly } from './api';
 
@@ -8,14 +10,23 @@ export interface RunDetectionInput {
   amountCents: number;
   categoryId: string | null;
   transactions: Transaction[];
+  /** Merchant for the notification body; omit to skip notifying. */
+  merchant?: string;
+  /** Fire a local notification when flagged (user preference). Default off. */
+  alertsEnabled?: boolean;
 }
 
 export interface RunDetectionDeps {
   flagTransaction: typeof flagTransaction;
   insertAnomaly: typeof insertAnomaly;
+  notify: typeof sendLocalNotification;
 }
 
-const defaultDeps: RunDetectionDeps = { flagTransaction, insertAnomaly };
+const defaultDeps: RunDetectionDeps = {
+  flagTransaction,
+  insertAnomaly,
+  notify: sendLocalNotification,
+};
 
 /**
  * Score a just-saved transaction against its category history and persist a flag
@@ -37,6 +48,14 @@ export async function runDetection(
       reason: result.reason,
       score: result.score,
     });
+    if (input.alertsEnabled) {
+      await deps.notify({
+        title: 'Необичайна транзакция',
+        body: `${input.merchant ?? 'Транзакция'} — ${formatCurrency(
+          input.amountCents,
+        )} изглежда необичайно за категорията.`,
+      });
+    }
   } catch (err) {
     if (__DEV__) console.warn('[anomaly] detection failed', err);
   }

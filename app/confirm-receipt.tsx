@@ -154,6 +154,9 @@ export default function ConfirmReceiptScreen() {
         amountCents: parsed.data.amountCents,
         categoryId: resolvedCategoryId,
         transactions: useTransactionsStore.getState().transactions,
+        merchant: parsed.data.merchant,
+        alertsEnabled:
+          usePreferencesStore.getState().preferences.anomalyAlertsEnabled ?? true,
       });
       await runBudgetCheck({
         householdId,

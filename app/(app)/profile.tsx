@@ -87,7 +87,10 @@ export default function ProfileScreen() {
     void updatePreferences({ ...preferences, budgetAlertsEnabled: value });
   };
 
-  const [anomalyAlerts, setAnomalyAlerts] = useState(false);
+  const anomalyAlerts = preferences.anomalyAlertsEnabled ?? true;
+  const onAnomalyAlertsChange = (value: boolean) => {
+    void updatePreferences({ ...preferences, anomalyAlertsEnabled: value });
+  };
   const [layoutSheetOpen, setLayoutSheetOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -344,7 +347,7 @@ export default function ProfileScreen() {
           </Text>
           <Switch
             value={anomalyAlerts}
-            onValueChange={setAnomalyAlerts}
+            onValueChange={onAnomalyAlertsChange}
             trackColor={{ false: '#44474f', true: '#adc7ff' }}
             thumbColor={anomalyAlerts ? '#112f5e' : '#e3e2e6'}
           />
