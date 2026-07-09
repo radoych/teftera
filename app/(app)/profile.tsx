@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { HairlineDivider } from '@/components/HairlineDivider';
@@ -15,6 +16,8 @@ import {
 } from '@/features/household/api';
 import { formatInviteCode } from '@/features/household/inviteCode';
 import { SectionLayoutEditor } from '@/features/preferences/components/SectionLayoutEditor';
+import { lastDskSyncAt, formatLastSync } from '@/features/transactions/lastSync';
+import { useTransactionsStore } from '@/features/transactions/store';
 import { usePreferencesStore } from '@/features/preferences/store';
 import { upsertMyPreferences } from '@/features/preferences/api';
 import type { UserPreferences } from '@/features/preferences/types';
@@ -34,6 +37,7 @@ export default function ProfileScreen() {
   const displayName = useAuthStore((s) => s.displayName) ?? '';
   const preferences = usePreferencesStore((s) => s.preferences);
   const setPreferences = usePreferencesStore((s) => s.setPreferences);
+  const transactions = useTransactionsStore((s) => s.transactions);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [inviteCode, setInviteCode] = useState('');
 
@@ -81,6 +85,11 @@ export default function ProfileScreen() {
 
   const [anomalyAlerts, setAnomalyAlerts] = useState(false);
   const [layoutSheetOpen, setLayoutSheetOpen] = useState(false);
+
+  const lastSyncLabel = useMemo(() => {
+    const iso = lastDskSyncAt(transactions);
+    return iso === null ? null : formatLastSync(iso);
+  }, [transactions]);
 
   return (
     <Screen withTabBar>
@@ -223,7 +232,9 @@ export default function ProfileScreen() {
               <Text className="font-inter text-body-lg text-on-surface">DSK Bank</Text>
             </View>
             <Text className="mb-3 font-inter text-label-md text-on-surface-variant opacity-60">
-              Последна синхронизация: преди 2 часа
+              {lastSyncLabel !== null
+                ? `Последна синхронизация: ${lastSyncLabel}`
+                : 'Няма синхронизация досега'}
             </Text>
             <Pressable
               onPress={() => router.push('/import-dsk')}
@@ -294,7 +305,7 @@ export default function ProfileScreen() {
       </View>
 
       <Text className="mt-lg text-center font-inter text-label-md text-on-surface-variant opacity-30">
-        Teftera v1.0.0
+        {`Teftera v${Constants.expoConfig?.version ?? '—'}`}
       </Text>
     </Screen>
   );
