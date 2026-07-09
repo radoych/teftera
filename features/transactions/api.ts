@@ -18,11 +18,43 @@ export interface NewTransaction {
 export async function listCategories(householdId: string): Promise<CategoryLite[]> {
   const { data, error } = await supabase
     .from('categories')
-    .select('id, name, icon, color')
+    .select('id, name, icon, color, is_default')
     .eq('household_id', householdId)
     .order('name', { ascending: true });
   if (error) throw error;
   return (data ?? []) as CategoryLite[];
+}
+
+/** Create a household category. */
+export async function createCategory(input: {
+  householdId: string;
+  name: string;
+  icon: string;
+  color: string;
+}): Promise<void> {
+  const { error } = await supabase.from('categories').insert({
+    household_id: input.householdId,
+    name: input.name,
+    icon: input.icon,
+    color: input.color,
+    is_default: false,
+  });
+  if (error) throw error;
+}
+
+/** Rename / restyle a category. RLS scopes by household. */
+export async function updateCategory(
+  id: string,
+  patch: { name: string; icon: string; color: string },
+): Promise<void> {
+  const { error } = await supabase.from('categories').update(patch).eq('id', id);
+  if (error) throw error;
+}
+
+/** Delete a category. Its transactions survive: the FK is `on delete set null`. */
+export async function deleteCategory(id: string): Promise<void> {
+  const { error } = await supabase.from('categories').delete().eq('id', id);
+  if (error) throw error;
 }
 
 /** All transactions for a household, newest first. */

@@ -70,6 +70,7 @@ export default function RootLayout() {
         />
         <Stack.Screen name="transaction/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="import-dsk" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="categories" options={{ animation: 'slide_from_right' }} />
       </Stack>
       <OfflineBanner />
     </GestureHandlerRootView>

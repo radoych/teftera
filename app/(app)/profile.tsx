@@ -357,7 +357,9 @@ export default function ProfileScreen() {
       {/* General */}
       <View className="mt-lg">
         <SectionLabel className="mb-md">Общи</SectionLabel>
-        <Pressable className="flex-row items-center justify-between py-5 active:bg-white/5">
+        <Pressable
+          onPress={() => router.push('/categories')}
+          className="flex-row items-center justify-between py-5 active:bg-white/5">
           <Text className="font-inter text-body-lg text-on-surface">
             Управление на категории
           </Text>

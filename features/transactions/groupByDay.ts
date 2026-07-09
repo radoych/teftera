@@ -7,6 +7,7 @@ export interface CategoryLite {
   name: string;
   icon: string;
   color: string;
+  is_default?: boolean;
 }
 
 const FALLBACK_ICON: MaterialIconName = 'category';
