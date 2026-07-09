@@ -221,11 +221,6 @@ export default function ProfileScreen() {
           <View className="flex-1">
             <View className="mb-1 flex-row items-center justify-between">
               <Text className="font-inter text-body-lg text-on-surface">DSK Bank</Text>
-              <View className="rounded-sm bg-secondary-fixed/10 px-2 py-0.5">
-                <Text className="font-inter-semibold text-[10px] text-secondary-fixed">
-                  СВЪРЗАНА
-                </Text>
-              </View>
             </View>
             <Text className="mb-3 font-inter text-label-md text-on-surface-variant opacity-60">
               Последна синхронизация: преди 2 часа
@@ -233,9 +228,9 @@ export default function ProfileScreen() {
             <Pressable
               onPress={() => router.push('/import-dsk')}
               className="flex-row items-center gap-1 active:opacity-70">
-              <MaterialIcons name="upload-file" size={16} color="#adc7ff" />
+              <MaterialIcons name="sync" size={16} color="#adc7ff" />
               <Text className="font-inter text-label-md text-primary-container">
-                Импортирай от CSV
+                Синхронизирай
               </Text>
             </Pressable>
           </View>

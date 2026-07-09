@@ -26,6 +26,8 @@ interface FloatingActionBarProps {
   actions: FloatingAction[];
   /** When true, the bar rises above the keyboard while one is open (e.g. forms). */
   liftWithKeyboard?: boolean;
+  /** Smaller pills, no enlargement — for screens whose long labels overflow. */
+  compact?: boolean;
 }
 
 /**
@@ -37,6 +39,7 @@ interface FloatingActionBarProps {
 export function FloatingActionBar({
   actions,
   liftWithKeyboard = false,
+  compact = false,
 }: FloatingActionBarProps) {
   const insets = useSafeAreaInsets();
   const keyboard = useKeyboardHeight();
@@ -53,14 +56,14 @@ export function FloatingActionBar({
         onPress={inactive ? undefined : action.onPress}
         disabled={inactive}
         accessibilityRole="button"
-        className={`h-12 flex-row items-center justify-center gap-2 rounded-full px-6 active:opacity-80 ${
+        className={`${compact ? 'h-10 px-4' : 'h-12 px-6'} flex-row items-center justify-center gap-2 rounded-full active:opacity-80 ${
           v.container
         } ${inactive ? 'opacity-60' : ''}`}>
         {action.loading ? (
           <ActivityIndicator color={v.content} />
         ) : (
           <>
-            <MaterialIcons name={action.icon} size={18} color={v.content} />
+            <MaterialIcons name={action.icon} size={compact ? 16 : 18} color={v.content} />
             <Text
               style={{ color: v.content }}
               className="font-inter-semibold text-label-md uppercase">
@@ -76,7 +79,9 @@ export function FloatingActionBar({
     <View
       style={{ position: 'absolute', left: 0, right: 0, bottom, pointerEvents: 'box-none' }}
       className="items-center px-md">
-      <View style={{ transform: [{ scale: 1.1 }] }} className="flex-row justify-center gap-md">
+      <View
+        style={{ transform: [{ scale: compact ? 1 : 1.1 }] }}
+        className={`flex-row justify-center ${compact ? 'gap-sm' : 'gap-md'}`}>
         {buttons}
       </View>
     </View>

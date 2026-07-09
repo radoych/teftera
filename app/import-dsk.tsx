@@ -234,6 +234,7 @@ export default function ImportDskScreen() {
       <Screen
         floatingAboveTabBar={
           <FloatingActionBar
+            compact
             actions={[{ label: 'Готово', icon: 'check', variant: 'filled', onPress: () => router.back() }]}
           />
         }>
@@ -276,6 +277,7 @@ export default function ImportDskScreen() {
         floatingAboveTabBar={
           busy ? undefined : (
             <FloatingActionBar
+              compact
               actions={[
                 {
                   label: needsReconnect ? 'Повторно свързване с ДСК' : 'Синхронизирай с ДСК',
@@ -324,6 +326,7 @@ export default function ImportDskScreen() {
     <Screen
       floatingAboveTabBar={
         <FloatingActionBar
+          compact
           actions={[
             {
               label: source === 'bank' ? 'Синхронизирай пак' : 'Друг файл',
