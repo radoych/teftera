@@ -8,7 +8,7 @@
  * Fixed conversion rate lives in formatCurrency.ts.
  */
 import { bgnToEurCents } from '@/lib/formatCurrency';
-import { guessCategory } from '@/lib/categories';
+import { BRAND_RULES, guessCategory } from '@/lib/categories';
 
 /** A mapped transaction row from the DSK table (raw, pre-normalization). */
 export interface DskParsedRow {
@@ -138,21 +138,6 @@ export function parseDskCsv(text: string): DskParsedRow[] {
   }
   return out;
 }
-
-/** Known card-acceptor / merchant names → clean display brand. First match wins. */
-const BRAND_RULES: ReadonlyArray<readonly [RegExp, string]> = [
-  [/\bLIDL\b/i, 'Lidl'],
-  [/\bKAUFLAND\b/i, 'Kaufland'],
-  [/\bBILLA\b/i, 'Billa'],
-  [/\bFANTASTICO\b/i, 'Fantastico'],
-  [/SOPHARMACY/i, 'SOpharmacy'],
-  [/\bDM\b/i, 'dm'],
-  [/ANTHROPIC/i, 'Anthropic'],
-  [/\bOMV\b/i, 'OMV'],
-  [/\bSHELL\b/i, 'Shell'],
-  [/NETFLIX/i, 'Netflix'],
-  [/SPOTIFY/i, 'Spotify'],
-];
 
 const COUNTRY_RE = /^(BGR|USA|GBR|DEU|FRA|ITA|ESP|NLD|AUT|GRC|TUR|ROU|CHE|BEL)$/;
 const ADDRESS_RE = /^(BUL|BULL|UL|UL\.|BLVD|ET|AP|NO|KV|ZH)$/i;
