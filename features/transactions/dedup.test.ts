@@ -23,7 +23,13 @@ function tx(partial: Partial<Transaction>): Transaction {
   };
 }
 
-const candidate = (date: string, amountEurCents: number, merchant: string) => ({
+const candidate = (
+  date: string,
+  amountEurCents: number,
+  merchant: string,
+  kind: 'expense' | 'income' = 'expense',
+) => ({
+  kind,
   date,
   amountEurCents,
   merchant,
@@ -31,13 +37,27 @@ const candidate = (date: string, amountEurCents: number, merchant: string) => ({
 
 describe('importKey', () => {
   it('is case- and whitespace-insensitive on merchant', () => {
-    expect(importKey('2026-02-04', 3766, '  Lidl ')).toBe(importKey('2026-02-04', 3766, 'lidl'));
+    expect(importKey('expense', '2026-02-04', 3766, '  Lidl ')).toBe(
+      importKey('expense', '2026-02-04', 3766, 'lidl'),
+    );
   });
 
   it('differs when date, amount, or merchant differ', () => {
-    expect(importKey('2026-02-04', 3766, 'Lidl')).not.toBe(importKey('2026-02-05', 3766, 'Lidl'));
-    expect(importKey('2026-02-04', 3766, 'Lidl')).not.toBe(importKey('2026-02-04', 100, 'Lidl'));
-    expect(importKey('2026-02-04', 3766, 'Lidl')).not.toBe(importKey('2026-02-04', 3766, 'dm'));
+    expect(importKey('expense', '2026-02-04', 3766, 'Lidl')).not.toBe(
+      importKey('expense', '2026-02-05', 3766, 'Lidl'),
+    );
+    expect(importKey('expense', '2026-02-04', 3766, 'Lidl')).not.toBe(
+      importKey('expense', '2026-02-04', 100, 'Lidl'),
+    );
+    expect(importKey('expense', '2026-02-04', 3766, 'Lidl')).not.toBe(
+      importKey('expense', '2026-02-04', 3766, 'dm'),
+    );
+  });
+
+  it('same date/amount/merchant but different kind do NOT collide', () => {
+    expect(importKey('expense', '2026-07-01', 1000, 'ACME')).not.toBe(
+      importKey('income', '2026-07-01', 1000, 'ACME'),
+    );
   });
 });
 

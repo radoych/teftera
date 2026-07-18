@@ -150,7 +150,7 @@ describe('normalizeDskRow', () => {
       credit: '',
       time: '21:48',
       currency: 'EUR',
-    });
+    })!;
     expect(out.kind).toBe('expense');
     expect(out.amountEurCents).toBe(3766);
     expect(out.originalAmountCents).toBeNull();
@@ -176,7 +176,7 @@ describe('normalizeDskRow', () => {
       credit: '506,22',
       time: '09:30',
       currency: 'EUR',
-    });
+    })!;
     expect(out.kind).toBe('income');
     expect(out.amountEurCents).toBe(50622);
   });
@@ -190,12 +190,20 @@ describe('normalizeDskRow', () => {
       credit: '',
       time: '14:05',
       currency: 'BGN',
-    });
+    })!;
     expect(out.kind).toBe('expense');
     expect(out.originalCurrency).toBe('BGN');
     expect(out.originalAmountCents).toBe(195583);
     expect(out.amountEurCents).toBe(100000); // 1955.83 BGN = 1000.00 EUR
     expect(out.date).toBe('2024-02-01');
     expect(out.categoryGuess).toBe('Groceries');
+  });
+
+  it('drops rows with zero amount (both debit and credit empty)', () => {
+    const row = {
+      date: '01.07.2026', merchantRaw: 'INFO ROW', description: '', debit: '', credit: '',
+      time: '', currency: 'EUR' as const,
+    };
+    expect(normalizeDskRow(row)).toBeNull();
   });
 });

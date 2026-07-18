@@ -101,6 +101,31 @@ describe('normalizeEbTransaction', () => {
     });
     expect(r?.amountEurCents).toBe(750);
   });
+
+  it('income (CRDT) merchant comes from debtor, not creditor', () => {
+    const r = normalizeEbTransaction({
+      transaction_amount: { amount: '1500.00', currency: 'EUR' },
+      credit_debit_indicator: 'CRDT',
+      status: 'BOOK',
+      booking_date: '2026-07-01',
+      creditor: { name: 'MY OWN ACCOUNT' },
+      debtor: { name: 'ACME LTD' },
+      remittance_information: null,
+    });
+    expect(r?.merchant).toBe('ACME LTD');
+  });
+
+  it('drops zero-amount EB rows', () => {
+    const r = normalizeEbTransaction({
+      transaction_amount: { amount: '0.00', currency: 'EUR' },
+      credit_debit_indicator: 'DBIT',
+      status: 'BOOK',
+      booking_date: '2026-07-01',
+      creditor: { name: 'X' },
+      remittance_information: null,
+    });
+    expect(r).toBeNull();
+  });
 });
 
 describe('fetchBankTransactions error mapping', () => {

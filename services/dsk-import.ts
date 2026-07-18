@@ -189,10 +189,11 @@ export function occurredAtISO(isoDate: string, time: string): string {
  * expenses, credit rows are income. BGN statements convert to EUR and retain
  * the original; EUR statements store cents directly.
  */
-export function normalizeDskRow(row: DskParsedRow): NormalizedTransaction {
+export function normalizeDskRow(row: DskParsedRow): NormalizedTransaction | null {
   const isIncome = row.debit === '' && row.credit !== '';
   const amountStr = isIncome ? row.credit : row.debit;
   const rawCents = Math.abs(parseBgAmount(amountStr));
+  if (rawCents === 0) return null; // info rows / both columns empty — nothing to import
   const merchant = normalizeMerchant(row.merchantRaw);
   const isoDate = parseDskDate(row.date);
   const base = {

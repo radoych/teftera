@@ -3,14 +3,20 @@ import type { Transaction } from './types';
 
 /** Minimal shape a candidate needs for dedup. */
 export interface DedupCandidate {
+  kind: 'expense' | 'income';
   date: string; // YYYY-MM-DD
   amountEurCents: number;
   merchant: string;
 }
 
-/** Normalized dedup key: date + EUR cents + case/space-insensitive merchant. */
-export function importKey(date: string, amountEurCents: number, merchant: string): string {
-  return `${date}|${amountEurCents}|${merchant.trim().toLowerCase()}`;
+/** Normalized dedup key: kind + date + EUR cents + case/space-insensitive merchant. */
+export function importKey(
+  kind: 'expense' | 'income',
+  date: string,
+  amountEurCents: number,
+  merchant: string,
+): string {
+  return `${kind}|${date}|${amountEurCents}|${merchant.trim().toLowerCase()}`;
 }
 
 /**
@@ -24,12 +30,12 @@ export function dedupeImport<T extends DedupCandidate>(
   existing: Transaction[],
 ): { toImport: T[]; duplicates: T[] } {
   const existingKeys = new Set(
-    existing.map((t) => importKey(t.date, t.amount_eur, t.merchant)),
+    existing.map((t) => importKey(t.kind, t.date, t.amount_eur, t.merchant)),
   );
   const toImport: T[] = [];
   const duplicates: T[] = [];
   for (const c of candidates) {
-    if (existingKeys.has(importKey(c.date, c.amountEurCents, c.merchant))) {
+    if (existingKeys.has(importKey(c.kind, c.date, c.amountEurCents, c.merchant))) {
       duplicates.push(c);
     } else {
       toImport.push(c);

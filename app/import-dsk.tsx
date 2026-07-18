@@ -122,7 +122,9 @@ export default function ImportDskScreen() {
       setStatus('reading');
       const text = await file.text();
 
-      const rows = parseDskCsv(text).map(normalizeDskRow);
+      const rows = parseDskCsv(text)
+        .map(normalizeDskRow)
+        .filter((r): r is NormalizedTransaction => r !== null);
       const expenses = rows.filter((r) => r.kind === 'expense');
       const income = rows.filter((r) => r.kind === 'income');
       const { toImport, duplicates } = dedupeImport(expenses, transactions);

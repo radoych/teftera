@@ -24,6 +24,7 @@ export interface EbTransaction {
   booking_date?: string | null; // YYYY-MM-DD
   value_date?: string | null; // YYYY-MM-DD
   creditor?: { name?: string | null } | null;
+  debtor?: { name?: string | null } | null;
   remittance_information?: string[] | null;
 }
 
@@ -38,6 +39,7 @@ export function normalizeEbTransaction(tx: EbTransaction): NormalizedTransaction
   const value = Number(tx.transaction_amount?.amount);
   if (!Number.isFinite(value)) return null;
   const rawCents = Math.round(Math.abs(value) * 100);
+  if (rawCents === 0) return null;
 
   const currency = tx.transaction_amount.currency;
   if (currency !== 'EUR' && currency !== 'BGN') return null;
@@ -45,12 +47,14 @@ export function normalizeEbTransaction(tx: EbTransaction): NormalizedTransaction
   const date = tx.booking_date || tx.value_date || null;
   if (!date) return null;
 
+  const isIncome = tx.credit_debit_indicator === 'CRDT';
+  const counterparty = isIncome ? tx.debtor?.name : tx.creditor?.name;
   const rawMerchant =
-    tx.creditor?.name?.trim() || (tx.remittance_information ?? []).join(' ').trim();
+    counterparty?.trim() || (tx.remittance_information ?? []).join(' ').trim();
   const merchant = normalizeMerchant(rawMerchant);
 
   const base = {
-    kind: (tx.credit_debit_indicator === 'CRDT' ? 'income' : 'expense') as 'income' | 'expense',
+    kind: (isIncome ? 'income' : 'expense') as 'income' | 'expense',
     merchant,
     categoryGuess: guessCategory(merchant),
     date,
