@@ -213,6 +213,7 @@ export default function ImportDskScreen() {
         date: r.date,
         occurredAt: r.occurredAt,
         note: null,
+        kind: r.kind,
       }));
       await bulkInsertImported(rows);
       await refreshTransactions(householdId);

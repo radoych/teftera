@@ -52,7 +52,13 @@ export default function CategoriesScreen() {
     setSaving(true);
     try {
       if (draft.id === null) {
-        await createCategory({ householdId, name, icon: draft.icon, color: draft.color });
+        await createCategory({
+          householdId,
+          name,
+          icon: draft.icon,
+          color: draft.color,
+          kind: 'expense',
+        });
       } else {
         await updateCategory(draft.id, { name, icon: draft.icon, color: draft.color });
       }

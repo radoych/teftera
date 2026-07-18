@@ -144,6 +144,7 @@ export default function ManualEntryScreen() {
           categoryId: resolvedCategoryId,
           date: parsed.data.date,
           note: parsed.data.note,
+          kind: existing?.kind ?? 'expense',
         });
       } else {
         const { id: newId } = await createTransaction({

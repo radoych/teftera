@@ -10,8 +10,8 @@ import type { CategoryLite } from './groupByDay';
 import type { Transaction } from './types';
 
 const cats: CategoryLite[] = [
-  { id: 'c1', name: 'Groceries', icon: 'shopping-basket', color: '#adc7ff' },
-  { id: 'c2', name: 'Beverages', icon: 'local-cafe', color: '#d8e3ff' },
+  { id: 'c1', name: 'Groceries', icon: 'shopping-basket', color: '#adc7ff', kind: 'expense' },
+  { id: 'c2', name: 'Beverages', icon: 'local-cafe', color: '#d8e3ff', kind: 'expense' },
 ];
 
 function tx(p: Partial<Transaction>): Transaction {
@@ -27,6 +27,7 @@ function tx(p: Partial<Transaction>): Transaction {
     date: '2026-06-22',
     note: null,
     source: 'manual',
+    kind: 'expense',
     receipt_id: null,
     is_flagged: false,
     occurred_at: null,

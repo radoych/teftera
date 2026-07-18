@@ -13,6 +13,7 @@ export interface Transaction {
   date: string; // YYYY-MM-DD
   note: string | null;
   source: 'manual' | 'dsk_import' | 'receipt';
+  kind: 'expense' | 'income';
   receipt_id: string | null;
   is_flagged: boolean;
   occurred_at: string | null; // actual transaction time; falls back to created_at for display

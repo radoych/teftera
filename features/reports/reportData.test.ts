@@ -4,15 +4,15 @@ import type { Transaction } from '@/features/transactions/types';
 import type { CategoryLite } from '@/features/transactions/groupByDay';
 
 const cats: CategoryLite[] = [
-  { id: 'groc', name: 'Хранителни', icon: 'shopping-cart', color: '#adc7ff' },
-  { id: 'fun', name: 'Забавления', icon: 'movie', color: '#ffdfa7' },
+  { id: 'groc', name: 'Хранителни', icon: 'shopping-cart', color: '#adc7ff', kind: 'expense' },
+  { id: 'fun', name: 'Забавления', icon: 'movie', color: '#ffdfa7', kind: 'expense' },
 ];
 
 function tx(over: Partial<Transaction>): Transaction {
   return {
     id: 't', household_id: 'h', user_id: 'u', amount_eur: 1000,
     original_amount: null, original_currency: null, merchant: 'Kaufland',
-    category_id: 'groc', date: '2026-06-10', note: null, source: 'manual',
+    category_id: 'groc', date: '2026-06-10', note: null, source: 'manual', kind: 'expense',
     receipt_id: null, is_flagged: false, occurred_at: null, created_at: '2026-06-10T00:00:00Z',
     ...over,
   };

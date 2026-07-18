@@ -14,6 +14,7 @@ function tx(partial: Partial<Transaction>): Transaction {
     date: '2026-02-01',
     note: null,
     source: 'manual',
+    kind: 'expense',
     receipt_id: null,
     is_flagged: false,
     occurred_at: null,

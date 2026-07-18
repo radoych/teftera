@@ -11,7 +11,7 @@ function tx(amount: number): Transaction {
   return {
     id: Math.random().toString(), household_id: 'h1', user_id: 'u1', amount_eur: amount,
     original_amount: null, original_currency: null, merchant: 'Kaufland', category_id: 'groceries',
-    date: '2026-06-10', note: null, source: 'manual', receipt_id: null, is_flagged: false,
+    date: '2026-06-10', note: null, source: 'manual', kind: 'expense', receipt_id: null, is_flagged: false,
     occurred_at: null, created_at: '2026-06-10T00:00:00Z',
   };
 }

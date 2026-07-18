@@ -8,6 +8,7 @@ export interface CategoryLite {
   icon: string;
   color: string;
   is_default?: boolean;
+  kind: 'expense' | 'income';
 }
 
 const FALLBACK_ICON: MaterialIconName = 'category';
