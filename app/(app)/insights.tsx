@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -37,6 +38,7 @@ import {
   pctChange,
   spendingByCategory,
 } from '@/features/transactions/dashboard';
+import { expensesOnly, incomeOnly } from '@/features/transactions/kind';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { useBudgetsStore } from '@/features/budgets/store';
@@ -70,7 +72,8 @@ export default function InsightsScreen() {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const now = useMemo(() => new Date(), []);
+  const [now, setNow] = useState(() => new Date());
+  useFocusEffect(useCallback(() => setNow(new Date()), []));
   const monthOptions = useMemo(() => monthPickerOptions(now), [now]);
 
   const onPickMonth = async (opt: MonthOption) => {
@@ -104,13 +107,25 @@ export default function InsightsScreen() {
     }
   };
 
+  const expenseTxs = useMemo(() => expensesOnly(transactions), [transactions]);
   const personFiltered = useMemo(
-    () => filterByUser(transactions, scope === 'me' ? userId : null),
-    [transactions, scope, userId],
+    () => filterByUser(expenseTxs, scope === 'me' ? userId : null),
+    [expenseTxs, scope, userId],
   );
   const rangeFiltered = useMemo(
     () => filterByRange(personFiltered, range, now),
     [personFiltered, range, now],
+  );
+  const incomeRangeTotal = useMemo(
+    () =>
+      sumCents(
+        filterByRange(
+          filterByUser(incomeOnly(transactions), scope === 'me' ? userId : null),
+          range,
+          now,
+        ),
+      ),
+    [transactions, scope, userId, range, now],
   );
 
   const heroTotal = useMemo(() => sumCents(rangeFiltered), [rangeFiltered]);
@@ -158,8 +173,8 @@ export default function InsightsScreen() {
     [categories],
   );
   const currentMonthHouseholdSpend = useMemo(
-    () => spendingByCategory(transactions, categories),
-    [transactions, categories],
+    () => spendingByCategory(expenseTxs, categories),
+    [expenseTxs, categories],
   );
   const budgetSection = useMemo(
     () =>
@@ -187,17 +202,18 @@ export default function InsightsScreen() {
       transactions.length > 0 &&
       useSummaryStore.getState().status === 'idle'
     ) {
-      void refreshSummary(filterByUser(transactions, null), categories);
+      void refreshSummary(expensesOnly(transactions), categories);
     }
   }, [loaded, transactions, categories]);
 
   const onRefresh = async () => {
+    setNow(new Date());
     if (!householdId) return;
     setRefreshing(true);
     try {
       await refreshTransactions(householdId);
       const s = useTransactionsStore.getState();
-      await refreshSummary(filterByUser(s.transactions, null), s.categories);
+      await refreshSummary(expensesOnly(s.transactions), s.categories);
     } finally {
       setRefreshing(false);
     }
@@ -276,6 +292,11 @@ export default function InsightsScreen() {
               {formatCurrency(heroTotal)}
             </Text>
             <Comparison pct={comparison} label={comparisonLabel} />
+            {incomeRangeTotal > 0 ? (
+              <Text className="font-inter-semibold text-body-md text-tertiary">
+                Приходи: +{formatCurrency(incomeRangeTotal)}
+              </Text>
+            ) : null}
           </View>
 
           <AiSummaryCard status={summaryStatus} text={summaryText} />
