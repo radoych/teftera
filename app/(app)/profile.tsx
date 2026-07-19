@@ -2,15 +2,13 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, Share, Switch, Text, View } from 'react-native';
-import { BottomSheet } from '@/components/BottomSheet';
-import { FlatInput } from '@/components/FlatInput';
+import { Pressable, Share, Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
-import { SheetActions } from '@/components/SheetActions';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { signOut } from '@/features/auth/api';
 import { useAuthStore } from '@/features/auth/store';
+import { BankConnectionSection } from '@/features/transactions/components/BankConnectionSection';
 import {
   getMembers,
   getMyHousehold,
@@ -18,7 +16,10 @@ import {
   type HouseholdMember,
 } from '@/features/household/api';
 import { formatInviteCode } from '@/features/household/inviteCode';
-import { SectionLayoutEditor } from '@/features/preferences/components/SectionLayoutEditor';
+import { MembersSection } from '@/features/household/components/MembersSection';
+import { ProfileHeader } from '@/features/household/components/ProfileHeader';
+import { LayoutSheet } from '@/features/preferences/components/LayoutSheet';
+import { PreferenceToggles } from '@/features/preferences/components/PreferenceToggles';
 import { lastDskSyncAt, formatLastSync } from '@/features/transactions/lastSync';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { usePreferencesStore } from '@/features/preferences/store';
@@ -46,14 +47,6 @@ export default function ProfileScreen() {
   const [inviteCode, setInviteCode] = useState('');
 
   const email = session?.user.email ?? '';
-  const initials =
-    displayName
-      .split(' ')
-      .map((p) => p[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join('')
-      .toUpperCase() || '?';
 
   useEffect(() => {
     if (!householdId) return;
@@ -92,9 +85,6 @@ export default function ProfileScreen() {
     void updatePreferences({ ...preferences, anomalyAlertsEnabled: value });
   };
   const [layoutSheetOpen, setLayoutSheetOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [nameDraft, setNameDraft] = useState('');
-  const [savingName, setSavingName] = useState(false);
 
   const onInvite = async () => {
     if (!inviteCode) return;
@@ -107,20 +97,10 @@ export default function ProfileScreen() {
     }
   };
 
-  const onSaveName = async () => {
-    const name = nameDraft.trim();
-    if (!name || savingName) return;
-    setSavingName(true);
-    try {
-      await updateMyDisplayName(name);
-      setHousehold(householdId, name);
-      if (householdId) getMembers(householdId).then(setMembers);
-      setEditOpen(false);
-    } catch {
-      Alert.alert('Грешка', 'Името не можа да бъде записано. Опитай отново.');
-    } finally {
-      setSavingName(false);
-    }
+  const onSaveName = async (name: string) => {
+    await updateMyDisplayName(name);
+    setHousehold(householdId, name);
+    if (householdId) getMembers(householdId).then(setMembers);
   };
 
   const lastSyncLabel = useMemo(() => {
@@ -134,88 +114,9 @@ export default function ProfileScreen() {
         Профил
       </Text>
 
-      {/* User header */}
-      <View className="flex-row items-center justify-between gap-md">
-        <View className="flex-1 flex-row items-center gap-md">
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-primary-container">
-            <Text className="font-jakarta-semibold text-headline-md text-on-primary">
-              {initials}
-            </Text>
-          </View>
-          <View className="flex-1">
-            <Text
-              numberOfLines={1}
-              className="font-jakarta-semibold text-headline-md text-on-surface"
-            >
-              {displayName}
-            </Text>
-            <Text
-              numberOfLines={1}
-              className="font-inter text-body-md text-on-surface-variant opacity-70"
-            >
-              {email}
-            </Text>
-          </View>
-        </View>
-        <Pressable
-          onPress={() => {
-            setNameDraft(displayName);
-            setEditOpen(true);
-          }}
-          className="shrink-0 rounded-full border border-primary-container px-6 py-2 active:bg-primary-container/10">
-          <Text className="font-inter text-label-md text-primary-container">
-            Редакция
-          </Text>
-        </Pressable>
-      </View>
+      <ProfileHeader displayName={displayName} email={email} onSaveName={onSaveName} />
 
-      {/* Household */}
-      <View className="mt-xl">
-        <SectionLabel className="mb-md">Домакинство</SectionLabel>
-        {members.map((m) => {
-          const memberInitials =
-            m.displayName
-              .split(' ')
-              .map((p) => p[0])
-              .filter(Boolean)
-              .slice(0, 2)
-              .join('')
-              .toUpperCase() || '?';
-          const memberName = m.displayName || 'Без име';
-          const roleLabel = m.role === 'owner' ? 'Собственик' : 'Член';
-          return (
-            <View key={m.userId}>
-              <View className="flex-row items-center gap-md py-md">
-                <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container">
-                  <Text className="font-inter-semibold text-body-md text-on-surface-variant">
-                    {memberInitials}
-                  </Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="font-inter text-body-lg text-on-surface">
-                    {memberName}
-                  </Text>
-                  <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
-                    {roleLabel}
-                  </Text>
-                </View>
-              </View>
-              <HairlineDivider />
-            </View>
-          );
-        })}
-        <Pressable onPress={onInvite} className="flex-row items-center gap-3 py-5 active:opacity-70">
-          <MaterialIcons name="person-add" size={20} color="#adc7ff" />
-          <Text className="font-inter text-body-md text-primary-container">
-            Покани член
-          </Text>
-        </Pressable>
-        {inviteCode ? (
-          <Text className="mt-2 font-inter-semibold text-body-lg tracking-widest text-primary">
-            {formatInviteCode(inviteCode)}
-          </Text>
-        ) : null}
-      </View>
+      <MembersSection members={members} inviteCode={inviteCode} onInvite={onInvite} />
 
       {/* Home layout */}
       <View className="mt-lg">
@@ -231,48 +132,12 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
 
-      <BottomSheet visible={editOpen} onClose={() => setEditOpen(false)}>
-        <View className="gap-lg px-6 pb-4 pt-2">
-          <Text className="font-jakarta-semibold text-headline-md text-on-surface">
-            Редакция на профила
-          </Text>
-          <FlatInput
-            value={nameDraft}
-            onChangeText={setNameDraft}
-            placeholder="Име"
-            autoCapitalize="words"
-          />
-          <SheetActions
-            actions={[
-              {
-                label: 'Запази',
-                onPress: onSaveName,
-                variant: 'filled',
-                loading: savingName,
-                disabled: nameDraft.trim() === '',
-              },
-              { label: 'Отказ', onPress: () => setEditOpen(false), variant: 'ghost' },
-            ]}
-          />
-        </View>
-      </BottomSheet>
-
-      <BottomSheet visible={layoutSheetOpen} onClose={() => setLayoutSheetOpen(false)}>
-        <Text className="px-6 pb-1 pt-1 font-jakarta-semibold text-headline-md text-on-surface">
-          Подреждане на началния екран
-        </Text>
-        <Text className="px-6 pb-3 font-inter text-body-md text-on-surface-variant opacity-70">
-          Влачи дръжката, за да подредиш. Превключи Вкл/Изкл, за да скриеш.
-        </Text>
-        {/* Extra bottom padding lifts the rows above the Android home-gesture
-            zone so the last item can be dragged up without triggering it. */}
-        <View className="px-6 pb-16">
-          <SectionLayoutEditor
-            sections={preferences.dashboardSections}
-            onChange={onLayoutChange}
-          />
-        </View>
-      </BottomSheet>
+      <LayoutSheet
+        visible={layoutSheetOpen}
+        sections={preferences.dashboardSections}
+        onChange={onLayoutChange}
+        onClose={() => setLayoutSheetOpen(false)}
+      />
 
       {/* Preferences */}
       <View className="mt-lg">
@@ -288,71 +153,14 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Bank connection */}
-      <View className="mt-lg">
-        <SectionLabel className="mb-md">Банкова връзка</SectionLabel>
-        <View className="flex-row items-start gap-md py-md">
-          <View className="h-10 w-10 items-center justify-center rounded-lg bg-surface-container">
-            <MaterialIcons name="account-balance" size={20} color="#adc7ff" />
-          </View>
-          <View className="flex-1">
-            <View className="mb-1 flex-row items-center justify-between">
-              <Text className="font-inter text-body-lg text-on-surface">DSK Bank</Text>
-            </View>
-            <Text className="mb-3 font-inter text-label-md text-on-surface-variant opacity-60">
-              {lastSyncLabel !== null
-                ? `Последна синхронизация: ${lastSyncLabel}`
-                : 'Няма синхронизация досега'}
-            </Text>
-            <Pressable
-              onPress={() => router.push('/import-dsk')}
-              className="flex-row items-center gap-1 active:opacity-70">
-              <MaterialIcons name="sync" size={16} color="#adc7ff" />
-              <Text className="font-inter text-label-md text-primary-container">
-                Синхронизирай
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
+      <BankConnectionSection lastSyncLabel={lastSyncLabel} />
 
-      {/* Notifications */}
-      <View className="mt-lg">
-        <SectionLabel className="mb-md">Известия</SectionLabel>
-        <Pressable
-          onPress={() => router.push('/budgets')}
-          className="flex-row items-center justify-between py-md active:bg-white/5"
-        >
-          <Text className="font-inter text-body-lg text-on-surface">
-            Управление на бюджети
-          </Text>
-          <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
-        </Pressable>
-        <HairlineDivider />
-        <View className="flex-row items-center justify-between py-3">
-          <Text className="font-inter text-body-lg text-on-surface">
-            Бюджетни сигнали
-          </Text>
-          <Switch
-            value={budgetAlerts}
-            onValueChange={onBudgetAlertsChange}
-            trackColor={{ false: '#44474f', true: '#adc7ff' }}
-            thumbColor={budgetAlerts ? '#112f5e' : '#e3e2e6'}
-          />
-        </View>
-        <HairlineDivider />
-        <View className="flex-row items-center justify-between py-3">
-          <Text className="font-inter text-body-lg text-on-surface">
-            Сигнали за аномалии
-          </Text>
-          <Switch
-            value={anomalyAlerts}
-            onValueChange={onAnomalyAlertsChange}
-            trackColor={{ false: '#44474f', true: '#adc7ff' }}
-            thumbColor={anomalyAlerts ? '#112f5e' : '#e3e2e6'}
-          />
-        </View>
-      </View>
+      <PreferenceToggles
+        budgetAlerts={budgetAlerts}
+        anomalyAlerts={anomalyAlerts}
+        onBudgetAlertsChange={onBudgetAlertsChange}
+        onAnomalyAlertsChange={onAnomalyAlertsChange}
+      />
 
       {/* General */}
       <View className="mt-lg">
