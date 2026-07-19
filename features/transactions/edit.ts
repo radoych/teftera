@@ -7,6 +7,7 @@ export interface ManualEntryFormValues {
   note: string; // '' when none
   date: string; // YYYY-MM-DD
   categoryId: string | null;
+  kind: 'expense' | 'income';
 }
 
 /**
@@ -21,6 +22,7 @@ export function transactionToFormValues(tx: Transaction): ManualEntryFormValues 
     note: tx.note ?? '',
     date: tx.date,
     categoryId: tx.category_id,
+    kind: tx.kind,
   };
 }
 

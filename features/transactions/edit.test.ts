@@ -14,8 +14,12 @@ describe('transactionToFormValues', () => {
   it('formats cents as a comma-decimal major string and passes fields through', () => {
     expect(transactionToFormValues(tx({}))).toEqual({
       amount: '12,50', merchant: 'Billa', note: 'lunch',
-      date: '2026-06-22', categoryId: 'c1',
+      date: '2026-06-22', categoryId: 'c1', kind: 'expense',
     });
+  });
+
+  it('passes an income kind through', () => {
+    expect(transactionToFormValues(tx({ kind: 'income' })).kind).toBe('income');
   });
 
   it('maps a null note to an empty string', () => {
