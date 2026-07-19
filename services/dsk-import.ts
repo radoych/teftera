@@ -34,10 +34,11 @@ export interface NormalizedTransaction {
 
 /** Parse a Bulgarian decimal string ("1 234,56") into integer minor units. */
 export function parseBgAmount(raw: string): number {
+  // DSK always formats comma-decimal ("1 234,56"). A dot here is a thousands
+  // separator; do NOT reuse this parser for dot-decimal sources.
   const cleaned = raw
-    .replace(/ /g, '')
     .replace(/\s/g, '')
-    .replace(/\./g, '') // thousands separator (if dot used)
+    .replace(/\./g, '')
     .replace(',', '.');
   const value = Number(cleaned);
   return Number.isFinite(value) ? Math.round(value * 100) : 0;
@@ -176,7 +177,10 @@ export function normalizeMerchant(raw: string): string {
  */
 export function occurredAtISO(isoDate: string, time: string): string {
   const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
-  if (!dm) return isoDate;
+  if (!dm) {
+    const parsed = new Date(isoDate);
+    return Number.isNaN(parsed.getTime()) ? isoDate : parsed.toISOString();
+  }
   const tm = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
   const [, y, mo, d] = dm;
   const hh = tm ? Number(tm[1]) : 0;

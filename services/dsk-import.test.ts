@@ -138,6 +138,13 @@ describe('occurredAtISO', () => {
     expect(d.getHours()).toBe(0);
     expect(d.getMinutes()).toBe(0);
   });
+
+  it('occurredAtISO with a non-ISO date still returns a parseable timestamp when possible', () => {
+    // regex fails → falls back to Date parsing → midnight ISO
+    const out = occurredAtISO('2026-7-1', '10:30');
+    expect(Number.isNaN(new Date(out).getTime())).toBe(false);
+    expect(out.endsWith('Z')).toBe(true);
+  });
 });
 
 describe('normalizeDskRow', () => {

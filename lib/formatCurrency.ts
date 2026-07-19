@@ -19,6 +19,24 @@ const SYMBOLS: Record<SupportedCurrency, string> = {
   BGN: 'лв',
 };
 
+let bgNumberFormat: Intl.NumberFormat | null | undefined; // undefined = not tried, null = unavailable
+
+function getBgNumberFormat(): Intl.NumberFormat | null {
+  if (bgNumberFormat === undefined) {
+    try {
+      bgNumberFormat = new Intl.NumberFormat('bg-BG', {
+        style: 'decimal',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    } catch {
+      // Runtime lacks full Intl (older Hermes builds).
+      bgNumberFormat = null;
+    }
+  }
+  return bgNumberFormat;
+}
+
 /**
  * Format integer minor units (cents/stotinki) as a localized currency string.
  * Locale is bg-BG; default currency EUR.
@@ -41,17 +59,8 @@ export function formatCurrency(
   const sign = major < 0 ? '-' : '';
   const abs = Math.abs(major);
 
-  let number: string;
-  try {
-    number = new Intl.NumberFormat('bg-BG', {
-      style: 'decimal',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(abs);
-  } catch {
-    // Fallback if the runtime lacks full Intl (older Hermes builds).
-    number = abs.toFixed(2).replace('.', ',');
-  }
+  const fmt = getBgNumberFormat();
+  const number = fmt ? fmt.format(abs) : abs.toFixed(2).replace('.', ',');
 
   return `${sign}${SYMBOLS[currency]}${number}`;
 }
