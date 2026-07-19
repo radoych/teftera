@@ -13,6 +13,7 @@ import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
 import { loadBudgets, useBudgetsStore } from '@/features/budgets/store';
 import { usePreferencesStore } from '@/features/preferences/store';
 import { useTransactionsStore } from '@/features/transactions/store';
+import { expenseCategories } from '@/features/transactions/kind';
 import type { MaterialIconName } from '@/lib/categories';
 import { firstOfMonth } from '@/lib/dates';
 
@@ -31,7 +32,8 @@ function Header() {
 
 export default function BudgetsScreen() {
   const householdId = useAuthStore((s) => s.householdId);
-  const categories = useTransactionsStore((s) => s.categories);
+  const allCategories = useTransactionsStore((s) => s.categories);
+  const categories = useMemo(() => expenseCategories(allCategories), [allCategories]);
   const rows = useBudgetsStore((s) => s.rows);
   const loaded = useBudgetsStore((s) => s.loaded);
   const preferences = usePreferencesStore((s) => s.preferences);

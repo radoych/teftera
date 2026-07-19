@@ -2,6 +2,7 @@
 import type { Transaction } from '@/features/transactions/types';
 import type { CategoryLite } from '@/features/transactions/groupByDay';
 import { spendingByCategory } from '@/features/transactions/dashboard';
+import { expensesOnly } from '@/features/transactions/kind';
 import { firstOfMonth } from '@/lib/dates';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { resolveBudgetsForMonth } from './resolve';
@@ -42,7 +43,7 @@ export async function runBudgetCheck(
     const now = input.now ?? new Date();
     const month = firstOfMonth(now);
     const resolved = resolveBudgetsForMonth(input.budgets, month);
-    const spend = spendingByCategory(input.transactions, input.categories, now);
+    const spend = spendingByCategory(expensesOnly(input.transactions), input.categories, now);
     const rows = budgetProgress(resolved, spend);
     const row = rows.find((r) => r.categoryId === input.savedCategoryId);
     if (!row) return;

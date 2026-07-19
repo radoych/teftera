@@ -6,6 +6,7 @@ const data: ReportData = {
   monthLabel: 'Юни 2026 г.',
   monthISO: '2026-06',
   totalCents: 4000,
+  incomeTotalCents: 0,
   pctVsPrevMonth: 100,
   categories: [
     { name: 'Хранителни', color: '#adc7ff', totalCents: 3000, share: 0.75 },

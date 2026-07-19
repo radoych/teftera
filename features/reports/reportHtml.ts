@@ -84,6 +84,11 @@ export function buildReportHtml(data: ReportData, logoDataUri: string): string {
          .join('')}`
     : '';
 
+  const incomeLine =
+    data.incomeTotalCents > 0
+      ? `<div class="pct" style="color:#ffdfa7">Приходи: +${formatCurrency(data.incomeTotalCents)}</div>`
+      : '';
+
   const summaryBlock = data.aiSummary
     ? `<div class="summary"><div class="label">AI обобщение</div><p>${esc(data.aiSummary)}</p></div>`
     : '';
@@ -129,6 +134,7 @@ export function buildReportHtml(data: ReportData, logoDataUri: string): string {
   <div class="month">${esc(data.monthLabel)}</div>
   <div class="total">${formatCurrency(data.totalCents)}</div>
   ${pctLine(data.pctVsPrevMonth)}
+  ${incomeLine}
   ${summaryBlock}
   <hr />
   <div class="label">Разходи по категория</div>

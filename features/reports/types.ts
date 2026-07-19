@@ -38,6 +38,7 @@ export interface ReportData {
   monthLabel: string; // "Юни 2026 г."
   monthISO: string; // "2026-06"
   totalCents: number;
+  incomeTotalCents: number;
   pctVsPrevMonth: number | null;
   categories: ReportCategory[];
   trend: ReportTrendMonth[];

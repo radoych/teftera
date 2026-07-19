@@ -72,6 +72,24 @@ describe('buildReportData', () => {
   });
 });
 
+describe('income exclusion', () => {
+  it('income is excluded from spend sections and reported as incomeTotalCents', () => {
+    const incomeMerchantName = 'Salary Inc';
+    const input: BuildReportInput = {
+      ...base,
+      transactions: [
+        tx({ id: 'exp', amount_eur: 1000, category_id: 'groc', merchant: 'Kaufland', date: '2026-06-05' }),
+        tx({ id: 'inc', amount_eur: 5000, category_id: null, merchant: incomeMerchantName, date: '2026-06-06', kind: 'income' }),
+      ],
+      month: new Date(2026, 5, 15), // June 2026
+    };
+    const data = buildReportData(input);
+    expect(data.totalCents).toBe(1000);
+    expect(data.incomeTotalCents).toBe(5000);
+    expect(data.merchants.every((m) => m.merchant !== incomeMerchantName)).toBe(true);
+  });
+});
+
 describe('monthPickerOptions', () => {
   it('returns the last 12 months, current first', () => {
     const opts = monthPickerOptions(new Date(2026, 6, 1));

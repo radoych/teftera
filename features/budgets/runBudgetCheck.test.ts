@@ -7,11 +7,11 @@ const NOW = new Date('2026-06-15T12:00:00Z');
 const cats = [{ id: 'groceries', name: 'Хранителни стоки', icon: 'shopping-cart', color: '#fff' }] as any;
 const budget: BudgetRow = { id: 'b1', household_id: 'h1', category_id: 'groceries', amount_eur: 20000, month: '2026-06-01' };
 
-function tx(amount: number): Transaction {
+function tx(amount: number, kind: 'expense' | 'income' = 'expense'): Transaction {
   return {
     id: Math.random().toString(), household_id: 'h1', user_id: 'u1', amount_eur: amount,
     original_amount: null, original_currency: null, merchant: 'Kaufland', category_id: 'groceries',
-    date: '2026-06-10', note: null, source: 'manual', kind: 'expense', receipt_id: null, is_flagged: false,
+    date: '2026-06-10', note: null, source: 'manual', kind, receipt_id: null, is_flagged: false,
     occurred_at: null, created_at: '2026-06-10T00:00:00Z',
   };
 }
@@ -34,6 +34,12 @@ describe('runBudgetCheck', () => {
   it('does nothing when below 80%', async () => {
     const deps = makeDeps();
     await runBudgetCheck({ householdId: 'h1', savedCategoryId: 'groceries', alertsEnabled: true, transactions: [tx(15999)], categories: cats, budgets: [budget], now: NOW }, deps);
+    expect(deps.notify).not.toHaveBeenCalled();
+  });
+
+  it('does not count an income transaction toward the budget threshold', async () => {
+    const deps = makeDeps(false);
+    await runBudgetCheck({ householdId: 'h1', savedCategoryId: 'groceries', alertsEnabled: true, transactions: [tx(16000, 'income')], categories: cats, budgets: [budget], now: NOW }, deps);
     expect(deps.notify).not.toHaveBeenCalled();
   });
 
