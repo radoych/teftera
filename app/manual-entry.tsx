@@ -4,11 +4,11 @@ import { useMemo, useState } from 'react';
 import {
   Alert,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatDigitsAsAmount } from '@/components/AmountInput';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
@@ -229,7 +229,10 @@ export default function ManualEntryScreen() {
           <View className="w-8" />
         </View>
 
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 96 }}>
+        <KeyboardAwareScrollView
+          bottomOffset={140}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 96 }}>
           {/* Expense / income toggle */}
           <View className="mb-md mt-6 items-center">
             <SegmentedToggle<TxKind>
@@ -293,7 +296,7 @@ export default function ManualEntryScreen() {
               className="font-inter text-body-lg text-on-surface"
             />
           </FieldRow>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
 
       <FloatingActionBar

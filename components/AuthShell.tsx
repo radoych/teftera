@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, View } from 'react-native';
+import { View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from './BackgroundGlow';
 
@@ -9,9 +10,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
     <View className="flex-1 bg-background">
       <BackgroundGlow />
       <SafeAreaView className="flex-1">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
           <View className="flex-1 px-xl">{children}</View>
         </KeyboardAvoidingView>
       </SafeAreaView>
