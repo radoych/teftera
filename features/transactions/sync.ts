@@ -4,6 +4,7 @@ import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/features/auth/store';
 import { listOpenAnomalies } from '@/features/anomalies/api';
 import { loadBudgets, useBudgetsStore } from '@/features/budgets/store';
+import { trailingDebounce } from '@/lib/debounce';
 import { listCategories, listTransactions } from './api';
 import { subscribeToTransactions } from './realtimeChannel';
 import { useTransactionsStore } from './store';
@@ -50,10 +51,12 @@ export function useTransactionsSync(): void {
     store.setLoading(true);
     load();
 
-    const unsubscribe = subscribeToTransactions(supabase, householdId, () => load());
+    const reload = trailingDebounce(() => void load(), 400);
+    const unsubscribe = subscribeToTransactions(supabase, householdId, () => reload.call());
 
     return () => {
       active = false;
+      reload.cancel();
       unsubscribe();
     };
   }, [householdId]);

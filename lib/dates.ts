@@ -73,3 +73,8 @@ export const MONTH_ABBR_BG = [
 export function monthAbbr(monthIndex: number): string {
   return MONTH_ABBR_BG[((monthIndex % 12) + 12) % 12]!;
 }
+
+/** First day of the month `months-1` months before `now` — start of a `months`-month window including the current month. */
+export function windowStartISO(months: number, now: Date = new Date()): string {
+  return toISODate(new Date(now.getFullYear(), now.getMonth() - (months - 1), 1));
+}

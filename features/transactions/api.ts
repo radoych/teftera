@@ -1,5 +1,6 @@
 // features/transactions/api.ts — the ONLY module that reads/writes transactions.
 import { supabase } from '@/services/supabase';
+import { windowStartISO } from '@/lib/dates';
 import type { CategoryLite } from './groupByDay';
 import type { Transaction } from './types';
 
@@ -7,6 +8,9 @@ import type { Transaction } from './types';
 const TRANSACTION_COLUMNS =
   'id, household_id, user_id, amount_eur, original_amount, original_currency, ' +
   'merchant, category_id, date, note, source, receipt_id, is_flagged, occurred_at, created_at, kind';
+
+/** Transactions are fetched for the last N months only (review #5). */
+export const TRANSACTION_WINDOW_MONTHS = 12;
 
 export interface NewTransaction {
   householdId: string;
@@ -71,6 +75,7 @@ export async function listTransactions(householdId: string): Promise<Transaction
     .from('transactions')
     .select(TRANSACTION_COLUMNS)
     .eq('household_id', householdId)
+    .gte('date', windowStartISO(TRANSACTION_WINDOW_MONTHS))
     .order('date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw error;

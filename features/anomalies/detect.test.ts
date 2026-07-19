@@ -25,6 +25,15 @@ describe('historyForCategory', () => {
     const txs = [tx({ id: 'a', category_id: null, amount_eur: 100 }), tx({ id: 'b', category_id: 'c1' })];
     expect(historyForCategory(txs, null, 'x')).toEqual([100]);
   });
+
+  it('history excludes income rows and rows older than sinceISO', () => {
+    const txs = [
+      tx({ id: '1', category_id: 'c', amount_eur: 100, date: '2026-07-01', kind: 'expense' }),
+      tx({ id: '2', category_id: 'c', amount_eur: 999, date: '2026-07-02', kind: 'income' }),
+      tx({ id: '3', category_id: 'c', amount_eur: 200, date: '2025-01-01', kind: 'expense' }),
+    ];
+    expect(historyForCategory(txs, 'c', 'x', '2026-01-01')).toEqual([100]);
+  });
 });
 
 describe('evaluate', () => {
