@@ -28,14 +28,41 @@ import {
 import { normalizeDskRow, parseDskCsv, type NormalizedTransaction } from '@/services/dsk-import';
 import { resolveCategoryId } from '@/lib/categories';
 import { useIsOnline } from '@/lib/useIsOnline';
+import { windowStartISO } from '@/lib/dates';
+import { TRANSACTION_WINDOW_MONTHS } from '@/features/transactions/api';
+import { expensesOnly, incomeOnly } from '@/features/transactions/kind';
+import type { Transaction } from '@/features/transactions/types';
 
 interface Preview {
-  toImport: NormalizedTransaction[];
+  newExpenses: NormalizedTransaction[];
+  newIncome: NormalizedTransaction[];
   duplicates: NormalizedTransaction[];
-  income: NormalizedTransaction[];
   fileName: string;
   source: 'csv' | 'bank';
-  truncated?: boolean;
+  truncated: boolean;
+  outOfWindow: boolean;
+}
+
+/** Partition freshly-parsed rows into new-expense / new-income / duplicate buckets, and flag
+ * rows the dedup window can't cover (older than the fetched-transaction window). */
+function buildPreview(
+  rows: NormalizedTransaction[],
+  existing: Transaction[],
+  fileName: string,
+  source: 'csv' | 'bank',
+  truncated: boolean,
+): Preview {
+  const windowStart = windowStartISO(TRANSACTION_WINDOW_MONTHS);
+  const { toImport, duplicates } = dedupeImport(rows, existing);
+  return {
+    newExpenses: expensesOnly(toImport),
+    newIncome: incomeOnly(toImport),
+    duplicates,
+    fileName,
+    source,
+    truncated,
+    outOfWindow: rows.some((r) => r.date < windowStart),
+  };
 }
 
 type Status = 'idle' | 'reading' | 'syncing' | 'ready' | 'importing' | 'done';
@@ -95,11 +122,8 @@ export default function ImportDskScreen() {
       const rows = parseDskCsv(text)
         .map(normalizeDskRow)
         .filter((r): r is NormalizedTransaction => r !== null);
-      const expenses = rows.filter((r) => r.kind === 'expense');
-      const income = rows.filter((r) => r.kind === 'income');
-      const { toImport, duplicates } = dedupeImport(expenses, transactions);
 
-      setPreview({ toImport, duplicates, income, fileName: file.name, source: 'csv' });
+      setPreview(buildPreview(rows, transactions, file.name, 'csv', false));
       setStatus('ready');
     } catch (err) {
       if (__DEV__) console.warn('[dsk-import] parse failed', err);
@@ -145,18 +169,8 @@ export default function ImportDskScreen() {
       const rows = ebTxs
         .map(normalizeEbTransaction)
         .filter((r): r is NonNullable<typeof r> => r !== null);
-      const expenses = rows.filter((r) => r.kind === 'expense');
-      const income = rows.filter((r) => r.kind === 'income');
-      const { toImport, duplicates } = dedupeImport(expenses, transactions);
 
-      setPreview({
-        toImport,
-        duplicates,
-        income,
-        fileName: 'Синхронизация с ДСК',
-        source: 'bank',
-        truncated,
-      });
+      setPreview(buildPreview(rows, transactions, 'Синхронизация с ДСК', 'bank', truncated));
       setStatus('ready');
     } catch (err) {
       if (__DEV__) console.warn('[bank-sync] failed', err);
@@ -173,8 +187,8 @@ export default function ImportDskScreen() {
   };
 
   const onImport = async () => {
-    if (!preview || preview.toImport.length === 0 || status === 'importing' || status === 'syncing')
-      return;
+    const total = preview ? preview.newExpenses.length + preview.newIncome.length : 0;
+    if (!preview || total === 0 || status === 'importing' || status === 'syncing') return;
     const { householdId, session } = useAuthStore.getState();
     if (!householdId) {
       Alert.alert('Грешка', 'Няма активно домакинство.');
@@ -182,25 +196,30 @@ export default function ImportDskScreen() {
     }
     setStatus('importing');
     try {
-      const rows: ImportedTransaction[] = preview.toImport.map((r) => ({
+      // Recompute dedupe against the FRESH store state — a partner may have inserted a
+      // transaction between building the preview and confirming the import.
+      const fresh = useTransactionsStore.getState().transactions;
+      const candidates = [...preview.newExpenses, ...preview.newIncome];
+      const { toImport } = dedupeImport(candidates, fresh);
+      const rows: ImportedTransaction[] = toImport.map((r) => ({
         householdId,
         userId: session?.user.id ?? null,
+        kind: r.kind,
         amountCents: r.amountEurCents,
         originalAmountCents: r.originalAmountCents,
         originalCurrency: r.originalCurrency,
         merchant: r.merchant,
-        categoryId: resolveCategoryId(r.merchant, categories),
+        categoryId: resolveCategoryId(r.merchant, categories, r.kind),
         date: r.date,
         occurredAt: r.occurredAt,
         note: null,
-        kind: r.kind,
       }));
       await bulkInsertImported(rows);
       await refreshTransactions(householdId);
       setSummary({
-        imported: preview.toImport.length,
-        duplicates: preview.duplicates.length,
-        other: preview.toImport.filter((r) => r.categoryGuess === 'Other').length,
+        imported: toImport.length,
+        duplicates: preview.duplicates.length + (candidates.length - toImport.length),
+        other: toImport.filter((r) => r.kind === 'expense' && r.categoryGuess === 'Other').length,
       });
       setStatus('done');
     } catch {
@@ -275,8 +294,9 @@ export default function ImportDskScreen() {
     );
   }
 
-  const { toImport, duplicates, income, fileName, source } = preview;
-  const nothing = toImport.length === 0;
+  const { newExpenses, newIncome, duplicates, fileName, source, truncated, outOfWindow } = preview;
+  const total = newExpenses.length + newIncome.length;
+  const nothing = total === 0;
 
   return (
     <Screen
@@ -293,7 +313,7 @@ export default function ImportDskScreen() {
               onPress: source === 'bank' ? syncFromBank : pickAndParse,
             },
             {
-              label: nothing ? 'Няма нови' : `Импортирай ${toImport.length}`,
+              label: nothing ? 'Няма нови' : `Импортирай ${total}`,
               icon: 'check',
               variant: 'filled',
               disabled: nothing || status === 'syncing' || !online,
@@ -309,11 +329,32 @@ export default function ImportDskScreen() {
         {fileName}
       </Text>
 
-      {toImport.length > 0 ? (
+      {outOfWindow ? (
+        <Text className="mb-md font-inter text-body-md text-tertiary">
+          {`Файлът съдържа редове отпреди ${TRANSACTION_WINDOW_MONTHS} месеца — те не се проверяват за дубликати.`}
+        </Text>
+      ) : null}
+
+      {truncated ? (
+        <Text className="mb-md font-inter text-body-md text-tertiary">
+          Банката върна непълен резултат — синхронизирай пак за останалите.
+        </Text>
+      ) : null}
+
+      {newExpenses.length > 0 ? (
         <View className="mb-lg">
-          <SectionLabel className="mb-sm">Нови ({toImport.length})</SectionLabel>
-          {toImport.map((r, i) => (
-            <ImportRow key={`new-${i}`} row={r} />
+          <SectionLabel className="mb-sm">Нови разходи ({newExpenses.length})</SectionLabel>
+          {newExpenses.map((r, i) => (
+            <ImportRow key={`exp-${i}`} row={r} />
+          ))}
+        </View>
+      ) : null}
+
+      {newIncome.length > 0 ? (
+        <View className="mb-lg">
+          <SectionLabel className="mb-sm">Приходи ({newIncome.length})</SectionLabel>
+          {newIncome.map((r, i) => (
+            <ImportRow key={`inc-${i}`} row={r} badge="приход" />
           ))}
         </View>
       ) : null}
@@ -323,15 +364,6 @@ export default function ImportDskScreen() {
           <SectionLabel className="mb-sm">Дубликати ({duplicates.length})</SectionLabel>
           {duplicates.map((r, i) => (
             <ImportRow key={`dup-${i}`} row={r} muted badge="дубликат" />
-          ))}
-        </View>
-      ) : null}
-
-      {income.length > 0 ? (
-        <View className="mb-lg">
-          <SectionLabel className="mb-sm">Приходи — пропуснати ({income.length})</SectionLabel>
-          {income.map((r, i) => (
-            <ImportRow key={`inc-${i}`} row={r} muted badge="приход" />
           ))}
         </View>
       ) : null}
