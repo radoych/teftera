@@ -1378,7 +1378,9 @@ Summary: `imported: toImport.length`, `duplicates: preview.duplicates.length + (
 - [ ] **Step 4:** `npx tsc --noEmit` + `npm test` → PASS. Manually sanity-check a CSV import in the dev app if available.
 - [ ] **Step 5:** Commit: `git commit -am "feat(income): income rows importable; dedupe recomputed at import; window/truncation notices"`
 
----### Task 14: View-layer income basics — history rows, dashboard math, detail screen
+---
+
+### Task 14: View-layer income basics — history rows, dashboard math, detail screen
 
 **Files:**
 - Modify: `features/transactions/groupByDay.ts`, `features/transactions/groupByDay.test.ts`, `app/(app)/index.tsx`, `app/transaction/[id].tsx`

@@ -24,7 +24,7 @@ function tx(over: Partial<Transaction>): Transaction {
   return {
     id: 'a', household_id: 'h', user_id: 'u', amount_eur: 3000, original_amount: null,
     original_currency: null, merchant: 'Kaufland', category_id: null, date: '2026-06-05',
-    note: null, source: 'manual', receipt_id: null, is_flagged: false, occurred_at: null,
+    note: null, source: 'manual', kind: 'expense', receipt_id: null, is_flagged: false, occurred_at: null,
     created_at: '2026-06-05T00:00:00Z', ...over,
   };
 }

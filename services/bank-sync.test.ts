@@ -101,6 +101,31 @@ describe('normalizeEbTransaction', () => {
     });
     expect(r?.amountEurCents).toBe(750);
   });
+
+  it('income (CRDT) merchant comes from debtor, not creditor', () => {
+    const r = normalizeEbTransaction({
+      transaction_amount: { amount: '1500.00', currency: 'EUR' },
+      credit_debit_indicator: 'CRDT',
+      status: 'BOOK',
+      booking_date: '2026-07-01',
+      creditor: { name: 'MY OWN ACCOUNT' },
+      debtor: { name: 'ACME LTD' },
+      remittance_information: null,
+    });
+    expect(r?.merchant).toBe('ACME LTD');
+  });
+
+  it('drops zero-amount EB rows', () => {
+    const r = normalizeEbTransaction({
+      transaction_amount: { amount: '0.00', currency: 'EUR' },
+      credit_debit_indicator: 'DBIT',
+      status: 'BOOK',
+      booking_date: '2026-07-01',
+      creditor: { name: 'X' },
+      remittance_information: null,
+    });
+    expect(r).toBeNull();
+  });
 });
 
 describe('fetchBankTransactions error mapping', () => {
@@ -136,7 +161,16 @@ describe('fetchBankTransactions error mapping', () => {
 
   it('returns the transactions array on 200', async () => {
     mockFetch(200, { transactions: [{ x: 1 }], validUntil: '2026-10-01T00:00:00Z' });
-    await expect(fetchBankTransactions()).resolves.toEqual([{ x: 1 }]);
+    await expect(fetchBankTransactions()).resolves.toEqual({
+      transactions: [{ x: 1 }],
+      truncated: false,
+    });
+  });
+
+  it('surfaces the truncated flag', async () => {
+    mockFetch(200, { transactions: [], truncated: true });
+    const r = await fetchBankTransactions();
+    expect(r.truncated).toBe(true);
   });
 
   it('sends the right URL, method, and auth headers', async () => {

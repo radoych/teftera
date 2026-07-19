@@ -1,23 +1,25 @@
 /**
  * Gemini chokepoint — the ONLY place LLM calls live (CLAUDE.md rule).
  *
- * Everything is isolated here so it can move to a Cloud Run service later
- * without touching screens. Every parse is wrapped in try/catch and falls back
- * to a null/`ok:false` result so the UI can route to the manual-edit screen.
+ * Gemini now runs server-side behind two Supabase Edge Functions
+ * (`gemini-extract`, `gemini-summary`) — this module is a thin client that
+ * calls them with the user's JWT. The API key never ships in the client
+ * bundle. Everything is still isolated here so it can move to a Cloud Run
+ * service later without touching screens. Every parse is wrapped in try/catch
+ * and falls back to a null/`ok:false` result so the UI can route to the
+ * manual-edit screen.
  */
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { isSupabaseConfigured, supabase } from '@/services/supabase';
 import { formatCurrency } from '@/lib/formatCurrency';
 
-// Receipt extraction model. Stable GA model: in testing it returned 0 errors
-// where `gemini-3-flash-preview` 503'd ("high demand") on ~3/4 of calls — the
-// preview tier is heavily throttled. `gemini-2.0-flash` free tier is limit:0 here.
-const MODEL = 'gemini-2.5-flash';
-// Transient errors are retried (see isRetryableGeminiError); a one-off 503 should
+/** Gemini now runs server-side; "configured" = Supabase reachable. */
+export const isGeminiConfigured = isSupabaseConfigured;
+
+const FUNCTIONS_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL ?? ''}/functions/v1`;
+// Transient errors are retried (see isRetryableStatus); a one-off 503 should
 // not drop the user to a blank manual form.
 const MAX_ATTEMPTS = 3;
-const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
-
-export const isGeminiConfigured = Boolean(apiKey);
+export const RETRY_BASE_MS = 500;
 
 /** A single parsed receipt line item (amounts in integer EUR cents). */
 export interface ReceiptLineItem {
@@ -48,11 +50,6 @@ export interface SummaryInput {
   topMerchant: { merchant: string; totalCents: number } | null;
 }
 
-const EXTRACTION_PROMPT = `You are a receipt parser. Extract the data from this receipt image.
-Return ONLY valid minified JSON (no markdown fences) with this exact shape:
-{"merchant": string, "date": "YYYY-MM-DD"|null, "total": number, "currency": "EUR"|"BGN", "items": [{"description": string, "amount": number}]}
-Amounts are decimal major units (e.g. 12.50). Use EUR unless the receipt is clearly in Bulgarian leva (лв/BGN).`;
-
 function toCents(major: unknown): number {
   const n = typeof major === 'number' ? major : Number(major);
   return Number.isFinite(n) ? Math.round(n * 100) : 0;
@@ -82,13 +79,28 @@ function normalize(raw: unknown): ReceiptExtraction {
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * True for transient Gemini/network errors that are worth retrying — an
- * overloaded model (503), rate limiting (429), other 5xx, or a network blip.
- * A JSON parse error is NOT retryable (the response arrived, just malformed).
+ * True for transient statuses worth retrying — rate limiting (429) or an
+ * upstream/server failure (5xx). 4xx statuses (bad request, unauthenticated,
+ * unparseable response) will not improve on retry.
  */
-export function isRetryableGeminiError(err: unknown): boolean {
-  const msg = String((err as { message?: string } | null)?.message ?? err);
-  return /\[(?:429|500|502|503|504)\b/.test(msg) || /fetch failed|network|ECONNRESET|ETIMEDOUT|timeout/i.test(msg);
+export function isRetryableStatus(status: number): boolean {
+  return status === 429 || (status >= 500 && status <= 504);
+}
+
+/** Calls one of the Gemini edge functions with the current session's JWT. */
+async function callGeminiFn(name: string, body: unknown): Promise<Response> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('not signed in');
+  return await fetch(`${FUNCTIONS_URL}/${name}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
 }
 
 /**
@@ -104,32 +116,32 @@ export async function extractReceipt(
     return { ok: false, reason: 'Gemini API key not configured.' };
   }
 
-  const client = new GoogleGenerativeAI(apiKey);
-  const model = client.getGenerativeModel({ model: MODEL });
   let lastErr: unknown = null;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    if (attempt > 0) await delay(500 * 2 ** (attempt - 1)); // 500ms, 1000ms
+    if (attempt > 0) await delay(RETRY_BASE_MS * 2 ** (attempt - 1)); // 500ms, 1000ms
     try {
-      const response = await model.generateContent([
-        EXTRACTION_PROMPT,
-        { inlineData: { data: base64Image, mimeType } },
-      ]);
-
-      const text = response.response.text().trim();
-      const jsonText = text.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-
-      const parsed: unknown = JSON.parse(jsonText);
-      if (__DEV__) {
-        console.log('[gemini] receipt extraction raw:', jsonText);
+      const res = await callGeminiFn('gemini-extract', { image: base64Image, mimeType });
+      if (!res.ok) {
+        lastErr = new Error(`gemini-extract ${res.status}`);
+        if (!isRetryableStatus(res.status)) break; // 4xx — won't improve on retry
+        if (__DEV__) {
+          console.warn(`[gemini] attempt ${attempt + 1}/${MAX_ATTEMPTS} transient failure, retrying`);
+        }
+        continue;
       }
-      return { ok: true, data: normalize(parsed), raw: parsed };
+
+      const { json: raw } = (await res.json()) as { json: unknown };
+      const data = normalize(raw);
+      // Review #3: a zero/negative total means the model failed to read the
+      // receipt — fall back to manual entry rather than saving a €0 row.
+      if (data.totalCents <= 0) {
+        return { ok: false, reason: 'Could not read the receipt automatically.' };
+      }
+      if (__DEV__) console.log('[gemini] receipt extraction:', JSON.stringify(raw));
+      return { ok: true, data, raw };
     } catch (err) {
-      lastErr = err;
-      if (!isRetryableGeminiError(err)) break; // malformed JSON etc. won't improve on retry
-      if (__DEV__) {
-        console.warn(`[gemini] attempt ${attempt + 1}/${MAX_ATTEMPTS} transient failure, retrying`);
-      }
+      lastErr = err; // network — retry
     }
   }
 
@@ -172,25 +184,29 @@ export function buildSummaryPrompt(input: SummaryInput): string {
 export async function generateInsightsSummary(input: SummaryInput): Promise<string | null> {
   if (!isGeminiConfigured) return null;
 
-  const client = new GoogleGenerativeAI(apiKey);
-  const model = client.getGenerativeModel({ model: MODEL });
   const prompt = buildSummaryPrompt(input);
   let lastErr: unknown = null;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    if (attempt > 0) await delay(500 * 2 ** (attempt - 1));
+    if (attempt > 0) await delay(RETRY_BASE_MS * 2 ** (attempt - 1));
     try {
-      const response = await model.generateContent(prompt);
-      const text = response.response.text().trim();
-      if (text.length === 0 || text.length > SUMMARY_MAX_CHARS) return null;
-      if (__DEV__) console.log('[gemini] insights summary:', text);
-      return text;
+      const res = await callGeminiFn('gemini-summary', { prompt });
+      if (!res.ok) {
+        lastErr = new Error(`gemini-summary ${res.status}`);
+        if (!isRetryableStatus(res.status)) break;
+        if (__DEV__) {
+          console.warn(`[gemini] summary attempt ${attempt + 1}/${MAX_ATTEMPTS} transient failure, retrying`);
+        }
+        continue;
+      }
+
+      const { text } = (await res.json()) as { text: string };
+      const trimmed = (text ?? '').trim();
+      if (trimmed.length === 0 || trimmed.length > SUMMARY_MAX_CHARS) return null;
+      if (__DEV__) console.log('[gemini] insights summary:', trimmed);
+      return trimmed;
     } catch (err) {
       lastErr = err;
-      if (!isRetryableGeminiError(err)) break;
-      if (__DEV__) {
-        console.warn(`[gemini] summary attempt ${attempt + 1}/${MAX_ATTEMPTS} transient failure, retrying`);
-      }
     }
   }
   if (__DEV__) console.warn('[gemini] summary failed, hiding card:', lastErr);

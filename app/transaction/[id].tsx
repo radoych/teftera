@@ -101,11 +101,12 @@ export default function TransactionDetailScreen() {
           {/* Hero */}
           <View className="items-center py-xl">
             <Text
-              className="font-jakarta-semibold text-on-surface"
+              className={`font-jakarta-semibold ${tx.kind === 'income' ? 'text-primary' : 'text-on-surface'}`}
               style={{ fontSize: 56, lineHeight: 64 }}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.5}>
+              {tx.kind === 'income' ? '+' : ''}
               {formatCurrency(tx.amount_eur)}
             </Text>
             <Text className="mt-sm font-jakarta-semibold text-headline-md text-on-surface">

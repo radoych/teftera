@@ -71,8 +71,9 @@ graph TD
 /scripts             Tooling (app-icon generator)
 ```
 
-All AI and bank logic sits behind `services/` modules so moving them to a server
-(planned Cloud Run FastAPI microservice) is a one-file change.
+All AI and bank logic sits behind `services/` modules. Gemini calls already run
+server-side (`supabase/functions/gemini-extract`/`gemini-summary`); the anomaly
+model is the remaining piece planned to move to a Cloud Run FastAPI microservice.
 
 ### Conventions
 
@@ -93,17 +94,19 @@ Client (`.env`, gitignored — `EXPO_PUBLIC_*` are embedded in the bundle at bui
 |---|---|
 | `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (publishable) key |
-| `EXPO_PUBLIC_GEMINI_API_KEY` | Google AI Studio key (dev only — moves server-side with the Cloud Run phase) |
+| ~~`EXPO_PUBLIC_GEMINI_API_KEY`~~ | **No longer used by the app.** Gemini calls moved server-side (see below) — the client never reads a Gemini key. Safe to delete from `.env` once the rebuilt dev client is verified working. |
 
 Edge Function secrets (`npx supabase secrets set`, never in the repo):
 `EB_APP_ID` · `EB_PRIVATE_KEY` (base64-encoded PEM) · `EB_ASPSP_NAME` ·
-`EB_ASPSP_COUNTRY` · `EB_REDIRECT_URL` · `EB_STATE_SECRET`
+`EB_ASPSP_COUNTRY` · `EB_REDIRECT_URL` · `EB_STATE_SECRET` · `GEMINI_API_KEY`
+(read by `supabase/functions/gemini-extract` and `gemini-summary` — the API key
+now lives only server-side, never in the client bundle)
 
 ## Getting started
 
 ```bash
 npm install
-cp .env.example .env          # fill in the three EXPO_PUBLIC_* values
+cp .env.example .env          # fill in the two EXPO_PUBLIC_* values
 npx supabase db push          # apply migrations to your Supabase project
 npx expo start                # dev server (Expo Go or a dev client)
 ```
@@ -114,6 +117,13 @@ Device builds go through EAS:
 eas build --profile preview --platform android   # internal-distribution APK
 eas build --profile preview --platform ios       # dev-signed, sideload via AltStore
 ```
+
+> **Native dependency added — rebuild your dev client once.** This branch adds
+> `react-native-keyboard-controller` (keyboard-aware scrolling on manual entry /
+> confirm receipt), which is a native module — a plain Expo Go / JS-only reload
+> is not enough. Run `eas build --profile preview --platform android` (or
+> `npx expo run:android` for a local build) once before running this build,
+> otherwise the app fails to load with a native-module-not-found error.
 
 ## Testing
 

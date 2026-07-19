@@ -7,7 +7,7 @@ function tx(p: Partial<Transaction> & { date: string }): Transaction {
   return {
     id: `${p.date}-${p.merchant ?? ''}`, household_id: 'h', user_id: 'u', amount_eur: 100,
     original_amount: null, original_currency: null, merchant: 'M',
-    category_id: null, note: null, source: 'manual', receipt_id: null,
+    category_id: null, note: null, source: 'manual', kind: 'expense', receipt_id: null,
     is_flagged: false, occurred_at: null, created_at: `${p.date}T00:00:00.000Z`,
     ...p,
   };

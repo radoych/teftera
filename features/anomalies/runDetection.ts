@@ -1,6 +1,7 @@
 import { sendLocalNotification } from '@/features/budgets/notify';
 import type { Transaction } from '@/features/transactions/types';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { windowStartISO } from '@/lib/dates';
 import { evaluate, historyForCategory } from './detect';
 import { flagTransaction, insertAnomaly } from './api';
 
@@ -38,7 +39,12 @@ export async function runDetection(
   deps: RunDetectionDeps = defaultDeps,
 ): Promise<void> {
   try {
-    const history = historyForCategory(input.transactions, input.categoryId, input.transactionId);
+    const history = historyForCategory(
+      input.transactions,
+      input.categoryId,
+      input.transactionId,
+      windowStartISO(6),
+    );
     const result = evaluate(input.amountCents, history);
     if (!result.isAnomaly || result.reason === null) return;
     await deps.flagTransaction(input.transactionId);

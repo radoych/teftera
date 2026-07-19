@@ -4,6 +4,7 @@ import { pctChange, categoryBreakdown } from '@/features/transactions/dashboard'
 import { filterByDateBounds } from '@/features/insights/range';
 import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
 import { budgetProgress } from '@/features/budgets/progress';
+import { expensesOnly, incomeOnly } from '@/features/transactions/kind';
 import { toISODate, firstOfMonth } from '@/lib/dates';
 import type { BuildReportInput, MonthOption, ReportData } from './types';
 
@@ -27,15 +28,16 @@ export function buildReportData(input: BuildReportInput): ReportData {
   const { month } = input;
   const { startISO, endISO } = monthBounds(month);
   const monthTxs = filterByDateBounds(input.transactions, startISO, endISO);
+  const expenseMonthTxs = expensesOnly(monthTxs);
 
-  const totalCents = sumCents(monthTxs);
+  const totalCents = sumCents(expenseMonthTxs);
 
   const prev = new Date(month.getFullYear(), month.getMonth() - 1, 1);
   const pb = monthBounds(prev);
-  const prevTotal = sumCents(filterByDateBounds(input.transactions, pb.startISO, pb.endISO));
+  const prevTotal = sumCents(expensesOnly(filterByDateBounds(input.transactions, pb.startISO, pb.endISO)));
   const pctVsPrevMonth = pctChange(totalCents, prevTotal);
 
-  const catRows = categoryBreakdown(monthTxs, input.categories);
+  const catRows = categoryBreakdown(expenseMonthTxs, input.categories);
   const categories = catRows.map((c) => ({
     name: c.name,
     color: c.color,
@@ -43,13 +45,15 @@ export function buildReportData(input: BuildReportInput): ReportData {
     share: totalCents > 0 ? c.totalCents / totalCents : 0,
   }));
 
-  const trend = monthlyTrend(input.transactions, 6, month).map((t) => ({
+  const trend = monthlyTrend(expensesOnly(input.transactions), 6, month).map((t) => ({
     label: t.label,
     fraction: t.fraction,
     isCurrent: t.isCurrent,
   }));
 
-  const merchants = topMerchants(monthTxs, 5);
+  const merchants = topMerchants(expenseMonthTxs, 5);
+
+  const incomeTotalCents = sumCents(incomeOnly(monthTxs));
 
   const resolved = resolveBudgetsForMonth(input.budgetRows, firstOfMonth(month));
   const spend = catRows.map((c) => ({ id: c.id, totalCents: c.totalCents }));
@@ -66,7 +70,7 @@ export function buildReportData(input: BuildReportInput): ReportData {
     };
   });
 
-  const monthTxById = new Map(monthTxs.map((t) => [t.id, t]));
+  const monthTxById = new Map(expenseMonthTxs.map((t) => [t.id, t]));
   const anomalies = input.openAnomalies
     .filter((a) => monthTxById.has(a.transactionId))
     .map((a) => {
@@ -88,6 +92,7 @@ export function buildReportData(input: BuildReportInput): ReportData {
     budgets,
     anomalies,
     aiSummary,
+    incomeTotalCents,
   };
 }
 

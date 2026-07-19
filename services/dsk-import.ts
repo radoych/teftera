@@ -8,7 +8,7 @@
  * Fixed conversion rate lives in formatCurrency.ts.
  */
 import { bgnToEurCents } from '@/lib/formatCurrency';
-import { guessCategory } from '@/lib/categories';
+import { BRAND_RULES, guessCategory } from '@/lib/categories';
 
 /** A mapped transaction row from the DSK table (raw, pre-normalization). */
 export interface DskParsedRow {
@@ -34,10 +34,11 @@ export interface NormalizedTransaction {
 
 /** Parse a Bulgarian decimal string ("1 234,56") into integer minor units. */
 export function parseBgAmount(raw: string): number {
+  // DSK always formats comma-decimal ("1 234,56"). A dot here is a thousands
+  // separator; do NOT reuse this parser for dot-decimal sources.
   const cleaned = raw
-    .replace(/ /g, '')
     .replace(/\s/g, '')
-    .replace(/\./g, '') // thousands separator (if dot used)
+    .replace(/\./g, '')
     .replace(',', '.');
   const value = Number(cleaned);
   return Number.isFinite(value) ? Math.round(value * 100) : 0;
@@ -139,21 +140,6 @@ export function parseDskCsv(text: string): DskParsedRow[] {
   return out;
 }
 
-/** Known card-acceptor / merchant names → clean display brand. First match wins. */
-const BRAND_RULES: ReadonlyArray<readonly [RegExp, string]> = [
-  [/\bLIDL\b/i, 'Lidl'],
-  [/\bKAUFLAND\b/i, 'Kaufland'],
-  [/\bBILLA\b/i, 'Billa'],
-  [/\bFANTASTICO\b/i, 'Fantastico'],
-  [/SOPHARMACY/i, 'SOpharmacy'],
-  [/\bDM\b/i, 'dm'],
-  [/ANTHROPIC/i, 'Anthropic'],
-  [/\bOMV\b/i, 'OMV'],
-  [/\bSHELL\b/i, 'Shell'],
-  [/NETFLIX/i, 'Netflix'],
-  [/SPOTIFY/i, 'Spotify'],
-];
-
 const COUNTRY_RE = /^(BGR|USA|GBR|DEU|FRA|ITA|ESP|NLD|AUT|GRC|TUR|ROU|CHE|BEL)$/;
 const ADDRESS_RE = /^(BUL|BULL|UL|UL\.|BLVD|ET|AP|NO|KV|ZH)$/i;
 
@@ -191,7 +177,10 @@ export function normalizeMerchant(raw: string): string {
  */
 export function occurredAtISO(isoDate: string, time: string): string {
   const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
-  if (!dm) return isoDate;
+  if (!dm) {
+    const parsed = new Date(isoDate);
+    return Number.isNaN(parsed.getTime()) ? isoDate : parsed.toISOString();
+  }
   const tm = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
   const [, y, mo, d] = dm;
   const hh = tm ? Number(tm[1]) : 0;
@@ -204,10 +193,11 @@ export function occurredAtISO(isoDate: string, time: string): string {
  * expenses, credit rows are income. BGN statements convert to EUR and retain
  * the original; EUR statements store cents directly.
  */
-export function normalizeDskRow(row: DskParsedRow): NormalizedTransaction {
+export function normalizeDskRow(row: DskParsedRow): NormalizedTransaction | null {
   const isIncome = row.debit === '' && row.credit !== '';
   const amountStr = isIncome ? row.credit : row.debit;
   const rawCents = Math.abs(parseBgAmount(amountStr));
+  if (rawCents === 0) return null; // info rows / both columns empty — nothing to import
   const merchant = normalizeMerchant(row.merchantRaw);
   const isoDate = parseDskDate(row.date);
   const base = {

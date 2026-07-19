@@ -1,18 +1,12 @@
-// Shared Enable Banking + auth helpers for the bank-sync Edge Functions.
+// Shared Enable Banking helpers for the bank-sync Edge Functions.
 // Secrets (EB_APP_ID, EB_PRIVATE_KEY, EB_STATE_SECRET) exist only here,
-// server-side. SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are runtime-injected.
+// server-side.
 import * as jose from 'npm:jose@5';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+
+export { json, adminClient, getCallerHousehold } from './auth.ts';
 
 const EB_API = 'https://api.enablebanking.com';
 const enc = new TextEncoder();
-
-export function json(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
 
 /**
  * The private key secret is stored base64-encoded (single line — multi-line
@@ -97,27 +91,3 @@ export async function verifyState(state: string): Promise<StatePayload | null> {
   }
 }
 
-/** Service-role client (bypasses RLS — used only inside these functions). */
-export function adminClient() {
-  return createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-}
-
-/** Resolve the calling user's household from their Supabase JWT, or null. */
-export async function getCallerHousehold(
-  req: Request,
-): Promise<{ userId: string; householdId: string } | null> {
-  const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? '';
-  if (!token) return null;
-  const admin = adminClient();
-  const { data: userData, error: userErr } = await admin.auth.getUser(token);
-  if (userErr || !userData.user) return null;
-  const { data: member } = await admin
-    .from('household_members')
-    .select('household_id')
-    .eq('user_id', userData.user.id)
-    .order('joined_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (!member) return null;
-  return { userId: userData.user.id, householdId: member.household_id as string };
-}

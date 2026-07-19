@@ -7,11 +7,11 @@ import {
   Alert,
   Image,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatDigitsAsAmount } from '@/components/AmountInput';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
@@ -187,9 +187,10 @@ export default function ConfirmReceiptScreen() {
           </Pressable>
         </View>
 
-        <ScrollView
-          className="px-8"
-          contentContainerClassName="pb-40"
+        <KeyboardAwareScrollView
+          style={{ paddingHorizontal: 32 }}
+          bottomOffset={140}
+          contentContainerStyle={{ paddingBottom: 160 }}
           keyboardShouldPersistTaps="handled">
           {/* Thumbnail */}
           <View className="my-xl items-center">
@@ -326,7 +327,7 @@ export default function ConfirmReceiptScreen() {
               </Pressable>
             </>
           )}
-        </ScrollView>
+        </KeyboardAwareScrollView>
 
         {/* Bottom actions */}
         <View className="absolute inset-x-0 bottom-0 flex-row gap-md bg-background px-8 pb-8 pt-md">

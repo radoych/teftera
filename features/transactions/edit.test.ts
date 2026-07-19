@@ -5,7 +5,7 @@ function tx(p: Partial<Transaction>): Transaction {
   return {
     id: 'id', household_id: 'h', user_id: 'u', amount_eur: 1250,
     original_amount: null, original_currency: null, merchant: 'Billa',
-    category_id: 'c1', date: '2026-06-22', note: 'lunch', source: 'manual', receipt_id: null,
+    category_id: 'c1', date: '2026-06-22', note: 'lunch', source: 'manual', kind: 'expense', receipt_id: null,
     is_flagged: false, occurred_at: null, created_at: '2026-06-22T08:30:00.000Z', ...p,
   };
 }
@@ -14,8 +14,12 @@ describe('transactionToFormValues', () => {
   it('formats cents as a comma-decimal major string and passes fields through', () => {
     expect(transactionToFormValues(tx({}))).toEqual({
       amount: '12,50', merchant: 'Billa', note: 'lunch',
-      date: '2026-06-22', categoryId: 'c1',
+      date: '2026-06-22', categoryId: 'c1', kind: 'expense',
     });
+  });
+
+  it('passes an income kind through', () => {
+    expect(transactionToFormValues(tx({ kind: 'income' })).kind).toBe('income');
   });
 
   it('maps a null note to an empty string', () => {

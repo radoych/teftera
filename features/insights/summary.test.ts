@@ -3,13 +3,15 @@ import type { CategoryLite } from '@/features/transactions/groupByDay';
 import type { Transaction } from '@/features/transactions/types';
 import { refreshSummary } from './summary';
 
-const cats: CategoryLite[] = [{ id: 'c1', name: 'Groceries', icon: 'shopping-basket', color: '#adc7ff' }];
+const cats: CategoryLite[] = [
+  { id: 'c1', name: 'Groceries', icon: 'shopping-basket', color: '#adc7ff', kind: 'expense' },
+];
 
 function tx(p: Partial<Transaction> & { id: string }): Transaction {
   return {
     household_id: 'h', user_id: 'u', amount_eur: 1000,
     original_amount: null, original_currency: null, merchant: 'M',
-    category_id: 'c1', date: toISODate(), note: null, source: 'manual',
+    category_id: 'c1', date: toISODate(), note: null, source: 'manual', kind: 'expense',
     receipt_id: null, is_flagged: false, occurred_at: null,
     created_at: new Date().toISOString(), ...p,
   };

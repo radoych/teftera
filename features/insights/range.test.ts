@@ -7,7 +7,7 @@ function tx(date: string): Transaction {
   return {
     id: date, household_id: 'h', user_id: 'u', amount_eur: 100,
     original_amount: null, original_currency: null, merchant: 'M',
-    category_id: null, date, note: null, source: 'manual',
+    category_id: null, date, note: null, source: 'manual', kind: 'expense',
     receipt_id: null, is_flagged: false, occurred_at: null,
     created_at: `${date}T00:00:00.000Z`,
   };

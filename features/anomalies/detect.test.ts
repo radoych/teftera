@@ -5,7 +5,7 @@ function tx(p: Partial<Transaction> & { id: string }): Transaction {
   return {
     household_id: 'h', user_id: 'u', amount_eur: 1000,
     original_amount: null, original_currency: null, merchant: 'M',
-    category_id: 'c1', date: '2026-06-01', note: null, source: 'manual',
+    category_id: 'c1', date: '2026-06-01', note: null, source: 'manual', kind: 'expense',
     receipt_id: null, is_flagged: false, occurred_at: null,
     created_at: '2026-06-01T00:00:00.000Z', ...p,
   };
@@ -24,6 +24,15 @@ describe('historyForCategory', () => {
   it('matches the uncategorized (null) bucket', () => {
     const txs = [tx({ id: 'a', category_id: null, amount_eur: 100 }), tx({ id: 'b', category_id: 'c1' })];
     expect(historyForCategory(txs, null, 'x')).toEqual([100]);
+  });
+
+  it('history excludes income rows and rows older than sinceISO', () => {
+    const txs = [
+      tx({ id: '1', category_id: 'c', amount_eur: 100, date: '2026-07-01', kind: 'expense' }),
+      tx({ id: '2', category_id: 'c', amount_eur: 999, date: '2026-07-02', kind: 'income' }),
+      tx({ id: '3', category_id: 'c', amount_eur: 200, date: '2025-01-01', kind: 'expense' }),
+    ];
+    expect(historyForCategory(txs, 'c', 'x', '2026-01-01')).toEqual([100]);
   });
 });
 

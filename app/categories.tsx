@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
@@ -8,6 +8,7 @@ import { FlatInput } from '@/components/FlatInput';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
+import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { SheetActions } from '@/components/SheetActions';
 import { useAuthStore } from '@/features/auth/store';
 import {
@@ -16,6 +17,7 @@ import {
   updateCategory,
 } from '@/features/transactions/api';
 import type { CategoryLite } from '@/features/transactions/groupByDay';
+import { expenseCategories, incomeCategories } from '@/features/transactions/kind';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import type { MaterialIconName } from '@/lib/categories';
@@ -24,14 +26,21 @@ const ICON_CHOICES: MaterialIconName[] = [
   'restaurant', 'local-cafe', 'shopping-basket', 'directions-car', 'home', 'bolt',
   'medical-services', 'movie', 'shopping-bag', 'category', 'pets', 'school',
   'flight', 'fitness-center', 'card-giftcard', 'savings',
+  'payments', 'account-balance-wallet', 'trending-up',
 ];
 
 // Design-palette tones only — never the anomaly accent #c3f400.
 const COLOR_CHOICES = ['#ffdfa7', '#d8e3ff', '#adc7ff', '#a8c8ff', '#c4c6d0', '#ffb4ab', '#8e909a'];
 
-type Draft = { id: string | null; name: string; icon: MaterialIconName; color: string };
+type Draft = {
+  id: string | null;
+  name: string;
+  icon: MaterialIconName;
+  color: string;
+  kind: 'expense' | 'income';
+};
 
-const emptyDraft: Draft = { id: null, name: '', icon: 'category', color: '#adc7ff' };
+const emptyDraft: Draft = { id: null, name: '', icon: 'category', color: '#adc7ff', kind: 'expense' };
 
 export default function CategoriesScreen() {
   const categories = useTransactionsStore((s) => s.categories);
@@ -43,7 +52,13 @@ export default function CategoriesScreen() {
   const [deleting, setDeleting] = useState(false);
 
   const openEdit = (c: CategoryLite) =>
-    setDraft({ id: c.id, name: c.name, icon: c.icon as MaterialIconName, color: c.color });
+    setDraft({
+      id: c.id,
+      name: c.name,
+      icon: c.icon as MaterialIconName,
+      color: c.color,
+      kind: c.kind,
+    });
 
   const onSave = async () => {
     if (!draft || saving || !householdId) return;
@@ -52,7 +67,13 @@ export default function CategoriesScreen() {
     setSaving(true);
     try {
       if (draft.id === null) {
-        await createCategory({ householdId, name, icon: draft.icon, color: draft.color });
+        await createCategory({
+          householdId,
+          name,
+          icon: draft.icon,
+          color: draft.color,
+          kind: draft.kind,
+        });
       } else {
         await updateCategory(draft.id, { name, icon: draft.icon, color: draft.color });
       }
@@ -79,6 +100,36 @@ export default function CategoriesScreen() {
     }
   };
 
+  const expenseList = useMemo(() => expenseCategories(categories), [categories]);
+  const incomeList = useMemo(() => incomeCategories(categories), [categories]);
+
+  const CategoryRow = ({ c }: { c: CategoryLite }) => (
+    <View>
+      <View className="flex-row items-center gap-md py-md">
+        <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container">
+          <MaterialIcons name={c.icon as MaterialIconName} size={20} color={c.color} />
+        </View>
+        <Pressable onPress={() => openEdit(c)} className="flex-1 active:opacity-70">
+          <Text className="font-inter text-body-lg text-on-surface">{c.name}</Text>
+          {c.is_default ? (
+            <Text className="font-inter text-label-md text-on-surface-variant opacity-50">
+              По подразбиране
+            </Text>
+          ) : null}
+        </Pressable>
+        <Pressable onPress={() => openEdit(c)} hitSlop={8} className="p-1">
+          <MaterialIcons name="edit" size={18} color="#8e909a" />
+        </Pressable>
+        {c.is_default ? null : (
+          <Pressable onPress={() => setToDelete(c)} hitSlop={8} className="p-1">
+            <MaterialIcons name="delete" size={18} color="#ffb4ab" />
+          </Pressable>
+        )}
+      </View>
+      <HairlineDivider />
+    </View>
+  );
+
   return (
     <Screen>
       {/* Top app bar */}
@@ -91,32 +142,13 @@ export default function CategoriesScreen() {
         </Text>
       </View>
 
-      <SectionLabel className="mb-sm">Категории на домакинството</SectionLabel>
-      {categories.map((c) => (
-        <View key={c.id}>
-          <View className="flex-row items-center gap-md py-md">
-            <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container">
-              <MaterialIcons name={c.icon as MaterialIconName} size={20} color={c.color} />
-            </View>
-            <Pressable onPress={() => openEdit(c)} className="flex-1 active:opacity-70">
-              <Text className="font-inter text-body-lg text-on-surface">{c.name}</Text>
-              {c.is_default ? (
-                <Text className="font-inter text-label-md text-on-surface-variant opacity-50">
-                  По подразбиране
-                </Text>
-              ) : null}
-            </Pressable>
-            <Pressable onPress={() => openEdit(c)} hitSlop={8} className="p-1">
-              <MaterialIcons name="edit" size={18} color="#8e909a" />
-            </Pressable>
-            {c.is_default ? null : (
-              <Pressable onPress={() => setToDelete(c)} hitSlop={8} className="p-1">
-                <MaterialIcons name="delete" size={18} color="#ffb4ab" />
-              </Pressable>
-            )}
-          </View>
-          <HairlineDivider />
-        </View>
+      <SectionLabel className="mb-sm">Разходи</SectionLabel>
+      {expenseList.map((c) => (
+        <CategoryRow key={c.id} c={c} />
+      ))}
+      <SectionLabel className="mb-sm mt-lg">Приходи</SectionLabel>
+      {incomeList.map((c) => (
+        <CategoryRow key={c.id} c={c} />
       ))}
 
       <Pressable
@@ -139,6 +171,18 @@ export default function CategoriesScreen() {
               placeholder="Име на категорията"
               autoCapitalize="sentences"
             />
+            {draft.id === null ? (
+              <View className="items-start">
+                <SegmentedToggle<'expense' | 'income'>
+                  value={draft.kind}
+                  onChange={(kind) => setDraft({ ...draft, kind })}
+                  options={[
+                    { value: 'expense', label: 'Разход' },
+                    { value: 'income', label: 'Приход' },
+                  ]}
+                />
+              </View>
+            ) : null}
             <View>
               <SectionLabel className="mb-md">Икона</SectionLabel>
               <View className="flex-row flex-wrap gap-sm">

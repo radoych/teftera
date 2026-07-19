@@ -4,16 +4,17 @@ import { useMemo, useState } from 'react';
 import {
   Alert,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatDigitsAsAmount } from '@/components/AmountInput';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
+import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { useAuthStore } from '@/features/auth/store';
 import { runDetection } from '@/features/anomalies/runDetection';
 import { runBudgetCheck } from '@/features/budgets/runBudgetCheck';
@@ -23,10 +24,12 @@ import { createTransaction, updateTransaction } from '@/features/transactions/ap
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
 import { transactionToFormValues } from '@/features/transactions/edit';
+import type { TxKind } from '@/features/transactions/kind';
+import { expenseCategories, incomeCategories } from '@/features/transactions/kind';
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
-import { guessCategory, resolveCategoryId } from '@/lib/categories';
+import { guessCategory, guessIncomeCategory, resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
 
@@ -85,6 +88,7 @@ export default function ManualEntryScreen() {
   const [date, setDate] = useState(seed?.date ?? toISODate());
   const [categoryId, setCategoryId] = useState<string | null>(seed?.categoryId ?? null);
   const [categoryTouched, setCategoryTouched] = useState(isEdit);
+  const [kind, setKind] = useState<TxKind>(seed?.kind ?? 'expense');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [errors, setErrors] = useState<{ amount?: string; merchant?: string }>({});
   const [saving, setSaving] = useState(false);
@@ -112,9 +116,22 @@ export default function ManualEntryScreen() {
   const selectedCategory = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
   const categoryLabel = selectedCategory
     ? selectedCategory.name
-    : merchant.trim() && !categoryTouched
-      ? guessCategory(merchant)
-      : 'Автоматично';
+    : kind === 'income'
+      ? merchant.trim() && !categoryTouched
+        ? guessIncomeCategory(merchant)
+        : 'Друг приход'
+      : merchant.trim() && !categoryTouched
+        ? guessCategory(merchant)
+        : 'Автоматично';
+
+  const onKindChange = (next: TxKind) => {
+    setKind(next);
+    const selected = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
+    if (selected && selected.kind !== next) {
+      setCategoryId(null);
+      setCategoryTouched(false);
+    }
+  };
 
   const onSave = async () => {
     if (saving) return;
@@ -132,7 +149,7 @@ export default function ManualEntryScreen() {
     }
     const resolvedCategoryId = categoryTouched
       ? categoryId
-      : resolveCategoryId(parsed.data.merchant, categories);
+      : resolveCategoryId(parsed.data.merchant, categories, kind);
 
     setSaving(true);
     let createdId: string | null = null;
@@ -144,6 +161,7 @@ export default function ManualEntryScreen() {
           categoryId: resolvedCategoryId,
           date: parsed.data.date,
           note: parsed.data.note,
+          kind,
         });
       } else {
         const { id: newId } = await createTransaction({
@@ -154,6 +172,7 @@ export default function ManualEntryScreen() {
           categoryId: resolvedCategoryId,
           date: parsed.data.date,
           note: parsed.data.note,
+          kind,
         });
         createdId = newId;
       }
@@ -169,7 +188,7 @@ export default function ManualEntryScreen() {
     // here must not invite a retry that would double-insert.
     try {
       await refreshTransactions(householdId);
-      if (createdId !== null) {
+      if (createdId !== null && kind === 'expense') {
         await runDetection({
           transactionId: createdId,
           householdId,
@@ -210,9 +229,24 @@ export default function ManualEntryScreen() {
           <View className="w-8" />
         </View>
 
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 96 }}>
+        <KeyboardAwareScrollView
+          bottomOffset={140}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 96 }}>
+          {/* Expense / income toggle */}
+          <View className="mb-md mt-6 items-center">
+            <SegmentedToggle<TxKind>
+              value={kind}
+              onChange={onKindChange}
+              options={[
+                { value: 'expense', label: 'Разход' },
+                { value: 'income', label: 'Приход' },
+              ]}
+            />
+          </View>
+
           {/* Amount */}
-          <View className="mb-16 mt-12 flex-row items-center justify-center px-6">
+          <View className="mb-16 mt-4 flex-row items-center justify-center px-6">
             <Text className="font-jakarta-semibold text-[64px] text-on-surface opacity-30">{'€'}</Text>
             <TextInput
               value={amount}
@@ -262,7 +296,7 @@ export default function ManualEntryScreen() {
               className="font-inter text-body-lg text-on-surface"
             />
           </FieldRow>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
 
       <FloatingActionBar
@@ -281,7 +315,7 @@ export default function ManualEntryScreen() {
 
       <CategoryPickerModal
         visible={pickerOpen}
-        categories={categories}
+        categories={kind === 'income' ? incomeCategories(categories) : expenseCategories(categories)}
         selectedId={categoryId}
         onSelect={(cid) => {
           setCategoryId(cid);

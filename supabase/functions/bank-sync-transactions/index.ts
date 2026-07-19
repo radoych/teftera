@@ -55,9 +55,10 @@ Deno.serve(async (req) => {
     if (!continuationKey) break;
   }
 
-  if (continuationKey) {
+  const truncated = Boolean(continuationKey);
+  if (truncated) {
     console.warn('[bank-sync-transactions] MAX_PAGES reached with continuation_key still present — result truncated');
   }
 
-  return json(200, { transactions, validUntil: conn.valid_until });
+  return json(200, { transactions, truncated, validUntil: conn.valid_until });
 });

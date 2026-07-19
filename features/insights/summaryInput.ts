@@ -8,6 +8,7 @@ import { comparisonRange, filterByDateBounds, filterByRange } from './range';
 /**
  * Build the compact current-month snapshot for the AI summary. Pass the already
  * household-scoped transactions; this fixes the window to the current calendar month.
+ * Pass expense-only transactions (use `expensesOnly`) — income must not inflate the spend summary.
  */
 export function buildSummaryInput(
   txs: Transaction[],

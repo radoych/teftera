@@ -4,15 +4,15 @@ import type { Transaction } from '@/features/transactions/types';
 import type { CategoryLite } from '@/features/transactions/groupByDay';
 
 const cats: CategoryLite[] = [
-  { id: 'groc', name: 'Хранителни', icon: 'shopping-cart', color: '#adc7ff' },
-  { id: 'fun', name: 'Забавления', icon: 'movie', color: '#ffdfa7' },
+  { id: 'groc', name: 'Хранителни', icon: 'shopping-cart', color: '#adc7ff', kind: 'expense' },
+  { id: 'fun', name: 'Забавления', icon: 'movie', color: '#ffdfa7', kind: 'expense' },
 ];
 
 function tx(over: Partial<Transaction>): Transaction {
   return {
     id: 't', household_id: 'h', user_id: 'u', amount_eur: 1000,
     original_amount: null, original_currency: null, merchant: 'Kaufland',
-    category_id: 'groc', date: '2026-06-10', note: null, source: 'manual',
+    category_id: 'groc', date: '2026-06-10', note: null, source: 'manual', kind: 'expense',
     receipt_id: null, is_flagged: false, occurred_at: null, created_at: '2026-06-10T00:00:00Z',
     ...over,
   };
@@ -69,6 +69,24 @@ describe('buildReportData', () => {
   it('labels the month in bg-BG', () => {
     expect(data.monthLabel.startsWith('Юни')).toBe(true);
     expect(data.monthISO).toBe('2026-06');
+  });
+});
+
+describe('income exclusion', () => {
+  it('income is excluded from spend sections and reported as incomeTotalCents', () => {
+    const incomeMerchantName = 'Salary Inc';
+    const input: BuildReportInput = {
+      ...base,
+      transactions: [
+        tx({ id: 'exp', amount_eur: 1000, category_id: 'groc', merchant: 'Kaufland', date: '2026-06-05' }),
+        tx({ id: 'inc', amount_eur: 5000, category_id: null, merchant: incomeMerchantName, date: '2026-06-06', kind: 'income' }),
+      ],
+      month: new Date(2026, 5, 15), // June 2026
+    };
+    const data = buildReportData(input);
+    expect(data.totalCents).toBe(1000);
+    expect(data.incomeTotalCents).toBe(5000);
+    expect(data.merchants.every((m) => m.merchant !== incomeMerchantName)).toBe(true);
   });
 });
 

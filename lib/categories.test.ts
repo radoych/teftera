@@ -1,4 +1,10 @@
-import { DEFAULT_CATEGORIES, guessCategory, resolveCategoryId } from './categories';
+import {
+  BRAND_RULES,
+  DEFAULT_CATEGORIES,
+  guessCategory,
+  guessIncomeCategory,
+  resolveCategoryId,
+} from './categories';
 
 describe('guessCategory', () => {
   it('matches known merchants', () => {
@@ -246,5 +252,43 @@ describe('resolveCategoryId', () => {
 
   it('returns null when even Other is missing', () => {
     expect(resolveCategoryId('Whatever', [{ id: 'x', name: 'Beverages' }])).toBeNull();
+  });
+});
+
+describe('income rules', () => {
+  it('salary keywords → Заплата', () => {
+    expect(guessIncomeCategory('ЗАПЛАТА ЮНИ 2026')).toBe('Заплата');
+    expect(guessIncomeCategory('Salary payment ACME')).toBe('Заплата');
+  });
+  it('unknown income → Друг приход', () => {
+    expect(guessIncomeCategory('IBAN превод Иван')).toBe('Друг приход');
+  });
+});
+
+describe('unified merchant table', () => {
+  it('dm is branded and categorized as Shopping (was Other)', () => {
+    expect(guessCategory('BGR SOFIA DM 340')).toBe('Shopping');
+    expect(BRAND_RULES.some(([re, brand]) => brand === 'dm' && re.test('DM 340'))).toBe(true);
+  });
+});
+
+describe('kind-aware resolveCategoryId', () => {
+  const cats = [
+    { id: 'e1', name: 'Groceries', kind: 'expense' as const },
+    { id: 'e2', name: 'Other', kind: 'expense' as const },
+    { id: 'i1', name: 'Заплата', kind: 'income' as const },
+    { id: 'i2', name: 'Друг приход', kind: 'income' as const },
+  ];
+  it('income guess maps to income category', () => {
+    expect(resolveCategoryId('ЗАПЛАТА ЮНИ', cats, 'income')).toBe('i1');
+  });
+  it('unknown income falls back to Друг приход', () => {
+    expect(resolveCategoryId('превод', cats, 'income')).toBe('i2');
+  });
+  it('expense default is unchanged', () => {
+    expect(resolveCategoryId('LIDL SOFIA', cats)).toBe('e1');
+  });
+  it('income never resolves to an expense category', () => {
+    expect(resolveCategoryId('lidl', cats, 'income')).toBe('i2');
   });
 });

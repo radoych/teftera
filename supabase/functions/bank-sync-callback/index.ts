@@ -60,6 +60,9 @@ Deno.serve(async (req) => {
   try {
     const data = await res.json();
     sessionId = data.session_id;
+    // Single-account assumption: EB returns the consented accounts; we store
+    // accounts[0]. DSK personal banking exposes one main account — revisit if
+    // an account picker is ever needed.
     accountUid = data.accounts[0].uid ?? data.accounts[0].id;
     validUntil = data.access.valid_until;
     bankName = data.aspsp?.name ?? 'DSK Bank';

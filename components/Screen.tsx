@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { RefreshControl, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackgroundGlow } from './BackgroundGlow';
 
@@ -50,8 +51,9 @@ export function Screen({
       <BackgroundGlow />
       <SafeAreaView className="flex-1" edges={['top']}>
         {scroll ? (
-          <ScrollView
-            className="flex-1"
+          <KeyboardAwareScrollView
+            style={{ flex: 1 }}
+            bottomOffset={bottomPad}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: bottomPad }}
             contentContainerClassName={contentClassName}
             showsVerticalScrollIndicator={false}
@@ -67,7 +69,7 @@ export function Screen({
               ) : undefined
             }>
             {children}
-          </ScrollView>
+          </KeyboardAwareScrollView>
         ) : (
           <View
             style={{ paddingHorizontal: 16, paddingBottom: bottomPad }}

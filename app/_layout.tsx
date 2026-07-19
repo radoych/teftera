@@ -17,9 +17,11 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { AuthErrorScreen } from '@/components/AuthErrorScreen';
 import { useAuthStore } from '@/features/auth/store';
-import { useAuthBootstrap, useProtectedRoute } from '@/features/auth/bootstrap';
+import { retryBootstrap, useAuthBootstrap, useProtectedRoute } from '@/features/auth/bootstrap';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -50,29 +52,35 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: '#121316' },
-          animation: 'slide_from_right',
-        }}>
-        <Stack.Screen name="(app)" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="scanner" options={{ animation: 'fade' }} />
-        <Stack.Screen
-          name="confirm-receipt"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-        />
-        <Stack.Screen
-          name="manual-entry"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-        />
-        <Stack.Screen name="transaction/[id]" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="import-dsk" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="categories" options={{ animation: 'slide_from_right' }} />
-      </Stack>
-      <OfflineBanner />
+      <KeyboardProvider>
+        <StatusBar style="light" />
+        {status === 'error' ? (
+          <AuthErrorScreen onRetry={retryBootstrap} />
+        ) : (
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: '#121316' },
+              animation: 'slide_from_right',
+            }}>
+            <Stack.Screen name="(app)" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="scanner" options={{ animation: 'fade' }} />
+            <Stack.Screen
+              name="confirm-receipt"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="manual-entry"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen name="transaction/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="import-dsk" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="categories" options={{ animation: 'slide_from_right' }} />
+          </Stack>
+        )}
+        <OfflineBanner />
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }

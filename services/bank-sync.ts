@@ -24,6 +24,7 @@ export interface EbTransaction {
   booking_date?: string | null; // YYYY-MM-DD
   value_date?: string | null; // YYYY-MM-DD
   creditor?: { name?: string | null } | null;
+  debtor?: { name?: string | null } | null;
   remittance_information?: string[] | null;
 }
 
@@ -38,6 +39,7 @@ export function normalizeEbTransaction(tx: EbTransaction): NormalizedTransaction
   const value = Number(tx.transaction_amount?.amount);
   if (!Number.isFinite(value)) return null;
   const rawCents = Math.round(Math.abs(value) * 100);
+  if (rawCents === 0) return null;
 
   const currency = tx.transaction_amount.currency;
   if (currency !== 'EUR' && currency !== 'BGN') return null;
@@ -45,12 +47,14 @@ export function normalizeEbTransaction(tx: EbTransaction): NormalizedTransaction
   const date = tx.booking_date || tx.value_date || null;
   if (!date) return null;
 
+  const isIncome = tx.credit_debit_indicator === 'CRDT';
+  const counterparty = isIncome ? tx.debtor?.name : tx.creditor?.name;
   const rawMerchant =
-    tx.creditor?.name?.trim() || (tx.remittance_information ?? []).join(' ').trim();
+    counterparty?.trim() || (tx.remittance_information ?? []).join(' ').trim();
   const merchant = normalizeMerchant(rawMerchant);
 
   const base = {
-    kind: (tx.credit_debit_indicator === 'CRDT' ? 'income' : 'expense') as 'income' | 'expense',
+    kind: (isIncome ? 'income' : 'expense') as 'income' | 'expense',
     merchant,
     categoryGuess: guessCategory(merchant),
     date,
@@ -99,7 +103,10 @@ export async function startBankSync(returnUrl: string): Promise<string> {
 }
 
 /** Pull the last 90 days of raw EB transactions for this household. */
-export async function fetchBankTransactions(): Promise<EbTransaction[]> {
+export async function fetchBankTransactions(): Promise<{
+  transactions: EbTransaction[];
+  truncated: boolean;
+}> {
   const res = await callBankSyncFn('bank-sync-transactions');
   if (res.status === 409) {
     let error: string | undefined;
@@ -113,8 +120,8 @@ export async function fetchBankTransactions(): Promise<EbTransaction[]> {
   }
   if (res.status === 429) throw new RateLimitedError('rate_limited');
   if (!res.ok) throw new Error(`bank-sync-transactions failed (${res.status})`);
-  const data = (await res.json()) as { transactions?: EbTransaction[] };
-  return data.transactions ?? [];
+  const data = (await res.json()) as { transactions?: EbTransaction[]; truncated?: boolean };
+  return { transactions: data.transactions ?? [], truncated: data.truncated ?? false };
 }
 
 /** The household's connection metadata (secret column is not even readable). */
@@ -126,6 +133,7 @@ export async function getBankConnection(
     .select('bank_name, valid_until')
     .eq('household_id', householdId)
     .maybeSingle();
+  if (error && __DEV__) console.warn('[bank-sync] connection lookup failed', error);
   if (error || !data) return null;
   return { bankName: data.bank_name as string, validUntil: data.valid_until as string };
 }

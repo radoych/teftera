@@ -1,7 +1,16 @@
 // features/transactions/api.ts — the ONLY module that reads/writes transactions.
 import { supabase } from '@/services/supabase';
+import { windowStartISO } from '@/lib/dates';
 import type { CategoryLite } from './groupByDay';
 import type { Transaction } from './types';
+
+/** Explicit column list — never select('*') (review #5). */
+const TRANSACTION_COLUMNS =
+  'id, household_id, user_id, amount_eur, original_amount, original_currency, ' +
+  'merchant, category_id, date, note, source, receipt_id, is_flagged, occurred_at, created_at, kind';
+
+/** Transactions are fetched for the last N months only (review #5). */
+export const TRANSACTION_WINDOW_MONTHS = 12;
 
 export interface NewTransaction {
   householdId: string;
@@ -12,13 +21,14 @@ export interface NewTransaction {
   date: string; // YYYY-MM-DD
   note: string | null;
   receiptId?: string | null;
+  kind?: 'expense' | 'income';
 }
 
 /** The household's categories, name-ascending. */
 export async function listCategories(householdId: string): Promise<CategoryLite[]> {
   const { data, error } = await supabase
     .from('categories')
-    .select('id, name, icon, color, is_default')
+    .select('id, name, icon, color, is_default, kind')
     .eq('household_id', householdId)
     .order('name', { ascending: true });
   if (error) throw error;
@@ -31,6 +41,7 @@ export async function createCategory(input: {
   name: string;
   icon: string;
   color: string;
+  kind: 'expense' | 'income';
 }): Promise<void> {
   const { error } = await supabase.from('categories').insert({
     household_id: input.householdId,
@@ -38,6 +49,7 @@ export async function createCategory(input: {
     icon: input.icon,
     color: input.color,
     is_default: false,
+    kind: input.kind,
   });
   if (error) throw error;
 }
@@ -61,12 +73,15 @@ export async function deleteCategory(id: string): Promise<void> {
 export async function listTransactions(householdId: string): Promise<Transaction[]> {
   const { data, error } = await supabase
     .from('transactions')
-    .select('*')
+    .select(TRANSACTION_COLUMNS)
     .eq('household_id', householdId)
+    .gte('date', windowStartISO(TRANSACTION_WINDOW_MONTHS))
     .order('date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Transaction[];
+  // TRANSACTION_COLUMNS is a runtime-built string, so postgrest-js can't parse it into a
+  // literal column type and widens the result to GenericStringError; cast through unknown.
+  return (data ?? []) as unknown as Transaction[];
 }
 
 /** A normalized imported row, carrying its BGN provenance when converted. */
@@ -81,6 +96,7 @@ export interface ImportedTransaction {
   date: string; // YYYY-MM-DD
   occurredAt: string; // ISO timestamp of the actual transaction
   note: string | null;
+  kind: 'expense' | 'income';
 }
 
 /** Insert many imported transactions in a single batch (DSK CSV import). */
@@ -99,6 +115,7 @@ export async function bulkInsertImported(rows: ImportedTransaction[]): Promise<v
       occurred_at: r.occurredAt,
       note: r.note,
       source: 'dsk_import',
+      kind: r.kind,
     })),
   );
   if (error) throw error;
@@ -120,6 +137,7 @@ export async function createTransaction(input: NewTransaction): Promise<{ id: st
       note: input.note,
       receipt_id: input.receiptId ?? null,
       source: input.receiptId ? 'receipt' : 'manual',
+      kind: input.kind ?? 'expense',
     })
     .select('id')
     .single();
@@ -133,6 +151,7 @@ export interface TransactionPatch {
   categoryId: string | null;
   date: string; // YYYY-MM-DD
   note: string | null;
+  kind: 'expense' | 'income';
 }
 
 /** Update an existing transaction's editable fields. RLS scopes by household. */
@@ -145,6 +164,7 @@ export async function updateTransaction(id: string, patch: TransactionPatch): Pr
       category_id: patch.categoryId,
       date: patch.date,
       note: patch.note,
+      kind: patch.kind,
     })
     .eq('id', id);
   if (error) throw error;
