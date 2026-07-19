@@ -6,7 +6,6 @@ import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
-import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
@@ -15,6 +14,8 @@ import { bulkInsertImported, type ImportedTransaction } from '@/features/transac
 import { dedupeImport } from '@/features/transactions/dedup';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
+import { ImportRow } from '@/features/transactions/components/import/ImportRow';
+import { ImportSummaryView } from '@/features/transactions/components/import/ImportSummaryView';
 import {
   ConsentExpiredError,
   NotConnectedError,
@@ -26,7 +27,6 @@ import {
 } from '@/services/bank-sync';
 import { normalizeDskRow, parseDskCsv, type NormalizedTransaction } from '@/services/dsk-import';
 import { resolveCategoryId } from '@/lib/categories';
-import { formatCurrency } from '@/lib/formatCurrency';
 import { useIsOnline } from '@/lib/useIsOnline';
 
 interface Preview {
@@ -55,37 +55,6 @@ function Header() {
       <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
         Импортиране от DSK
       </Text>
-    </View>
-  );
-}
-
-function Row({ row, muted, badge }: { row: NormalizedTransaction; muted?: boolean; badge?: string }) {
-  return (
-    <View>
-      <View className={`flex-row items-center justify-between py-md ${muted ? 'opacity-45' : ''}`}>
-        <View className="flex-1 pr-3">
-          <Text numberOfLines={1} className="font-inter text-body-lg text-on-surface">
-            {row.merchant || 'Без търговец'}
-          </Text>
-          <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
-            {row.date} · {row.categoryGuess}
-            {row.originalCurrency === 'BGN'
-              ? ` · от ${formatCurrency(row.originalAmountCents ?? 0, 'BGN')}`
-              : ''}
-          </Text>
-        </View>
-        <View className="items-end gap-1">
-          <Text className="font-inter-semibold text-body-lg text-on-surface">
-            {formatCurrency(row.amountEurCents)}
-          </Text>
-          {badge ? (
-            <Text className="font-inter-semibold text-[10px] uppercase text-on-surface-variant">
-              {badge}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-      <HairlineDivider />
     </View>
   );
 }
@@ -251,32 +220,7 @@ export default function ImportDskScreen() {
           />
         }>
         <Header />
-        <SectionLabel className="mb-lg">Резултат от импорта</SectionLabel>
-        <View className="gap-4">
-          <View className="flex-row items-center justify-between py-md">
-            <Text className="font-inter text-body-lg text-on-surface">Импортирани</Text>
-            <Text className="font-inter-semibold text-body-lg text-on-surface">{summary.imported}</Text>
-          </View>
-          <HairlineDivider />
-          <View className="flex-row items-center justify-between py-md">
-            <Text className="font-inter text-body-lg text-on-surface-variant opacity-70">
-              Пропуснати дубликати
-            </Text>
-            <Text className="font-inter-semibold text-body-lg text-on-surface-variant opacity-70">
-              {summary.duplicates}
-            </Text>
-          </View>
-          <HairlineDivider />
-          <View className="flex-row items-center justify-between py-md">
-            <Text className="font-inter text-body-lg text-on-surface-variant opacity-70">
-              {`В категория „Други"`}
-            </Text>
-            <Text className="font-inter-semibold text-body-lg text-on-surface-variant opacity-70">
-              {summary.other}
-            </Text>
-          </View>
-          <HairlineDivider />
-        </View>
+        <ImportSummaryView summary={summary} />
       </Screen>
     );
   }
@@ -369,7 +313,7 @@ export default function ImportDskScreen() {
         <View className="mb-lg">
           <SectionLabel className="mb-sm">Нови ({toImport.length})</SectionLabel>
           {toImport.map((r, i) => (
-            <Row key={`new-${i}`} row={r} />
+            <ImportRow key={`new-${i}`} row={r} />
           ))}
         </View>
       ) : null}
@@ -378,7 +322,7 @@ export default function ImportDskScreen() {
         <View className="mb-lg">
           <SectionLabel className="mb-sm">Дубликати ({duplicates.length})</SectionLabel>
           {duplicates.map((r, i) => (
-            <Row key={`dup-${i}`} row={r} muted badge="дубликат" />
+            <ImportRow key={`dup-${i}`} row={r} muted badge="дубликат" />
           ))}
         </View>
       ) : null}
@@ -387,7 +331,7 @@ export default function ImportDskScreen() {
         <View className="mb-lg">
           <SectionLabel className="mb-sm">Приходи — пропуснати ({income.length})</SectionLabel>
           {income.map((r, i) => (
-            <Row key={`inc-${i}`} row={r} muted badge="приход" />
+            <ImportRow key={`inc-${i}`} row={r} muted badge="приход" />
           ))}
         </View>
       ) : null}
