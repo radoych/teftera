@@ -71,8 +71,9 @@ graph TD
 /scripts             Tooling (app-icon generator)
 ```
 
-All AI and bank logic sits behind `services/` modules so moving them to a server
-(planned Cloud Run FastAPI microservice) is a one-file change.
+All AI and bank logic sits behind `services/` modules. Gemini calls already run
+server-side (`supabase/functions/gemini-extract`/`gemini-summary`); the anomaly
+model is the remaining piece planned to move to a Cloud Run FastAPI microservice.
 
 ### Conventions
 
