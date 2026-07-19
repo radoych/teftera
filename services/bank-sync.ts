@@ -103,7 +103,10 @@ export async function startBankSync(returnUrl: string): Promise<string> {
 }
 
 /** Pull the last 90 days of raw EB transactions for this household. */
-export async function fetchBankTransactions(): Promise<EbTransaction[]> {
+export async function fetchBankTransactions(): Promise<{
+  transactions: EbTransaction[];
+  truncated: boolean;
+}> {
   const res = await callBankSyncFn('bank-sync-transactions');
   if (res.status === 409) {
     let error: string | undefined;
@@ -117,8 +120,8 @@ export async function fetchBankTransactions(): Promise<EbTransaction[]> {
   }
   if (res.status === 429) throw new RateLimitedError('rate_limited');
   if (!res.ok) throw new Error(`bank-sync-transactions failed (${res.status})`);
-  const data = (await res.json()) as { transactions?: EbTransaction[] };
-  return data.transactions ?? [];
+  const data = (await res.json()) as { transactions?: EbTransaction[]; truncated?: boolean };
+  return { transactions: data.transactions ?? [], truncated: data.truncated ?? false };
 }
 
 /** The household's connection metadata (secret column is not even readable). */
@@ -130,6 +133,7 @@ export async function getBankConnection(
     .select('bank_name, valid_until')
     .eq('household_id', householdId)
     .maybeSingle();
+  if (error && __DEV__) console.warn('[bank-sync] connection lookup failed', error);
   if (error || !data) return null;
   return { bankName: data.bank_name as string, validUntil: data.valid_until as string };
 }

@@ -35,6 +35,7 @@ interface Preview {
   income: NormalizedTransaction[];
   fileName: string;
   source: 'csv' | 'bank';
+  truncated?: boolean;
 }
 
 type Status = 'idle' | 'reading' | 'syncing' | 'ready' | 'importing' | 'done';
@@ -151,9 +152,10 @@ export default function ImportDskScreen() {
     if (status === 'syncing') return;
     setStatus('syncing');
     try {
-      let ebRows;
+      let ebTxs;
+      let truncated: boolean;
       try {
-        ebRows = await fetchBankTransactions();
+        ({ transactions: ebTxs, truncated } = await fetchBankTransactions());
       } catch (err) {
         if (err instanceof NotConnectedError || err instanceof ConsentExpiredError) {
           const consented = await runConsentFlow();
@@ -165,20 +167,27 @@ export default function ImportDskScreen() {
           }
           setNeedsReconnect(false);
           if (householdId) getBankConnection(householdId).then(setConnection).catch(() => {});
-          ebRows = await fetchBankTransactions();
+          ({ transactions: ebTxs, truncated } = await fetchBankTransactions());
         } else {
           throw err;
         }
       }
 
-      const rows = ebRows
+      const rows = ebTxs
         .map(normalizeEbTransaction)
         .filter((r): r is NonNullable<typeof r> => r !== null);
       const expenses = rows.filter((r) => r.kind === 'expense');
       const income = rows.filter((r) => r.kind === 'income');
       const { toImport, duplicates } = dedupeImport(expenses, transactions);
 
-      setPreview({ toImport, duplicates, income, fileName: 'Синхронизация с ДСК', source: 'bank' });
+      setPreview({
+        toImport,
+        duplicates,
+        income,
+        fileName: 'Синхронизация с ДСК',
+        source: 'bank',
+        truncated,
+      });
       setStatus('ready');
     } catch (err) {
       if (__DEV__) console.warn('[bank-sync] failed', err);

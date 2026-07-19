@@ -161,7 +161,16 @@ describe('fetchBankTransactions error mapping', () => {
 
   it('returns the transactions array on 200', async () => {
     mockFetch(200, { transactions: [{ x: 1 }], validUntil: '2026-10-01T00:00:00Z' });
-    await expect(fetchBankTransactions()).resolves.toEqual([{ x: 1 }]);
+    await expect(fetchBankTransactions()).resolves.toEqual({
+      transactions: [{ x: 1 }],
+      truncated: false,
+    });
+  });
+
+  it('surfaces the truncated flag', async () => {
+    mockFetch(200, { transactions: [], truncated: true });
+    const r = await fetchBankTransactions();
+    expect(r.truncated).toBe(true);
   });
 
   it('sends the right URL, method, and auth headers', async () => {
