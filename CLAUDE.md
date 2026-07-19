@@ -70,6 +70,7 @@ eas build --profile preview --platform all
 | Fonts | expo-font + @expo-google-fonts/plus-jakarta-sans + inter |
 | Icons | @expo/vector-icons (MaterialIcons) or lucide-react-native |
 | Auth | Supabase Auth — email/password + Google OAuth |
+| Keyboard | react-native-keyboard-controller (KeyboardProvider in root layout) |
 | CI/CD | Expo EAS |
 
 **Future (not yet built):** thin FastAPI service on GCP Cloud Run for anomaly model + server-side Gemini calls. Isolate all AI and ML logic behind service modules now so the move is a one-file change later.
@@ -120,7 +121,7 @@ eas build --profile preview --platform all
 2. **No USD / no `$`.** Default currency is **EUR (€)**. BGN (лв) for legacy pre-2026 DSK imports only, converted at fixed rate **1 EUR = 1.95583 BGN**. Retain `original_amount` + `original_currency` on imported rows.
 3. **`household_id` on every table.** Row Level Security on every table — a user reads/writes only their household's rows. Non-negotiable.
 4. **Schema changes = migration files.** Never edit the schema only via the Supabase dashboard.
-5. **No secrets in git.** `.env` is gitignored from commit 1. Gemini key never ships in the client bundle long-term — all calls go through `/services/gemini.ts` so they can move server-side in one step.
+5. **No secrets in git.** `.env` is gitignored from commit 1. Gemini key never ships in the client bundle long-term — all calls go through `/services/gemini.ts` so they can move server-side in one step. **DONE:** Gemini calls now run server-side behind `supabase/functions/gemini-extract` and `supabase/functions/gemini-summary`; `services/gemini.ts` is a thin client seam that calls those edge functions (with the user's JWT) rather than the Gemini SDK directly.
 6. **Gemini always has a fallback.** Wrap all JSON parsing in try/catch. A bad or empty receipt response falls back to the manual-edit screen — never crash, never block.
 7. **Log Gemini calls in dev.** Build a receipt image test set as you go.
 8. **Ask before adding paid deps.** Free tiers only unless explicitly agreed.
@@ -134,8 +135,9 @@ households          id, name, invite_code, created_at
 household_members   id, household_id, user_id, role, joined_at
 transactions        id, household_id, user_id, amount_eur (int, cents),
                     original_amount (int, nullable), original_currency (text, nullable),
-                    merchant, category_id, date, note, receipt_id, is_flagged, created_at
-categories          id, household_id, name, icon, color, is_default
+                    merchant, category_id, date, note, receipt_id, is_flagged, created_at,
+                    kind ('expense'|'income')
+categories          id, household_id, name, icon, color, is_default, kind ('expense'|'income')
 receipts            id, household_id, user_id, storage_path, raw_gemini_json,
                     processed_at, created_at
 budgets             id, household_id, category_id, amount_eur (int), month, created_at
