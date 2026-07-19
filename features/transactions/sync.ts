@@ -40,7 +40,13 @@ export function useTransactionsSync(): void {
 
     async function load() {
       try {
-        await refreshTransactions(householdId!);
+        const [categories, transactions, openAnomalies] = await Promise.all([
+          listCategories(householdId!),
+          listTransactions(householdId!),
+          listOpenAnomalies(householdId!),
+        ]);
+        if (!active) return;
+        store.setData(transactions, categories, openAnomalies);
         void loadBudgets(householdId!);
       } catch (err) {
         if (__DEV__) console.warn('[transactions] load failed', err);
