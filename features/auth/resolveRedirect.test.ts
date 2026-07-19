@@ -36,4 +36,9 @@ describe('resolveRedirect', () => {
     expect(resolveRedirect('ready', ['(app)', 'index'])).toBeNull();
     expect(resolveRedirect('ready', ['scanner'])).toBeNull();
   });
+
+  it("status 'error' never redirects (root layout shows the retry screen)", () => {
+    expect(resolveRedirect('error', ['(app)'])).toBeNull();
+    expect(resolveRedirect('error', ['(auth)', 'sign-in'])).toBeNull();
+  });
 });

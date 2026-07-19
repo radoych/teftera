@@ -5,45 +5,64 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/services/supabase';
 import { getMyHousehold } from '@/features/household/api';
 import { resolveRedirect } from './resolveRedirect';
+import { shouldSkipAuthEvent } from './sessionEvents';
 import { useAuthStore } from './store';
+
+let lastAppliedUserId: string | null = null;
+
+/** Apply a session to the store. A failed household lookup → status 'error' (retry screen). */
+async function applySession(session: Session | null): Promise<void> {
+  const { setStatus, setSession, setHousehold, reset } = useAuthStore.getState();
+  if (!session) {
+    lastAppliedUserId = null;
+    reset();
+    return;
+  }
+  setSession(session);
+  try {
+    const household = await getMyHousehold();
+    lastAppliedUserId = session.user.id;
+    if (household) {
+      setHousehold(household.householdId, household.displayName);
+      setStatus('ready');
+    } else {
+      const metadataName =
+        (session.user.user_metadata?.display_name as string | undefined) ?? null;
+      setHousehold(null, metadataName);
+      setStatus('needs-household');
+    }
+  } catch (err) {
+    if (__DEV__) console.warn('[auth] bootstrap household lookup failed', err);
+    setStatus('error');
+  }
+}
+
+/** (Re)start hydration: also the retry action for the error screen. */
+export function retryBootstrap(): void {
+  useAuthStore.getState().setStatus('loading');
+  supabase.auth
+    .getSession()
+    .then(({ data }) => applySession(data.session))
+    .catch((err) => {
+      if (__DEV__) console.warn('[auth] getSession failed', err);
+      useAuthStore.getState().setStatus('error');
+    });
+}
 
 /** Hydrate the auth store from Supabase and keep it live. Call once, in the root layout. */
 export function useAuthBootstrap(): void {
-  const { setStatus, setSession, setHousehold, reset } = useAuthStore.getState();
-
   useEffect(() => {
-    let active = true;
-
-    async function applySession(session: Session | null) {
-      if (!active) return;
-      if (!session) {
-        reset();
+    retryBootstrap();
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        shouldSkipAuthEvent(event, session?.user.id, lastAppliedUserId, useAuthStore.getState().status)
+      ) {
         return;
       }
-      setSession(session);
-      const household = await getMyHousehold();
-      if (!active) return;
-      if (household) {
-        setHousehold(household.householdId, household.displayName);
-        setStatus('ready');
-      } else {
-        const metadataName =
-          (session.user.user_metadata?.display_name as string | undefined) ?? null;
-        setHousehold(null, metadataName);
-        setStatus('needs-household');
-      }
-    }
-
-    supabase.auth.getSession().then(({ data }) => applySession(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      applySession(session);
+      void applySession(session);
     });
-
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
-  }, [reset, setHousehold, setSession, setStatus]);
+    return () => sub.subscription.unsubscribe();
+  }, []);
 }
 
 /** Redirect to the correct group based on auth status. Call once, in the root layout. */

@@ -1,4 +1,4 @@
-export type AuthStatus = 'loading' | 'unauthenticated' | 'needs-household' | 'ready';
+export type AuthStatus = 'loading' | 'unauthenticated' | 'needs-household' | 'ready' | 'error';
 
 const AUTH_GROUP = '(auth)';
 const PUBLIC_SCREENS = ['sign-in', 'sign-up'];
@@ -21,5 +21,7 @@ export function resolveRedirect(status: AuthStatus, segments: string[]): string 
       return inAuthGroup && HOUSEHOLD_SCREENS.includes(screen) ? null : '/(auth)/household-setup';
     case 'ready':
       return inAuthGroup ? '/(app)' : null;
+    case 'error':
+      return null;
   }
 }
