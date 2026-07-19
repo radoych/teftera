@@ -52,7 +52,6 @@ export function retryBootstrap(): void {
 /** Hydrate the auth store from Supabase and keep it live. Call once, in the root layout. */
 export function useAuthBootstrap(): void {
   useEffect(() => {
-    retryBootstrap();
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (
         shouldSkipAuthEvent(event, session?.user.id, lastAppliedUserId, useAuthStore.getState().status)
