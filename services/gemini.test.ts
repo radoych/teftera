@@ -1,38 +1,85 @@
-import { buildSummaryPrompt, isRetryableGeminiError, type SummaryInput } from './gemini';
+import { extractReceipt, generateInsightsSummary, isRetryableStatus, buildSummaryPrompt, type SummaryInput } from './gemini';
 
-describe('isRetryableGeminiError', () => {
-  it('retries an overloaded model (503)', () => {
-    expect(
-      isRetryableGeminiError(
-        new Error(
-          '[GoogleGenerativeAI Error]: Error fetching from .../gemini-2.5-flash:generateContent: [503 Service Unavailable] This model is currently experiencing high demand.',
-        ),
-      ),
-    ).toBe(true);
+declare const global: {
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+};
+
+jest.mock('@/services/supabase', () => ({
+  isSupabaseConfigured: true,
+  supabase: {
+    auth: { getSession: jest.fn().mockResolvedValue({ data: { session: { access_token: 'jwt' } } }) },
+  },
+}));
+
+const mockFetch = (status: number, body: unknown) =>
+  jest.fn().mockResolvedValue({ ok: status < 400, status, json: async () => body });
+
+describe('isRetryableStatus', () => {
+  it('retries 429 and 5xx, not 4xx', () => {
+    expect(isRetryableStatus(429)).toBe(true);
+    expect(isRetryableStatus(503)).toBe(true);
+    expect(isRetryableStatus(422)).toBe(false);
+    expect(isRetryableStatus(401)).toBe(false);
+  });
+});
+
+describe('extractReceipt', () => {
+  beforeEach(() => jest.useFakeTimers({ advanceTimers: true }));
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
-  it('retries rate limiting (429) and other 5xx', () => {
-    expect(isRetryableGeminiError(new Error('[429 Too Many Requests] quota'))).toBe(true);
-    expect(isRetryableGeminiError(new Error('[500 Internal Server Error]'))).toBe(true);
-    expect(isRetryableGeminiError(new Error('[502 Bad Gateway]'))).toBe(true);
+  it('maps a good response to normalized cents', async () => {
+    global.fetch = mockFetch(200, {
+      json: { merchant: 'Lidl', date: '2026-07-01', total: 12.5, currency: 'EUR', items: [] },
+    }) as never;
+    const r = await extractReceipt('AAAA');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.data.totalCents).toBe(1250);
   });
 
-  it('retries network-level failures', () => {
-    expect(isRetryableGeminiError(new Error('fetch failed'))).toBe(true);
-    expect(isRetryableGeminiError(new Error('network request timeout'))).toBe(true);
+  it('rejects a zero/missing total as extraction failure (review #3)', async () => {
+    global.fetch = mockFetch(200, {
+      json: { merchant: 'Lidl', date: null, currency: 'EUR', items: [] },
+    }) as never;
+    const r = await extractReceipt('AAAA');
+    expect(r.ok).toBe(false);
   });
 
-  it('does NOT retry a malformed-JSON parse error', () => {
-    expect(isRetryableGeminiError(new SyntaxError('Unexpected token < in JSON at position 0'))).toBe(false);
+  it('does not retry a 422 and falls back', async () => {
+    const f = mockFetch(422, { error: 'bad_response' });
+    global.fetch = f as never;
+    const r = await extractReceipt('AAAA');
+    expect(r.ok).toBe(false);
+    expect(f).toHaveBeenCalledTimes(1);
   });
 
-  it('does NOT retry a 400 bad request', () => {
-    expect(isRetryableGeminiError(new Error('[400 Bad Request] invalid argument'))).toBe(false);
+  it('retries a 503 up to 3 attempts', async () => {
+    const f = mockFetch(503, { error: 'gemini_error' });
+    global.fetch = f as never;
+    const r = await extractReceipt('AAAA');
+    expect(r.ok).toBe(false);
+    expect(f).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('generateInsightsSummary', () => {
+  beforeEach(() => jest.useFakeTimers({ advanceTimers: true }));
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
-  it('handles non-Error values without throwing', () => {
-    expect(isRetryableGeminiError('503 plain string')).toBe(false); // no bracket form
-    expect(isRetryableGeminiError(null)).toBe(false);
+  it('returns trimmed text on success', async () => {
+    global.fetch = mockFetch(200, { text: 'Кратко обобщение.' }) as never;
+    const input = { monthTotalCents: 1000, prevMonthTotalCents: 0, pctChange: null, topCategory: null, topMerchant: null };
+    await expect(generateInsightsSummary(input)).resolves.toBe('Кратко обобщение.');
+  });
+  it('null on over-long text', async () => {
+    global.fetch = mockFetch(200, { text: 'x'.repeat(500) }) as never;
+    const input = { monthTotalCents: 1000, prevMonthTotalCents: 0, pctChange: null, topCategory: null, topMerchant: null };
+    await expect(generateInsightsSummary(input)).resolves.toBeNull();
   });
 });
 
