@@ -73,7 +73,7 @@ eas build --profile preview --platform all
 | Keyboard | react-native-keyboard-controller (KeyboardProvider in root layout) |
 | CI/CD | Expo EAS |
 
-**Future (not yet built):** thin FastAPI service on GCP Cloud Run for anomaly model + server-side Gemini calls. Isolate all AI and ML logic behind service modules now so the move is a one-file change later.
+**Future (not yet built):** thin FastAPI service on GCP Cloud Run for the anomaly model. (Gemini calls are already server-side — see Non-Negotiable Rules #5.) Isolate all AI and ML logic behind service modules now so the move is a one-file change later.
 
 ---
 
