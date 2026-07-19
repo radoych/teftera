@@ -76,6 +76,12 @@ describe('toTransactionView', () => {
     const v = toTransactionView(tx({ id: 'd', is_flagged: false }), byId, NOW, reasons);
     expect(v.flagReason).toBeUndefined();
   });
+
+  it('maps kind income → isIncome view flag', () => {
+    const view = toTransactionView(tx({ kind: 'income' }), new Map());
+    expect(view.isIncome).toBe(true);
+    expect(toTransactionView(tx({ kind: 'expense' }), new Map()).isIncome).toBe(false);
+  });
 });
 
 describe('groupTransactionsByDay', () => {

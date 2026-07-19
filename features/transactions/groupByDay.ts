@@ -25,7 +25,6 @@ export function toTransactionView(
   const cat = tx.category_id ? byId.get(tx.category_id) : undefined;
   const name = cat?.name ?? FALLBACK_NAME;
   const time = formatTime(new Date(tx.occurred_at ?? tx.created_at));
-  // isIncome deferred (income lands in a later day)
   return {
     id: tx.id,
     merchant: tx.merchant,
@@ -35,6 +34,7 @@ export function toTransactionView(
     iconColor: cat?.color ?? FALLBACK_COLOR,
     isFlagged: tx.is_flagged,
     flagReason: tx.is_flagged ? reasons.get(tx.id) : undefined,
+    isIncome: tx.kind === 'income',
   };
 }
 

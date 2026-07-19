@@ -21,6 +21,7 @@ import {
 } from '@/features/transactions/dashboard';
 import { reasonByTxId } from '@/features/anomalies/reasons';
 import { monthTotalCents, toTransactionView } from '@/features/transactions/groupByDay';
+import { expensesOnly } from '@/features/transactions/kind';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { formatCurrency } from '@/lib/formatCurrency';
@@ -53,7 +54,14 @@ export default function DashboardScreen() {
   const [scope, setScope] = useState<Scope>('household');
   const [refreshing, setRefreshing] = useState(false);
 
+  const expenseTxs = useMemo(() => expensesOnly(transactions), [transactions]);
+
   const filtered = useMemo(
+    () => filterByUser(expenseTxs, scope === 'me' ? userId : null),
+    [expenseTxs, scope, userId],
+  );
+
+  const recentPool = useMemo(
     () => filterByUser(transactions, scope === 'me' ? userId : null),
     [transactions, scope, userId],
   );
@@ -76,8 +84,8 @@ export default function DashboardScreen() {
   // Household-scoped category spend: always uses all household transactions,
   // ignoring the per-person toggle, so budget progress is household-level.
   const householdCategoryRows = useMemo(
-    () => spendingByCategory(transactions, categories),
-    [transactions, categories],
+    () => spendingByCategory(expenseTxs, categories),
+    [expenseTxs, categories],
   );
 
   const budgetRows = useBudgetsStore((s) => s.rows);
@@ -92,8 +100,8 @@ export default function DashboardScreen() {
 
   const recent = useMemo(() => {
     const byId = new Map(categories.map((c) => [c.id, c]));
-    return filtered.slice(0, 3).map((tx) => toTransactionView(tx, byId, undefined, reasons));
-  }, [filtered, categories, reasons]);
+    return recentPool.slice(0, 3).map((tx) => toTransactionView(tx, byId, undefined, reasons));
+  }, [recentPool, categories, reasons]);
 
   const onRefresh = async () => {
     if (!householdId) return;
