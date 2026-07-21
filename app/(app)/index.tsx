@@ -17,6 +17,7 @@ import {
   filterByUser,
   pctChange,
   prevMonthTotalCents,
+  sortByCreatedAtDesc,
   spendingByCategory,
 } from '@/features/transactions/dashboard';
 import { reasonByTxId } from '@/features/anomalies/reasons';
@@ -100,7 +101,9 @@ export default function DashboardScreen() {
 
   const recent = useMemo(() => {
     const byId = new Map(categories.map((c) => [c.id, c]));
-    return recentPool.slice(0, 3).map((tx) => toTransactionView(tx, byId, undefined, reasons));
+    return sortByCreatedAtDesc(recentPool)
+      .slice(0, 3)
+      .map((tx) => toTransactionView(tx, byId, undefined, reasons));
   }, [recentPool, categories, reasons]);
 
   const onRefresh = async () => {
