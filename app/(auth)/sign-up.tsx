@@ -1,9 +1,8 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { AuthShell } from '@/components/AuthShell';
 import { FlatInput } from '@/components/FlatInput';
-import { PillButton } from '@/components/PillButton';
 import { signUpWithPassword } from '@/features/auth/api';
 
 export default function SignUpScreen() {
@@ -63,13 +62,23 @@ export default function SignUpScreen() {
           {error ? <Text className="font-inter text-body-md text-error">{error}</Text> : null}
         </View>
 
-        <PillButton label="Регистрация" onPress={onRegister} loading={loading} block />
-
-        <Pressable onPress={() => router.back()} className="items-center">
-          <Text className="font-inter text-label-md text-on-surface-variant">
-            Вече имаш акаунт? <Text className="text-primary-container">Вход</Text>
-          </Text>
-        </Pressable>
+        <View className="flex-row items-center justify-between rounded-full bg-surface-container-high p-2">
+          <Pressable onPress={() => router.back()} className="flex-1 items-center py-3">
+            <Text className="font-inter text-body-md text-on-surface-variant">
+              Вече имате регистрация?
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={onRegister}
+            disabled={loading}
+            className="flex-1 items-center rounded-full bg-primary-container py-3 active:opacity-90">
+            {loading ? (
+              <ActivityIndicator color="#112f5e" />
+            ) : (
+              <Text className="font-inter-semibold text-body-md text-on-primary">Регистрация</Text>
+            )}
+          </Pressable>
+        </View>
       </View>
     </AuthShell>
   );

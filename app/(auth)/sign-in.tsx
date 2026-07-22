@@ -30,7 +30,6 @@ export default function SignInScreen() {
           contentFit="contain"
         />
         <Text className="mt-md font-jakarta-bold text-headline-lg text-primary">Teftera</Text>
-        <Text className="font-inter text-label-md text-on-surface-variant opacity-60">тефтера</Text>
       </View>
 
       <View className="flex-[2] justify-center gap-lg">
