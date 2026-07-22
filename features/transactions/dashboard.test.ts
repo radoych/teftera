@@ -4,7 +4,7 @@ import {
   filterByUser,
   pctChange,
   prevMonthTotalCents,
-  sortByCreatedAt,
+  sortByCreatedAtDesc,
   spendingByCategory,
 } from './dashboard';
 import type { CategoryLite } from './groupByDay';
@@ -116,33 +116,24 @@ describe('filterByUser', () => {
   });
 });
 
-describe('sortByCreatedAt', () => {
+describe('sortByCreatedAtDesc', () => {
   it('orders by created_at descending, ignoring the transaction date', () => {
     const txs = [
       tx({ id: 'old-date-new-entry', date: '2026-01-01', created_at: '2026-06-22T10:00:00.000Z' }),
       tx({ id: 'recent-date-old-entry', date: '2026-06-20', created_at: '2026-06-20T08:00:00.000Z' }),
       tx({ id: 'newest-entry', date: '2026-03-15', created_at: '2026-06-22T12:00:00.000Z' }),
     ];
-    expect(sortByCreatedAt(txs, true).map((t) => t.id)).toEqual([
+    expect(sortByCreatedAtDesc(txs).map((t) => t.id)).toEqual([
       'newest-entry',
       'old-date-new-entry',
       'recent-date-old-entry',
     ]);
   });
 
-  it('orders ascending when desc is false', () => {
-    const txs = [
-      tx({ id: 'newest', created_at: '2026-06-22T12:00:00.000Z' }),
-      tx({ id: 'oldest', created_at: '2026-06-20T08:00:00.000Z' }),
-      tx({ id: 'middle', created_at: '2026-06-21T10:00:00.000Z' }),
-    ];
-    expect(sortByCreatedAt(txs, false).map((t) => t.id)).toEqual(['oldest', 'middle', 'newest']);
-  });
-
   it('does not mutate the input array', () => {
     const txs = [tx({ id: 'a', created_at: '2026-06-20T00:00:00.000Z' }), tx({ id: 'b', created_at: '2026-06-22T00:00:00.000Z' })];
     const original = [...txs];
-    sortByCreatedAt(txs, true);
+    sortByCreatedAtDesc(txs);
     expect(txs).toEqual(original);
   });
 });

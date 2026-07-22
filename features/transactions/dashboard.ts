@@ -39,15 +39,12 @@ export function filterByUser(txs: Transaction[], userId: string | null): Transac
 }
 
 /**
- * Sort by created_at — order of ADDITION, regardless of the transaction's own
- * date. Used for "recent" lists, where a just-entered backdated transaction
- * (e.g. an old CSV import row) should still surface as recent.
+ * Sort by created_at descending — most recently ADDED first, regardless of the
+ * transaction's own date. Used for "recent" lists, where a just-entered backdated
+ * transaction (e.g. an old CSV import row) should still surface as recent.
  */
-export function sortByCreatedAt(txs: Transaction[], desc: boolean): Transaction[] {
-  return [...txs].sort((a, b) => {
-    const cmp = a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0;
-    return desc ? -cmp : cmp;
-  });
+export function sortByCreatedAtDesc(txs: Transaction[]): Transaction[] {
+  return [...txs].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
 }
 
 /** One category's spend bucket, with a bar fraction relative to the largest bucket. */
