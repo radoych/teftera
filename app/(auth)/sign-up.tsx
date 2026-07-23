@@ -64,9 +64,7 @@ export default function SignUpScreen() {
 
         <View className="flex-row items-center justify-between rounded-full bg-surface-container-high p-2">
           <Pressable onPress={() => router.back()} className="flex-1 items-center py-3">
-            <Text className="font-inter text-body-md text-on-surface-variant">
-              Вече имате регистрация?
-            </Text>
+            <Text className="font-inter text-body-md text-on-surface-variant">Вход</Text>
           </Pressable>
           <Pressable
             onPress={onRegister}
