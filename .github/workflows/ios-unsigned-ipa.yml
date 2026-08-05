@@ -13,7 +13,12 @@
 name: iOS unsigned IPA
 
 on:
+  # workflow_dispatch only works once this file is on the default branch, so
+  # until it is merged the push trigger below is what actually runs it.
   workflow_dispatch:
+  push:
+    branches: [ci/ios-unsigned-ipa]
+    paths: ['.github/workflows/ios-unsigned-ipa.yml']
 
 concurrency:
   group: ios-ipa-${{ github.ref }}
