@@ -1,0 +1,112 @@
+# Builds an UNSIGNED iOS .ipa for sideloading with AltStore.
+#
+# Why unsigned: EAS iOS builds need ad-hoc provisioning, which requires a paid
+# Apple Developer Program membership. AltStore does the signing itself using a
+# free Apple ID (7-day expiry, refreshed by AltServer over Wi-Fi), so all we
+# have to produce is the compiled app — no certificates, no provisioning
+# profiles, no Apple account of any kind involved here.
+#
+# Run it from the Actions tab (Run workflow). The .ipa lands in the run's
+# artifacts. Note that macOS runners bill at 10x against the free minutes, so a
+# ~25 min build costs ~250 of the 2000 free minutes/month.
+
+name: iOS unsigned IPA
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      # Inlined into the JS bundle by Metro during the Xcode build phase, so
+      # they must be present for the archive step, not just at prebuild.
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Toolchain versions
+        run: |
+          node --version
+          xcodebuild -version
+          pod --version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fail early if Supabase config is missing
+        run: |
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Repo secrets EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY are not set."
+            echo "Without them the app builds but cannot reach Supabase, so sign-in fails on device."
+            exit 1
+          fi
+
+      # --no-install keeps prebuild from re-running npm on top of npm ci.
+      - name: Prebuild iOS project
+        run: npx expo prebuild --platform ios --no-install
+
+      - name: Install pods
+        run: pod install --project-directory=ios
+
+      # The scheme is derived from app.json's `name`, so discover it rather
+      # than hardcoding "Teftera" and breaking on a rename.
+      - name: Resolve scheme
+        id: scheme
+        run: |
+          SCHEME=$(basename ios/*.xcworkspace .xcworkspace)
+          echo "Resolved scheme: $SCHEME"
+          echo "name=$SCHEME" >> "$GITHUB_OUTPUT"
+
+      - name: Archive without code signing
+        env:
+          SCHEME: ${{ steps.scheme.outputs.name }}
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -workspace "ios/${SCHEME}.xcworkspace" \
+            -scheme "${SCHEME}" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "${RUNNER_TEMP}/${SCHEME}.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      # An .ipa is just a zip with the .app inside a Payload/ directory.
+      - name: Package IPA
+        env:
+          SCHEME: ${{ steps.scheme.outputs.name }}
+        run: |
+          APP="${RUNNER_TEMP}/${SCHEME}.xcarchive/Products/Applications/${SCHEME}.app"
+          if [ ! -d "$APP" ]; then
+            echo "::error::Archive produced no .app at $APP"
+            ls -R "${RUNNER_TEMP}/${SCHEME}.xcarchive/Products" || true
+            exit 1
+          fi
+          mkdir -p "${RUNNER_TEMP}/Payload"
+          cp -R "$APP" "${RUNNER_TEMP}/Payload/"
+          cd "${RUNNER_TEMP}"
+          zip -qry "Teftera-unsigned.ipa" Payload
+          echo "IPA size: $(du -h Teftera-unsigned.ipa | cut -f1)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Teftera-unsigned-ipa
+          path: ${{ runner.temp }}/Teftera-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30
