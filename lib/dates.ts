@@ -33,11 +33,45 @@ export function toISODate(date: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+// ── Month toolkit ───────────────────────────────────────────────────────────
+// One definition of "calendar month": LOCAL time, zero-padded, bounds inclusive.
+// Transaction `date` columns are YYYY-MM-DD strings, so month membership is a
+// string-prefix test against `monthKey`.
+
+/** 'YYYY-MM' for the local calendar month containing `date`. */
+export function monthKey(date: Date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** First day of the month containing `date`, shifted by `offset` whole months. */
+export function startOfMonth(date: Date = new Date(), offset = 0): Date {
+  return new Date(date.getFullYear(), date.getMonth() + offset, 1);
+}
+
 /** First day of the month for a given date (used for budgets.month). */
 export function firstOfMonth(date: Date = new Date()): string {
+  return `${monthKey(date)}-01`;
+}
+
+/** Inclusive [first, last] YYYY-MM-DD bounds of the month containing `date`. */
+export function monthBounds(date: Date = new Date()): { startISO: string; endISO: string } {
   const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  return `${y}-${m}-01`;
+  const m = date.getMonth();
+  return { startISO: toISODate(new Date(y, m, 1)), endISO: toISODate(new Date(y, m + 1, 0)) };
+}
+
+/** True when the YYYY-MM-DD `isoDate` falls in the calendar month containing `date`. */
+export function isInMonth(isoDate: string, date: Date): boolean {
+  return isoDate.startsWith(`${monthKey(date)}-`);
+}
+
+/** Sum of `amount_eur` (integer cents) over rows dated in the month containing `date`. */
+export function sumInMonth(
+  rows: ReadonlyArray<{ date: string; amount_eur: number }>,
+  date: Date,
+): number {
+  const prefix = `${monthKey(date)}-`;
+  return rows.reduce((sum, r) => (r.date.startsWith(prefix) ? sum + r.amount_eur : sum), 0);
 }
 
 /** Human day label: "Днес", "Вчера", or a localized date. */
