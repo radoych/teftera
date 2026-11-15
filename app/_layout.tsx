@@ -22,6 +22,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { AuthErrorScreen } from '@/components/AuthErrorScreen';
 import { useAuthStore } from '@/features/auth/store';
 import { retryBootstrap, useAuthBootstrap, useProtectedRoute } from '@/features/auth/bootstrap';
+import { colors } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -60,7 +61,7 @@ export default function RootLayout() {
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: '#121316' },
+              contentStyle: { backgroundColor: colors.background },
               animation: 'slide_from_right',
             }}>
             <Stack.Screen name="(app)" />

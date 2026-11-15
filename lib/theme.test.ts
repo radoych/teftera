@@ -6,8 +6,8 @@ const tailwindConfig = require('../tailwind.config.js') as {
 };
 
 describe('theme tokens', () => {
-  it('are 6-digit hex colours, except the translucent placeholder', () => {
-    const { placeholder: _placeholder, ...opaque } = colors;
+  it('are 6-digit hex colours, except the translucent placeholder and hairline', () => {
+    const { placeholder: _placeholder, hairline: _hairline, ...opaque } = colors;
     Object.values(opaque).forEach((c) => expect(c).toMatch(/^#[0-9a-f]{6}$/));
   });
 
@@ -16,6 +16,10 @@ describe('theme tokens', () => {
       parseInt(colors.onSurfaceVariant.slice(i, i + 2), 16),
     );
     expect(colors.placeholder).toBe(`rgba(${r},${g},${b},0.3)`);
+  });
+
+  it('hairline is white at 5%', () => {
+    expect(colors.hairline).toBe('rgba(255,255,255,0.05)');
   });
 
   it('anomaly is an alias of secondary-fixed', () => {

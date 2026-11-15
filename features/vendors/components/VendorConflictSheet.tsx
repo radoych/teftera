@@ -209,14 +209,14 @@ const styles = StyleSheet.create({
   summaryRow: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.hairline,
   },
   vRule: {
     width: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.hairline,
   },
   optionDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.hairline,
   },
 });

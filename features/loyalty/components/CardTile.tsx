@@ -32,7 +32,7 @@ export function CardTile({ card, vendorName, onPress, onLongPress, width }: Card
         width,
         backgroundColor: `${card.color}26`,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.hairline,
       }}>
       <View className="mb-md flex-row items-start justify-between gap-sm">
         <Text

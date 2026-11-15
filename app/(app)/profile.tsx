@@ -110,7 +110,7 @@ export default function ProfileScreen() {
           <Text className="font-inter text-body-lg text-on-surface">
             Подреди секциите
           </Text>
-          <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
         </Pressable>
       </View>
 
@@ -146,13 +146,13 @@ export default function ProfileScreen() {
           <Text className="font-inter text-body-lg text-on-surface">
             Управление на категории
           </Text>
-          <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
         </Pressable>
         <Pressable
           onPress={onSignOut}
           className="flex-row items-center gap-3 py-5 active:opacity-70"
         >
-          <MaterialIcons name="logout" size={22} color="#ffb4ab" />
+          <MaterialIcons name="logout" size={22} color={colors.error} />
           <Text className="font-inter text-body-lg text-error">Изход</Text>
         </Pressable>
       </View>

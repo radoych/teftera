@@ -46,6 +46,8 @@ export const colors = {
   anomaly: '#c3f400',
   /** Input placeholder text — on-surface-variant (#c4c6d0) at 30% opacity. */
   placeholder: 'rgba(196,198,208,0.3)',
+  /** Hairline section divider (CLAUDE.md visual patterns): white at 5%. */
+  hairline: 'rgba(255,255,255,0.05)',
 } as const;
 
 export type ColorToken = keyof typeof colors;
@@ -81,4 +83,5 @@ export const tailwindColors = {
   'error-container': colors.errorContainer,
   anomaly: colors.anomaly,
   placeholder: colors.placeholder,
+  hairline: colors.hairline,
 } as const;

@@ -208,7 +208,7 @@ export default function VendorsScreen() {
 const styles = StyleSheet.create({
   divider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.hairline,
   },
 });
 

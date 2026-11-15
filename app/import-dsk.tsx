@@ -10,12 +10,13 @@ import { vendorNameForKey } from '@/features/vendors/store';
 import { useIsOnline } from '@/lib/useIsOnline';
 import { normalizeEbTransaction } from '@/services/bank-sync';
 import { normalizeDskRow } from '@/services/dsk-import';
+import { colors } from '@/lib/theme';
 
 function Header() {
   return (
     <View className="mb-md flex-row items-center gap-3 py-2">
       <Pressable onPress={() => router.back()} hitSlop={8} className="-ml-2 p-2">
-        <MaterialIcons name="arrow-back" size={24} color="#e3e2e6" />
+        <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
       </Pressable>
       <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
         Импортиране от DSK

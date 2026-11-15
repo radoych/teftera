@@ -36,7 +36,7 @@ const INPUT_CLASS = {
 } as const;
 
 const PLACEHOLDER_COLOR = {
-  field: 'rgba(196,198,208,0.3)',
+  field: colors.placeholder,
   headline: 'rgba(142,144,154,0.5)',
 } as const;
 
@@ -165,6 +165,6 @@ const styles = StyleSheet.create({
   divider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     // Same hairline as components/HairlineDivider (CLAUDE.md visual patterns).
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.hairline,
   },
 });

@@ -39,6 +39,7 @@ import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
 import { extractReceipt } from '@/services/gemini';
 import { formatCurrency, parseAmountToCents } from '@/lib/formatCurrency';
+import { colors } from '@/lib/theme';
 
 type Phase = 'extracting' | 'ready';
 
@@ -175,7 +176,7 @@ export default function ConfirmReceiptScreen() {
             Потвърди бележката
           </Text>
           <Pressable onPress={() => router.back()} hitSlop={8}>
-            <MaterialIcons name="close" size={24} color="#e3e2e6" />
+            <MaterialIcons name="close" size={24} color={colors.onSurface} />
           </Pressable>
         </View>
 
@@ -201,7 +202,7 @@ export default function ConfirmReceiptScreen() {
 
           {phase === 'extracting' ? (
             <View className="items-center gap-md py-xl">
-              <ActivityIndicator size="large" color="#adc7ff" />
+              <ActivityIndicator size="large" color={colors.primaryContainer} />
               <Text className="font-inter text-body-lg text-on-surface-variant">
                 Разчитане на бележката…
               </Text>
@@ -262,7 +263,7 @@ export default function ConfirmReceiptScreen() {
                     </Text>
                     <Text className="font-inter text-body-lg text-on-surface">{categoryLabel}</Text>
                   </View>
-                  <MaterialIcons name="expand-more" size={22} color="#c4c6d0" />
+                  <MaterialIcons name="expand-more" size={22} color={colors.onSurfaceVariant} />
                 </View>
               </Pressable>
               <HairlineDivider className="mb-xl" />
@@ -300,7 +301,7 @@ export default function ConfirmReceiptScreen() {
                         />
                       </View>
                       <Pressable onPress={() => removeItem(item.id)} hitSlop={8}>
-                        <MaterialIcons name="delete" size={18} color="#ffb4ab" />
+                        <MaterialIcons name="delete" size={18} color={colors.error} />
                       </Pressable>
                     </View>
                   </View>
@@ -309,7 +310,7 @@ export default function ConfirmReceiptScreen() {
               ))}
 
               <Pressable onPress={addItem} className="flex-row items-center py-md active:opacity-70">
-                <MaterialIcons name="add" size={20} color="#adc7ff" />
+                <MaterialIcons name="add" size={20} color={colors.primaryContainer} />
                 <Text className="ml-md font-inter text-body-md text-on-surface-variant">
                   Добави артикул
                 </Text>

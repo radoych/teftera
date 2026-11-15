@@ -33,6 +33,7 @@ import { getVendorIndex } from '@/features/vendors/store';
 import { guessCategory, guessIncomeCategory, resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
+import { colors } from '@/lib/theme';
 
 function FieldRow({
   label,
@@ -53,7 +54,7 @@ function FieldRow({
         </Text>
         {children}
       </View>
-      {chevron ? <MaterialIcons name="expand-more" size={22} color="#c4c6d0" /> : null}
+      {chevron ? <MaterialIcons name="expand-more" size={22} color={colors.onSurfaceVariant} /> : null}
     </View>
   );
   return (
