@@ -4,8 +4,8 @@ import * as Crypto from 'expo-crypto';
 import { supabase } from '@/services/supabase';
 import { buildReceiptObjectKey } from './objectKey';
 
-export const RECEIPT_BUCKET = 'receipts';
-export const RECEIPT_CONTENT_TYPE = 'image/jpeg';
+const RECEIPT_BUCKET = 'receipts';
+const RECEIPT_CONTENT_TYPE = 'image/jpeg';
 
 /**
  * Upload a local JPEG to the private `receipts` bucket under

@@ -92,7 +92,7 @@ export function formatTime(date: Date): string {
   return timeFormat().format(date);
 }
 
-export function parseISODate(iso: string): Date {
+function parseISODate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
 }
@@ -115,7 +115,7 @@ export function isValidISODate(iso: string): boolean {
 }
 
 /** Bulgarian 3-letter month abbreviations; index 0 = January. */
-export const MONTH_ABBR_BG = [
+const MONTH_ABBR_BG = [
   'ЯНУ', 'ФЕВ', 'МАР', 'АПР', 'МАЙ', 'ЮНИ',
   'ЮЛИ', 'АВГ', 'СЕП', 'ОКТ', 'НОЕ', 'ДЕК',
 ] as const;

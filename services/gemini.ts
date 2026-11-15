@@ -15,9 +15,6 @@ import { formatCurrency } from '@/lib/formatCurrency';
 
 export { isRetryableStatus } from '@/services/edge';
 
-/** Gemini now runs server-side; "configured" = Supabase reachable. */
-export const isGeminiConfigured = isSupabaseConfigured;
-
 /** A single parsed receipt line item (amounts in integer EUR cents). */
 export interface ReceiptLineItem {
   description: string;
@@ -82,7 +79,7 @@ export async function extractReceipt(
   base64Image: string,
   mimeType = 'image/jpeg',
 ): Promise<ExtractionResult> {
-  if (!isGeminiConfigured) {
+  if (!isSupabaseConfigured) {
     return { ok: false, reason: 'Gemini API key not configured.' };
   }
 
@@ -145,7 +142,7 @@ export function buildSummaryPrompt(input: SummaryInput): string {
  * suspiciously long. Best-effort — never throws; retries transient failures.
  */
 export async function generateInsightsSummary(input: SummaryInput): Promise<string | null> {
-  if (!isGeminiConfigured) return null;
+  if (!isSupabaseConfigured) return null;
 
   try {
     const { text } = await withRetry(
