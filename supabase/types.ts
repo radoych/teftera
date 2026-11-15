@@ -242,7 +242,6 @@ export type Database = {
         }
         Relationships: []
       }
-      // loyalty_cards hand-added from migration 20261115130100_loyalty_cards.sql pending regeneration.
       loyalty_cards: {
         Row: {
           code: string
@@ -338,7 +337,6 @@ export type Database = {
           },
         ]
       }
-      // shopping_lists / shopping_list_items hand-added from migration 20261115130200_shopping_lists.sql pending regeneration.
       shopping_list_items: {
         Row: {
           checked_at: string | null
@@ -556,7 +554,6 @@ export type Database = {
           },
         ]
       }
-      // vendors + vendor_aliases (and merge_vendors under Functions) hand-added from migration 20261115130000_vendors.sql pending regeneration.
       vendor_aliases: {
         Row: {
           alias: string
