@@ -1,5 +1,5 @@
 import { alias, vendor, withPrimaries } from './fixtures';
-import { buildVendorIndex, resolveVendor, suggestVendors } from './resolve';
+import { buildVendorIndex, filterVendors, resolveVendor, suggestVendors } from './resolve';
 
 const kaufland = vendor('v1', 'Kaufland');
 const billa = vendor('v2', 'Billa');
@@ -124,5 +124,22 @@ describe('suggestVendors', () => {
 
   it('can exclude one vendor (the one being edited)', () => {
     expect(suggestVendors('ka', index, 6, 'v1').map((s) => s.vendor.name)).toEqual(['Billa']);
+  });
+});
+
+describe('filterVendors', () => {
+  it('lists every vendor alphabetically for a blank query', () => {
+    expect(filterVendors(' ', index).map((v) => v.name)).toEqual([
+      'Billa',
+      'Fantastico Market',
+      'Kaufland',
+      'Lidl',
+    ]);
+  });
+
+  it('matches a substring of the name or of any recognized name', () => {
+    expect(filterVendors('LAND', index).map((v) => v.name)).toEqual(['Billa', 'Kaufland']);
+    expect(filterVendors('кауф', index).map((v) => v.name)).toEqual(['Kaufland']);
+    expect(filterVendors('metro', index)).toEqual([]);
   });
 });

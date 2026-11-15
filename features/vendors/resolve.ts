@@ -103,3 +103,18 @@ export function suggestVendors(
     .sort((a, b) => a.score - b.score || a.vendor.name.localeCompare(b.vendor.name, 'bg'))
     .slice(0, limit);
 }
+
+/**
+ * Vendors-screen search: blank query → every vendor alphabetically (bg);
+ * otherwise vendors whose name or any recognized name contains the query.
+ */
+export function filterVendors(query: string, index: VendorIndex): Vendor[] {
+  const q = merchantKey(query);
+  const all = [...index.byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'bg'));
+  if (!q) return all;
+  return all.filter(
+    (v) =>
+      v.name_key.includes(q) ||
+      (index.aliasesByVendor.get(v.id) ?? []).some((a) => a.alias_key.includes(q)),
+  );
+}
