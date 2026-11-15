@@ -4,6 +4,7 @@ import { HairlineDivider } from '@/components/HairlineDivider';
 import { SectionLabel } from '@/components/SectionLabel';
 import { type HouseholdMember } from '@/features/household/api';
 import { formatInviteCode } from '@/features/household/inviteCode';
+import { initials } from '@/lib/initials';
 
 interface MembersSectionProps {
   members: HouseholdMember[];
@@ -16,14 +17,7 @@ export function MembersSection({ members, inviteCode, onInvite }: MembersSection
     <View className="mt-xl">
       <SectionLabel className="mb-md">Домакинство</SectionLabel>
       {members.map((m) => {
-        const memberInitials =
-          m.displayName
-            .split(' ')
-            .map((p) => p[0])
-            .filter(Boolean)
-            .slice(0, 2)
-            .join('')
-            .toUpperCase() || '?';
+        const memberInitials = initials(m.displayName);
         const memberName = m.displayName || 'Без име';
         const roleLabel = m.role === 'owner' ? 'Собственик' : 'Член';
         return (
