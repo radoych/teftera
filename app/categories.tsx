@@ -1,5 +1,4 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -7,6 +6,7 @@ import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { FlatInput } from '@/components/FlatInput';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { SheetActions } from '@/components/SheetActions';
@@ -130,15 +130,7 @@ export default function CategoriesScreen() {
 
   return (
     <Screen>
-      {/* Top app bar */}
-      <View className="mb-md flex-row items-center gap-3 py-2">
-        <Pressable onPress={() => router.back()} hitSlop={8} className="-ml-2 p-2">
-          <MaterialIcons name="arrow-back" size={24} color="#e3e2e6" />
-        </Pressable>
-        <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-          Категории
-        </Text>
-      </View>
+      <ScreenHeader title="Категории" />
 
       <SectionLabel className="mb-sm">Разходи</SectionLabel>
       {expenseList.map((c) => (

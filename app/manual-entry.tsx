@@ -14,6 +14,8 @@ import { formatDigitsAsAmount } from '@/components/AmountInput';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
+import { NotFoundView } from '@/components/NotFoundView';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { useAuthStore } from '@/features/auth/store';
 import { runAfterSave } from '@/features/transactions/afterSave';
@@ -92,21 +94,7 @@ export default function ManualEntryScreen() {
 
   // Edit mode but the transaction is gone (deleted on another device).
   if (isEdit && !existing) {
-    return (
-      <View className="flex-1 bg-background">
-        <BackgroundGlow />
-        <SafeAreaView className="flex-1 items-center justify-center px-8" edges={['top']}>
-          <Text className="text-center font-inter text-body-lg text-on-surface-variant">
-            {'Транзакцията не е намерена.'}
-          </Text>
-          <Pressable
-            onPress={() => router.back()}
-            className="mt-lg rounded-full border border-primary-container px-6 py-2">
-            <Text className="font-inter text-label-md text-primary-container">{'Назад'}</Text>
-          </Pressable>
-        </SafeAreaView>
-      </View>
-    );
+    return <NotFoundView message="Транзакцията не е намерена." />;
   }
 
   const selectedCategory = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
@@ -197,16 +185,7 @@ export default function ManualEntryScreen() {
     <View className="flex-1 bg-background">
       <BackgroundGlow />
       <SafeAreaView className="flex-1" edges={['top']}>
-        {/* Top app bar */}
-        <View className="flex-row items-center justify-between px-6 py-4">
-          <Pressable onPress={() => router.back()} hitSlop={8} className="-ml-2 p-2">
-            <MaterialIcons name="arrow-back" size={24} color="#e3e2e6" />
-          </Pressable>
-          <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-            {isEdit ? 'Редактиране' : 'Ръчно въвеждане'}
-          </Text>
-          <View className="w-8" />
-        </View>
+        <ScreenHeader centered title={isEdit ? 'Редактиране' : 'Ръчно въвеждане'} className="px-6" />
 
         <KeyboardAwareScrollView
           bottomOffset={140}
