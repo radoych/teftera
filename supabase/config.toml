@@ -413,6 +413,14 @@ enabled = true
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
 
+# _shared/auth.ts getCallerHousehold reads the JWT `sub` without re-verifying it, so
+# every function that calls it MUST keep verify_jwt = true (the gateway verifies).
+[functions.gemini-extract]
+verify_jwt = true
+
+[functions.gemini-summary]
+verify_jwt = true
+
 [functions.bank-sync-start]
 verify_jwt = true
 
