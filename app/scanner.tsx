@@ -9,6 +9,7 @@ import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { PillButton } from '@/components/PillButton';
 import { useAuthStore } from '@/features/auth/store';
 import { uploadReceipt } from '@/features/receipts/storage';
+import { colors } from '@/lib/theme';
 
 type Phase = 'scanning' | 'uploading' | 'error' | 'no-household';
 
@@ -62,16 +63,16 @@ export default function ScannerScreen() {
       <SafeAreaView className="flex-1 items-center justify-center px-xl">
         {phase === 'uploading' && (
           <View className="items-center gap-lg">
-            <ActivityIndicator size="large" color="#adc7ff" />
+            <ActivityIndicator size="large" color={colors.primaryContainer} />
             <Text className="font-inter text-body-lg text-on-surface">Качване на бележка…</Text>
           </View>
         )}
 
-        {phase === 'scanning' && <ActivityIndicator size="large" color="#adc7ff" />}
+        {phase === 'scanning' && <ActivityIndicator size="large" color={colors.primaryContainer} />}
 
         {phase === 'no-household' && (
           <View className="items-center gap-lg">
-            <MaterialIcons name="error-outline" size={48} color="#ffb4ab" />
+            <MaterialIcons name="error-outline" size={48} color={colors.error} />
             <Text className="text-center font-inter text-body-lg text-on-surface">
               Няма активно домакинство.
             </Text>
@@ -83,7 +84,7 @@ export default function ScannerScreen() {
 
         {phase === 'error' && (
           <View className="w-full items-center gap-lg">
-            <MaterialIcons name="cloud-off" size={48} color="#ffb4ab" />
+            <MaterialIcons name="cloud-off" size={48} color={colors.error} />
             <Text className="text-center font-inter text-body-lg text-on-surface">
               Качването не успя. Опитай отново.
             </Text>

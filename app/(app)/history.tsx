@@ -32,6 +32,7 @@ import { refreshTransactions } from '@/features/transactions/sync';
 import { lastDskSyncAt, formatLastSync } from '@/features/transactions/lastSync';
 import type { TransactionView } from '@/features/transactions/types';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import { colors } from '@/lib/theme';
 
 /** Search keystrokes settle for this long before the year of rows is re-filtered. */
 const SEARCH_DEBOUNCE_MS = 250;
@@ -158,7 +159,7 @@ export default function HistoryScreen() {
   const listEmpty =
     loading && !loaded ? (
       <View className="mt-xxl items-center">
-        <ActivityIndicator color="#adc7ff" />
+        <ActivityIndicator color={colors.primaryContainer} />
       </View>
     ) : narrowed ? (
       <EmptyState
@@ -220,9 +221,9 @@ export default function HistoryScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#adc7ff"
-            colors={['#adc7ff']}
-            progressBackgroundColor="#1e2023"
+            tintColor={colors.primaryContainer}
+            colors={[colors.primaryContainer]}
+            progressBackgroundColor={colors.surfaceContainer}
           />
         }
       />
@@ -247,7 +248,7 @@ export default function HistoryScreen() {
                     <MaterialIcons
                       name={c.icon as never}
                       size={14}
-                      color={active ? '#112f5e' : '#c4c6d0'}
+                      color={active ? colors.onPrimary : colors.onSurfaceVariant}
                     />
                     <Text
                       className={`font-inter text-label-md ${

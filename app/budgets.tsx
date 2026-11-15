@@ -17,6 +17,7 @@ import { useTransactionsStore } from '@/features/transactions/store';
 import { expenseCategories } from '@/features/transactions/kind';
 import type { MaterialIconName } from '@/lib/categories';
 import { firstOfMonth } from '@/lib/dates';
+import { colors } from '@/lib/theme';
 
 export default function BudgetsScreen() {
   const householdId = useAuthStore((s) => s.householdId);
@@ -105,7 +106,7 @@ export default function BudgetsScreen() {
       <Screen>
         <ScreenHeader title="Бюджети" />
         <View className="items-center py-xxl">
-          <ActivityIndicator color="#adc7ff" />
+          <ActivityIndicator color={colors.primaryContainer} />
           <Text className="mt-md font-inter text-body-md text-on-surface-variant opacity-70">
             Зареждане на бюджети…
           </Text>

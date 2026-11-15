@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { colors } from '@/lib/theme';
 
 /** Auth flow stack: sign-in, sign-up, and household setup/join. */
 export default function AuthLayout() {
@@ -6,7 +7,7 @@ export default function AuthLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#121316' },
+        contentStyle: { backgroundColor: colors.background },
       }}
     />
   );

@@ -22,6 +22,7 @@ import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import type { MaterialIconName } from '@/lib/categories';
 import { COLOR_CHOICES } from '@/lib/palette';
+import { colors } from '@/lib/theme';
 
 const ICON_CHOICES: MaterialIconName[] = [
   'restaurant', 'local-cafe', 'shopping-basket', 'directions-car', 'home', 'bolt',
@@ -116,11 +117,11 @@ export default function CategoriesScreen() {
           ) : null}
         </Pressable>
         <Pressable onPress={() => openEdit(c)} hitSlop={8} className="p-1">
-          <MaterialIcons name="edit" size={18} color="#8e909a" />
+          <MaterialIcons name="edit" size={18} color={colors.outline} />
         </Pressable>
         {c.is_default ? null : (
           <Pressable onPress={() => setToDelete(c)} hitSlop={8} className="p-1">
-            <MaterialIcons name="delete" size={18} color="#ffb4ab" />
+            <MaterialIcons name="delete" size={18} color={colors.error} />
           </Pressable>
         )}
       </View>
@@ -144,7 +145,7 @@ export default function CategoriesScreen() {
       <Pressable
         onPress={() => setDraft(emptyDraft)}
         className="flex-row items-center gap-3 py-5 active:opacity-70">
-        <MaterialIcons name="add" size={20} color="#adc7ff" />
+        <MaterialIcons name="add" size={20} color={colors.primaryContainer} />
         <Text className="font-inter text-body-md text-primary-container">Нова категория</Text>
       </Pressable>
 
@@ -188,7 +189,7 @@ export default function CategoriesScreen() {
                       <MaterialIcons
                         name={icon}
                         size={20}
-                        color={active ? '#112f5e' : '#c4c6d0'}
+                        color={active ? colors.onPrimary : colors.onSurfaceVariant}
                       />
                     </Pressable>
                   );
@@ -208,9 +209,11 @@ export default function CategoriesScreen() {
                       style={{
                         backgroundColor: color,
                         borderWidth: active ? 3 : 0,
-                        borderColor: '#e3e2e6',
+                        borderColor: colors.onSurface,
                       }}>
-                      {active ? <MaterialIcons name="check" size={18} color="#121316" /> : null}
+                      {active ? (
+                        <MaterialIcons name="check" size={18} color={colors.background} />
+                      ) : null}
                     </Pressable>
                   );
                 })}

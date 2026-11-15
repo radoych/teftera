@@ -32,6 +32,7 @@ import { monthBudgetProgress } from '@/features/budgets/currentMonth';
 import { budgetStateColor } from '@/features/budgets/progress';
 import type { BudgetProgress } from '@/features/budgets/types';
 import { startOfMonth, sumInMonth } from '@/lib/dates';
+import { colors } from '@/lib/theme';
 
 type Timeframe = 'day' | 'month';
 type Scope = 'me' | 'household';
@@ -158,7 +159,7 @@ export default function DashboardScreen() {
           onPress={() => router.navigate('/(app)/history')}
           className="flex-row items-center gap-1">
           <Text className="font-inter-semibold text-label-md text-primary">Виж всички</Text>
-          <MaterialIcons name="chevron-right" size={16} color="#d8e3ff" />
+          <MaterialIcons name="chevron-right" size={16} color={colors.primary} />
         </Pressable>
       </View>
       {loaded && recent.length === 0 ? (
@@ -236,7 +237,7 @@ export default function DashboardScreen() {
           </Text>
         ) : (
           <View className="h-20 justify-center">
-            <ActivityIndicator color="#adc7ff" />
+            <ActivityIndicator color={colors.primaryContainer} />
           </View>
         )}
         {loaded ? <Comparison pct={comparison} label={comparisonLabel} /> : null}
