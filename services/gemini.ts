@@ -9,17 +9,14 @@
  * and falls back to a null/`ok:false` result so the UI can route to the
  * manual-edit screen.
  */
-import { isSupabaseConfigured, supabase } from '@/services/supabase';
+import { isSupabaseConfigured } from '@/services/supabase';
+import { invokeEdgeJson, withRetry } from '@/services/edge';
 import { formatCurrency } from '@/lib/formatCurrency';
+
+export { isRetryableStatus } from '@/services/edge';
 
 /** Gemini now runs server-side; "configured" = Supabase reachable. */
 export const isGeminiConfigured = isSupabaseConfigured;
-
-const FUNCTIONS_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL ?? ''}/functions/v1`;
-// Transient errors are retried (see isRetryableStatus); a one-off 503 should
-// not drop the user to a blank manual form.
-const MAX_ATTEMPTS = 3;
-export const RETRY_BASE_MS = 500;
 
 /** A single parsed receipt line item (amounts in integer EUR cents). */
 export interface ReceiptLineItem {
@@ -76,37 +73,10 @@ function normalize(raw: unknown): ReceiptExtraction {
   };
 }
 
-const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * True for transient statuses worth retrying — rate limiting (429) or an
- * upstream/server failure (5xx). 4xx statuses (bad request, unauthenticated,
- * unparseable response) will not improve on retry.
- */
-export function isRetryableStatus(status: number): boolean {
-  return status === 429 || (status >= 500 && status <= 504);
-}
-
-/** Calls one of the Gemini edge functions with the current session's JWT. */
-async function callGeminiFn(name: string, body: unknown): Promise<Response> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error('not signed in');
-  return await fetch(`${FUNCTIONS_URL}/${name}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-}
-
 /**
  * Extract structured data from a base64-encoded receipt image.
- * Retries transient failures (overloaded model / network) up to MAX_ATTEMPTS with
- * backoff. Never throws — returns `{ ok: false }` so callers fall back to manual entry.
+ * Retries transient failures (overloaded model / network) with backoff. Never
+ * throws — returns `{ ok: false }` so callers fall back to manual entry.
  */
 export async function extractReceipt(
   base64Image: string,
@@ -116,39 +86,32 @@ export async function extractReceipt(
     return { ok: false, reason: 'Gemini API key not configured.' };
   }
 
-  let lastErr: unknown = null;
-
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    if (attempt > 0) await delay(RETRY_BASE_MS * 2 ** (attempt - 1)); // 500ms, 1000ms
-    try {
-      const res = await callGeminiFn('gemini-extract', { image: base64Image, mimeType });
-      if (!res.ok) {
-        lastErr = new Error(`gemini-extract ${res.status}`);
-        if (!isRetryableStatus(res.status)) break; // 4xx — won't improve on retry
-        if (__DEV__) {
-          console.warn(`[gemini] attempt ${attempt + 1}/${MAX_ATTEMPTS} transient failure, retrying`);
-        }
-        continue;
-      }
-
-      const { json: raw } = (await res.json()) as { json: unknown };
-      const data = normalize(raw);
-      // Review #3: a zero/negative total means the model failed to read the
-      // receipt — fall back to manual entry rather than saving a €0 row.
-      if (data.totalCents <= 0) {
-        return { ok: false, reason: 'Could not read the receipt automatically.' };
-      }
-      if (__DEV__) console.log('[gemini] receipt extraction:', JSON.stringify(raw));
-      return { ok: true, data, raw };
-    } catch (err) {
-      lastErr = err; // network — retry
+  try {
+    // Transient errors (429/5xx, network, malformed body) are retried with
+    // backoff; a one-off 503 should not drop the user to a blank manual form.
+    const { raw, data } = await withRetry(
+      async () => {
+        const { json: raw } = await invokeEdgeJson<{ json: unknown }>('gemini-extract', {
+          image: base64Image,
+          mimeType,
+        });
+        return { raw, data: normalize(raw) };
+      },
+      { label: '[gemini] extract' },
+    );
+    // Review #3: a zero/negative total means the model failed to read the
+    // receipt — fall back to manual entry rather than saving a €0 row.
+    if (data.totalCents <= 0) {
+      return { ok: false, reason: 'Could not read the receipt automatically.' };
     }
+    if (__DEV__) console.log('[gemini] receipt extraction:', JSON.stringify(raw));
+    return { ok: true, data, raw };
+  } catch (err) {
+    if (__DEV__) {
+      console.warn('[gemini] extraction failed, falling back to manual entry:', err);
+    }
+    return { ok: false, reason: 'Could not read the receipt automatically.' };
   }
-
-  if (__DEV__) {
-    console.warn('[gemini] extraction failed, falling back to manual entry:', lastErr);
-  }
-  return { ok: false, reason: 'Could not read the receipt automatically.' };
 }
 
 const SUMMARY_MAX_CHARS = 400;
@@ -184,31 +147,17 @@ export function buildSummaryPrompt(input: SummaryInput): string {
 export async function generateInsightsSummary(input: SummaryInput): Promise<string | null> {
   if (!isGeminiConfigured) return null;
 
-  const prompt = buildSummaryPrompt(input);
-  let lastErr: unknown = null;
-
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    if (attempt > 0) await delay(RETRY_BASE_MS * 2 ** (attempt - 1));
-    try {
-      const res = await callGeminiFn('gemini-summary', { prompt });
-      if (!res.ok) {
-        lastErr = new Error(`gemini-summary ${res.status}`);
-        if (!isRetryableStatus(res.status)) break;
-        if (__DEV__) {
-          console.warn(`[gemini] summary attempt ${attempt + 1}/${MAX_ATTEMPTS} transient failure, retrying`);
-        }
-        continue;
-      }
-
-      const { text } = (await res.json()) as { text: string };
-      const trimmed = (text ?? '').trim();
-      if (trimmed.length === 0 || trimmed.length > SUMMARY_MAX_CHARS) return null;
-      if (__DEV__) console.log('[gemini] insights summary:', trimmed);
-      return trimmed;
-    } catch (err) {
-      lastErr = err;
-    }
+  try {
+    const { text } = await withRetry(
+      () => invokeEdgeJson<{ text: string }>('gemini-summary', { prompt: buildSummaryPrompt(input) }),
+      { label: '[gemini] summary' },
+    );
+    const trimmed = (text ?? '').trim();
+    if (trimmed.length === 0 || trimmed.length > SUMMARY_MAX_CHARS) return null;
+    if (__DEV__) console.log('[gemini] insights summary:', trimmed);
+    return trimmed;
+  } catch (err) {
+    if (__DEV__) console.warn('[gemini] summary failed, hiding card:', err);
+    return null;
   }
-  if (__DEV__) console.warn('[gemini] summary failed, hiding card:', lastErr);
-  return null;
 }

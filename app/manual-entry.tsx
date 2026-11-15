@@ -16,10 +16,7 @@ import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { useAuthStore } from '@/features/auth/store';
-import { runDetection } from '@/features/anomalies/runDetection';
-import { runBudgetCheck } from '@/features/budgets/runBudgetCheck';
-import { useBudgetsStore } from '@/features/budgets/store';
-import { usePreferencesStore } from '@/features/preferences/store';
+import { runAfterSave } from '@/features/transactions/afterSave';
 import { createTransaction, updateTransaction } from '@/features/transactions/api';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
@@ -28,7 +25,6 @@ import type { TxKind } from '@/features/transactions/kind';
 import { expenseCategories, incomeCategories } from '@/features/transactions/kind';
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
-import { refreshTransactions } from '@/features/transactions/sync';
 import { guessCategory, guessIncomeCategory, resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
@@ -184,33 +180,16 @@ export default function ManualEntryScreen() {
       );
       return;
     }
-    // Refresh + detection are non-fatal: the save already succeeded, so a failure
-    // here must not invite a retry that would double-insert.
-    try {
-      await refreshTransactions(householdId);
-      if (createdId !== null && kind === 'expense') {
-        await runDetection({
-          transactionId: createdId,
-          householdId,
-          amountCents: parsed.data.amountCents,
-          categoryId: resolvedCategoryId,
-          transactions: useTransactionsStore.getState().transactions,
-          merchant: parsed.data.merchant,
-          alertsEnabled:
-            usePreferencesStore.getState().preferences.anomalyAlertsEnabled ?? true,
-        });
-        await runBudgetCheck({
-          householdId,
-          savedCategoryId: resolvedCategoryId,
-          alertsEnabled: usePreferencesStore.getState().preferences.budgetAlertsEnabled ?? true,
-          transactions: useTransactionsStore.getState().transactions,
-          categories: useTransactionsStore.getState().categories,
-          budgets: useBudgetsStore.getState().rows,
-        });
-      }
-    } catch {
-      // List reconciles on next focus / realtime refetch.
-    }
+    // Non-fatal: the save already succeeded, so nothing after it may invite a
+    // retry that would double-insert.
+    await runAfterSave({
+      householdId,
+      transactionId: createdId,
+      kind,
+      amountCents: parsed.data.amountCents,
+      categoryId: resolvedCategoryId,
+      merchant: parsed.data.merchant,
+    });
     router.back();
   };
 

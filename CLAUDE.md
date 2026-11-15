@@ -97,6 +97,7 @@ eas build --profile preview --platform all
   /insights              charts, AI summary
   /budgets               goals, progress
   /household             members, invite codes
+  /sync                  realtime channels + createHouseholdSync (coalesced reloads)
 
 /services
   /supabase.ts           client init — single export, used everywhere
