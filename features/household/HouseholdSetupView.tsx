@@ -9,6 +9,7 @@ import { mapAuthError } from '@/features/auth/errors';
 import { useAuthStore } from '@/features/auth/store';
 import { createHousehold, joinHouseholdByCode } from '@/features/household/api';
 import { formatInviteCode, normalizeInviteCode } from '@/features/household/inviteCode';
+import { useHouseholdStore } from '@/features/household/store';
 
 type Tab = 'create' | 'join';
 
@@ -57,6 +58,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
       const { householdId, inviteCode } = await createHousehold(name.trim(), displayName);
       setCreatedId(householdId);
       setCreatedCode(inviteCode);
+      useHouseholdStore.getState().setInviteCode(householdId, inviteCode);
     } catch (e) {
       setError(mapAuthError(e));
     } finally {
@@ -86,7 +88,8 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
     setError(null);
     setLoading(true);
     try {
-      const { householdId } = await createHousehold('Моето домакинство', displayName);
+      const { householdId, inviteCode } = await createHousehold('Моето домакинство', displayName);
+      useHouseholdStore.getState().setInviteCode(householdId, inviteCode);
       enterHousehold(householdId, displayName);
     } catch (e) {
       setError(mapAuthError(e));
