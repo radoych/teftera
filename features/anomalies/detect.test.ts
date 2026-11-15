@@ -40,11 +40,11 @@ describe('evaluate', () => {
   it('flags a 3x outlier once there are >= 4 prior samples', () => {
     const r = evaluate(3000, [800, 1000, 1200, 1000]);
     expect(r.isAnomaly).toBe(true);
-    expect(r.reason).not.toBeNull();
+    expect(r.direction).not.toBeNull();
   });
   it('does not flag below the minimum sample size', () => {
     const r = evaluate(9999, [800, 1000, 1200]);
     expect(r.isAnomaly).toBe(false);
-    expect(r.reason).toBeNull();
+    expect(r.direction).toBeNull();
   });
 });
