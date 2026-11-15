@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
+import { ProgressBar } from '@/components/ProgressBar';
 import { SectionLabel } from '@/components/SectionLabel';
 import { formatCurrency } from '@/lib/formatCurrency';
 import type { CategorySpend } from '@/features/transactions/dashboard';
@@ -37,15 +38,7 @@ export function CategoryBreakdownList({ rows }: CategoryBreakdownListProps) {
                   {formatCurrency(c.totalCents)}
                 </Text>
               </View>
-              <View className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
-                <View
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.max(c.fraction * 100, 2)}%`,
-                    backgroundColor: c.color,
-                  }}
-                />
-              </View>
+              <ProgressBar fraction={c.fraction} color={c.color} minFraction={0.02} />
             </View>
           ))}
         </View>

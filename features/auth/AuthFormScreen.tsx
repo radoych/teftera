@@ -109,13 +109,6 @@ export function AuthFormScreen({ initialMode }: { initialMode: Mode }) {
           />
         ) : null}
         {error ? <Text className="font-inter text-body-md text-error">{error}</Text> : null}
-        {mode === 'login' ? (
-          <Pressable className="self-end">
-            <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
-              Забравена парола?
-            </Text>
-          </Pressable>
-        ) : null}
       </View>
 
       <View className="flex-1 justify-end pb-lg">

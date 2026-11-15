@@ -1,7 +1,9 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
+import { ProgressBar } from '@/components/ProgressBar';
 import { SectionLabel } from '@/components/SectionLabel';
+import { budgetStateColor } from '@/features/budgets/progress';
 import type { BudgetProgress } from '@/features/budgets/types';
 import type { CategoryLite } from '@/features/transactions/types';
 import { categoryPresentation } from '@/lib/categories';
@@ -29,12 +31,6 @@ export function BudgetSection({ rows, categoryById }: BudgetSectionProps) {
             const { icon, color: iconColor, name } = categoryPresentation(
               categoryById.get(p.categoryId),
             );
-            const barColor =
-              p.state === 'over'
-                ? '#ffb4ab'
-                : p.state === 'warning'
-                  ? '#ffdfa7'
-                  : '#adc7ff';
             const remaining = p.budgetCents - p.spentCents;
             return (
               <View key={p.categoryId} className="gap-sm">
@@ -49,19 +45,7 @@ export function BudgetSection({ rows, categoryById }: BudgetSectionProps) {
                     {formatCurrency(p.spentCents)} / {formatCurrency(p.budgetCents)}
                   </Text>
                 </View>
-                <View
-                  className="h-1.5 overflow-hidden bg-surface-container"
-                  style={{ borderRadius: 9999 }}
-                >
-                  <View
-                    className="h-full"
-                    style={{
-                      width: `${Math.min(p.pct, 100)}%`,
-                      backgroundColor: barColor,
-                      borderRadius: 9999,
-                    }}
-                  />
-                </View>
+                <ProgressBar fraction={p.pct / 100} color={budgetStateColor(p.state)} />
                 <Text
                   className="font-inter text-label-md"
                   style={{ color: remaining < 0 ? '#ffb4ab' : '#c4c6d0' }}

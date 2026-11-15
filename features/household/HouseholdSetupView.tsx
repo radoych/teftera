@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 import { AuthShell } from '@/components/AuthShell';
 import { PillButton } from '@/components/PillButton';
 import { SectionLabel } from '@/components/SectionLabel';
+import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { mapAuthError } from '@/features/auth/errors';
 import { useAuthStore } from '@/features/auth/store';
 import { createHousehold, joinHouseholdByCode } from '@/features/household/api';
@@ -12,27 +13,6 @@ import { formatInviteCode, normalizeInviteCode } from '@/features/household/invi
 import { useHouseholdStore } from '@/features/household/store';
 
 type Tab = 'create' | 'join';
-
-function SegmentButton({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      className={`flex-1 items-center rounded-full py-3 ${active ? 'bg-primary-container' : ''}`}>
-      <Text
-        className={`font-inter-medium text-label-md ${active ? 'text-on-primary' : 'text-on-surface-variant'}`}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
 
 export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab }) {
   const displayName = useAuthStore((s) => s.displayName) ?? '';
@@ -146,16 +126,15 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
           </View>
         ) : (
           <>
-            <View className="mb-xl flex-row rounded-full border border-white/5 bg-surface-container-low p-1">
-              <SegmentButton
-                label="Създай"
-                active={tab === 'create'}
-                onPress={() => setTab('create')}
-              />
-              <SegmentButton
-                label="Присъедини се"
-                active={tab === 'join'}
-                onPress={() => setTab('join')}
+            <View className="mb-xl">
+              <SegmentedToggle<Tab>
+                block
+                value={tab}
+                onChange={setTab}
+                options={[
+                  { value: 'create', label: 'Създай' },
+                  { value: 'join', label: 'Присъедини се' },
+                ]}
               />
             </View>
 

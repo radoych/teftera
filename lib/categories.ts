@@ -49,7 +49,7 @@ export function categoryPresentation(
  * First match wins for BOTH brand normalization (rows with a brand) and
  * category guessing. dsk-import derives its BRAND_RULES from this table.
  */
-export const MERCHANT_TABLE: ReadonlyArray<readonly [RegExp, string | null, string]> = [
+const MERCHANT_TABLE: ReadonlyArray<readonly [RegExp, string | null, string]> = [
   // ── PERSONAL MERCHANTS (household-specific overrides) ────────────────────
   // Add [/pattern/i, null, 'Category'] lines here for small local shops.
   // These run FIRST, so they always win over the generic rules below.

@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Comparison } from '@/components/Comparison';
 import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
+import { ProgressBar } from '@/components/ProgressBar';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
@@ -28,6 +29,7 @@ import { formatCurrency } from '@/lib/formatCurrency';
 import { useIsOnline } from '@/lib/useIsOnline';
 import { useBudgetsStore } from '@/features/budgets/store';
 import { monthBudgetProgress } from '@/features/budgets/currentMonth';
+import { budgetStateColor } from '@/features/budgets/progress';
 import type { BudgetProgress } from '@/features/budgets/types';
 import { startOfMonth, sumInMonth } from '@/lib/dates';
 
@@ -122,13 +124,7 @@ export default function DashboardScreen() {
         <SectionLabel className="mb-md">По категория</SectionLabel>
         {categoryRows.map((row) => {
             const bp = budgetMap.get(row.id);
-            const barColor = bp
-              ? bp.state === 'over'
-                ? '#ffb4ab'
-                : bp.state === 'warning'
-                  ? '#ffdfa7'
-                  : '#adc7ff'
-              : row.color;
+            const barColor = bp ? budgetStateColor(bp.state) : row.color;
             const rightLabel = bp
               ? `${formatCurrency(bp.spentCents)} / ${formatCurrency(bp.budgetCents)}`
               : formatCurrency(row.totalCents);
@@ -143,20 +139,11 @@ export default function DashboardScreen() {
                     {rightLabel}
                   </Text>
                 </View>
-                <View
-                  className="h-1.5 overflow-hidden bg-surface-container"
-                  style={{ borderRadius: 9999 }}>
-                  <View
-                    className="h-full"
-                    style={{
-                      width: bp
-                        ? `${Math.min(bp.pct, 100)}%`
-                        : `${Math.max(row.fraction * 100, 2)}%`,
-                      backgroundColor: barColor,
-                      borderRadius: 9999,
-                    }}
-                  />
-                </View>
+                <ProgressBar
+                  fraction={bp ? bp.pct / 100 : row.fraction}
+                  color={barColor}
+                  minFraction={bp ? 0 : 0.02}
+                />
               </View>
             );
           })}
@@ -179,14 +166,14 @@ export default function DashboardScreen() {
           icon="receipt-long"
           title="Все още няма транзакции"
           message="Последните движения на домакинството ще се показват тук."
-          cta={{ label: 'Добави транзакция', onPress: () => router.navigate('/manual-entry') }}
+          cta={{ label: 'Добави транзакция', onPress: () => router.push('/manual-entry') }}
         />
       ) : (
         recent.map((tx, i) => (
           <TransactionRow
             key={tx.id}
             tx={tx}
-            onPress={() => router.navigate(`/transaction/${tx.id}`)}
+            onPress={() => router.push(`/transaction/${tx.id}`)}
             showDivider={i < recent.length - 1}
           />
         ))
@@ -211,14 +198,14 @@ export default function DashboardScreen() {
               label: 'Ръчно',
               icon: 'add',
               variant: 'ghost',
-              onPress: () => router.navigate('/manual-entry'),
+              onPress: () => router.push('/manual-entry'),
             },
             {
               label: 'Сканирай',
               icon: 'photo-camera',
               variant: 'filled',
               disabled: !online,
-              onPress: () => router.navigate('/scanner'),
+              onPress: () => router.push('/scanner'),
             },
           ]}
         />
