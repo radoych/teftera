@@ -20,21 +20,29 @@ interface ScreenHeaderProps {
 }
 
 /** Top app bar for stack screens: back arrow + title, optional trailing action. */
-export function ScreenHeader({ title, onBack, centered = false, right, className = '' }: ScreenHeaderProps) {
+export function ScreenHeader({
+  title,
+  onBack,
+  centered = false,
+  right,
+  className = '',
+}: ScreenHeaderProps) {
   const back = (
     <Pressable
       onPress={onBack ?? (() => router.back())}
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel="Назад"
-      className="-ml-2 p-2">
+      className="-ml-2 p-2"
+    >
       <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
     </Pressable>
   );
   const titleText = (
     <Text
       className="font-jakarta-semibold text-headline-lg-mobile text-on-surface"
-      numberOfLines={1}>
+      numberOfLines={1}
+    >
       {title}
     </Text>
   );

@@ -26,11 +26,17 @@ export function progressWidthPct(fraction: number, minFraction = 0): number {
  * Horizontal pill progress bar — the one track colour (`surface-container`)
  * and default height used everywhere a share or budget is shown.
  */
-export function ProgressBar({ fraction, color, height = 6, minFraction = 0 }: ProgressBarProps) {
+export function ProgressBar({
+  fraction,
+  color,
+  height = 6,
+  minFraction = 0,
+}: ProgressBarProps) {
   return (
     <View
       className="w-full overflow-hidden"
-      style={{ height, borderRadius: 9999, backgroundColor: colors.surfaceContainer }}>
+      style={{ height, borderRadius: 9999, backgroundColor: colors.surfaceContainer }}
+    >
       <View
         style={{
           height: '100%',

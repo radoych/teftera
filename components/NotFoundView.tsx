@@ -13,7 +13,11 @@ interface NotFoundViewProps {
 }
 
 /** Full-screen fallback for a stack screen whose record no longer exists. */
-export function NotFoundView({ message, onBack, backLabel = 'Назад' }: NotFoundViewProps) {
+export function NotFoundView({
+  message,
+  onBack,
+  backLabel = 'Назад',
+}: NotFoundViewProps) {
   return (
     <View className="flex-1 bg-background">
       <BackgroundGlow />
@@ -23,8 +27,11 @@ export function NotFoundView({ message, onBack, backLabel = 'Назад' }: NotF
         </Text>
         <Pressable
           onPress={onBack ?? (() => router.back())}
-          className="mt-lg rounded-full border border-primary-container px-6 py-2">
-          <Text className="font-inter text-label-md text-primary-container">{backLabel}</Text>
+          className="mt-lg rounded-full border border-primary-container px-6 py-2"
+        >
+          <Text className="font-inter text-label-md text-primary-container">
+            {backLabel}
+          </Text>
         </Pressable>
       </SafeAreaView>
     </View>
