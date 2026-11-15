@@ -1,3 +1,7 @@
+// The explicit .ts extension lets Node's native type stripping load it; on
+// older Node, Tailwind's jiti fallback transpiles it instead.
+const { tailwindColors } = require('./lib/theme.ts');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   // NativeWind v4 — class-based dark theme is always-on for Teftera.
@@ -12,36 +16,10 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
-      colors: {
-        background: '#121316',
-        surface: '#121316',
-        'surface-container-lowest': '#0d0e11',
-        'surface-container-low': '#1a1c1f',
-        'surface-container': '#1e2023',
-        'surface-container-high': '#292a2d',
-        'surface-container-highest': '#343538',
-        'surface-bright': '#38393c',
-        'surface-variant': '#343538',
-        primary: '#d8e3ff',
-        'primary-container': '#adc7ff',
-        'on-primary': '#112f5e',
-        'on-primary-container': '#385283',
-        'surface-tint': '#adc7ff',
-        // ANOMALY ACCENT ONLY — never use for anything else.
-        'secondary-fixed': '#c3f400',
-        'secondary-fixed-dim': '#abd600',
-        'secondary-container': '#c3f400',
-        'on-secondary-container': '#556d00',
-        tertiary: '#ffdfa7',
-        'tertiary-container': '#ecc16f',
-        'on-surface': '#e3e2e6',
-        'on-background': '#e3e2e6',
-        'on-surface-variant': '#c4c6d0',
-        outline: '#8e909a',
-        'outline-variant': '#44474f',
-        error: '#ffb4ab',
-        'error-container': '#93000a',
-      },
+      // Single source of truth: lib/theme.ts (also imported by app code as
+      // `colors`). Keep that module dependency-free — this file loads it
+      // outside Metro.
+      colors: tailwindColors,
       fontFamily: {
         jakarta: ['PlusJakartaSans_400Regular'],
         'jakarta-medium': ['PlusJakartaSans_500Medium'],

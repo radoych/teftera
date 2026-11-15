@@ -21,6 +21,7 @@ import { expenseCategories, incomeCategories } from '@/features/transactions/kin
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import type { MaterialIconName } from '@/lib/categories';
+import { COLOR_CHOICES } from '@/lib/palette';
 
 const ICON_CHOICES: MaterialIconName[] = [
   'restaurant', 'local-cafe', 'shopping-basket', 'directions-car', 'home', 'bolt',
@@ -28,9 +29,6 @@ const ICON_CHOICES: MaterialIconName[] = [
   'flight', 'fitness-center', 'card-giftcard', 'savings',
   'payments', 'account-balance-wallet', 'trending-up',
 ];
-
-// Design-palette tones only — never the anomaly accent #c3f400.
-const COLOR_CHOICES = ['#ffdfa7', '#d8e3ff', '#adc7ff', '#a8c8ff', '#c4c6d0', '#ffb4ab', '#8e909a'];
 
 type Draft = {
   id: string | null;
