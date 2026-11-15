@@ -14,6 +14,7 @@ import {
   occurredAtISO,
   type NormalizedTransaction,
 } from '@/services/dsk-import';
+import { invokeEdge } from '@/services/edge';
 import { supabase } from '@/services/supabase';
 
 /** The subset of Enable Banking's transaction resource we consume. */
@@ -72,30 +73,13 @@ export function normalizeEbTransaction(tx: EbTransaction): NormalizedTransaction
   return { ...base, amountEurCents: rawCents, originalAmountCents: null, originalCurrency: null };
 }
 
-const FUNCTIONS_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL ?? ''}/functions/v1`;
-
 export class NotConnectedError extends Error {}
 export class ConsentExpiredError extends Error {}
 export class RateLimitedError extends Error {}
 
-async function callBankSyncFn(name: string, body?: unknown): Promise<Response> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error('not signed in');
-  return await fetch(`${FUNCTIONS_URL}/${name}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
-      'Content-Type': 'application/json',
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-}
-
 /** Begin the consent flow; returns the bank authorization URL to open. */
 export async function startBankSync(returnUrl: string): Promise<string> {
-  const res = await callBankSyncFn('bank-sync-start', { returnUrl });
+  const res = await invokeEdge('bank-sync-start', { returnUrl });
   if (!res.ok) throw new Error(`bank-sync-start failed (${res.status})`);
   const data = (await res.json()) as { url?: string };
   if (typeof data.url !== 'string') throw new Error('bank-sync-start: malformed response');
@@ -107,7 +91,7 @@ export async function fetchBankTransactions(): Promise<{
   transactions: EbTransaction[];
   truncated: boolean;
 }> {
-  const res = await callBankSyncFn('bank-sync-transactions');
+  const res = await invokeEdge('bank-sync-transactions');
   if (res.status === 409) {
     let error: string | undefined;
     try {
