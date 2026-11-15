@@ -114,7 +114,7 @@ export default function TransactionDetailScreen() {
             label: 'Редакция',
             icon: 'edit',
             variant: 'filled',
-            onPress: () => router.navigate(`/manual-entry?id=${tx.id}`),
+            onPress: () => router.push(`/manual-entry?id=${tx.id}`),
           },
         ]}
       />

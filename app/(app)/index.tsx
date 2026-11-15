@@ -166,14 +166,14 @@ export default function DashboardScreen() {
           icon="receipt-long"
           title="Все още няма транзакции"
           message="Последните движения на домакинството ще се показват тук."
-          cta={{ label: 'Добави транзакция', onPress: () => router.navigate('/manual-entry') }}
+          cta={{ label: 'Добави транзакция', onPress: () => router.push('/manual-entry') }}
         />
       ) : (
         recent.map((tx, i) => (
           <TransactionRow
             key={tx.id}
             tx={tx}
-            onPress={() => router.navigate(`/transaction/${tx.id}`)}
+            onPress={() => router.push(`/transaction/${tx.id}`)}
             showDivider={i < recent.length - 1}
           />
         ))
@@ -198,14 +198,14 @@ export default function DashboardScreen() {
               label: 'Ръчно',
               icon: 'add',
               variant: 'ghost',
-              onPress: () => router.navigate('/manual-entry'),
+              onPress: () => router.push('/manual-entry'),
             },
             {
               label: 'Сканирай',
               icon: 'photo-camera',
               variant: 'filled',
               disabled: !online,
-              onPress: () => router.navigate('/scanner'),
+              onPress: () => router.push('/scanner'),
             },
           ]}
         />
