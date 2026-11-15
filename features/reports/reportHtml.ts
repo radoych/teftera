@@ -1,5 +1,6 @@
 // features/reports/reportHtml.ts
 import { formatCurrency } from '@/lib/formatCurrency';
+import { colors } from '@/lib/theme';
 import type { ReportData, ReportCategory } from './types';
 
 const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -7,13 +8,13 @@ function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ESC[c]!);
 }
 
-const SAFE_COLOR_FALLBACK = '#8e909a';
+const SAFE_COLOR_FALLBACK = colors.outline;
 function safeColor(color: string): string {
   return /^#[0-9a-fA-F]{6}$/.test(color) ? color : SAFE_COLOR_FALLBACK;
 }
 
 function donutGradient(cats: ReportCategory[]): string {
-  if (cats.length === 0) return '#343538';
+  if (cats.length === 0) return colors.surfaceContainerHighest;
   let acc = 0;
   const stops = cats.map((c, i) => {
     const start = acc * 100;
@@ -28,7 +29,12 @@ function donutGradient(cats: ReportCategory[]): string {
 function pctLine(pct: number | null): string {
   if (pct === null) return '';
   const dir = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
-  const color = dir === 'up' ? '#ffb4ab' : dir === 'down' ? '#adc7ff' : '#c4c6d0';
+  const color =
+    dir === 'up'
+      ? colors.error
+      : dir === 'down'
+        ? colors.primaryContainer
+        : colors.onSurfaceVariant;
   const arrow = dir === 'up' ? '▲ ' : dir === 'down' ? '▼ ' : '';
   return `<div class="pct" style="color:${color}">${arrow}${Math.abs(pct)}% спрямо миналия месец</div>`;
 }
@@ -64,7 +70,12 @@ export function buildReportHtml(data: ReportData, logoDataUri: string): string {
 
   const budgetRows = data.budgets
     .map((b) => {
-      const barColor = b.state === 'over' ? '#ffb4ab' : b.state === 'warning' ? '#ffdfa7' : '#adc7ff';
+      const barColor =
+        b.state === 'over'
+          ? colors.error
+          : b.state === 'warning'
+            ? colors.tertiary
+            : colors.primaryContainer;
       return `<div class="brow">
         <div class="row"><span class="grow">${esc(b.name)}</span>
           <span class="mono">${formatCurrency(b.spentCents)} / ${formatCurrency(b.budgetCents)}</span></div>
@@ -77,8 +88,8 @@ export function buildReportHtml(data: ReportData, logoDataUri: string): string {
     ? `<div class="label">Аномалии</div>
        ${data.anomalies
          .map(
-           (a) => `<div class="row"><span class="grow" style="color:#c3f400">${esc(a.merchant)}</span>
-             <span class="mono" style="color:#c3f400">${formatCurrency(a.amountCents)}</span></div>
+           (a) => `<div class="row"><span class="grow" style="color:${colors.anomaly}">${esc(a.merchant)}</span>
+             <span class="mono" style="color:${colors.anomaly}">${formatCurrency(a.amountCents)}</span></div>
              <div class="reason">${esc(a.reason)}</div>`,
          )
          .join('')}`
@@ -86,7 +97,7 @@ export function buildReportHtml(data: ReportData, logoDataUri: string): string {
 
   const incomeLine =
     data.incomeTotalCents > 0
-      ? `<div class="pct" style="color:#ffdfa7">Приходи: +${formatCurrency(data.incomeTotalCents)}</div>`
+      ? `<div class="pct" style="color:${colors.tertiary}">Приходи: +${formatCurrency(data.incomeTotalCents)}</div>`
       : '';
 
   const summaryBlock = data.aiSummary
@@ -96,16 +107,16 @@ export function buildReportHtml(data: ReportData, logoDataUri: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8" />
 <style>
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 32px; background: #121316; color: #e3e2e6;
+  body { margin: 0; padding: 32px; background: ${colors.background}; color: ${colors.onSurface};
     font-family: -apple-system, Roboto, Helvetica, Arial, sans-serif; }
   .head { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
   .head img { height: 40px; }
-  .head .brand { font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: #8e909a; }
+  .head .brand { font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: ${colors.outline}; }
   .month { font-size: 28px; font-weight: 600; margin: 4px 0; }
-  .total { font-size: 40px; font-weight: 600; color: #adc7ff; }
+  .total { font-size: 40px; font-weight: 600; color: ${colors.primaryContainer}; }
   .pct { font-size: 13px; margin-top: 4px; }
   .label { font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase;
-    color: #8e909a; margin: 28px 0 12px; }
+    color: ${colors.outline}; margin: 28px 0 12px; }
   hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 24px 0; }
   .donutwrap { display: flex; align-items: center; gap: 24px; }
   .donut { width: 140px; height: 140px; border-radius: 50%;
@@ -119,15 +130,15 @@ export function buildReportHtml(data: ReportData, logoDataUri: string): string {
   .mono { font-variant-numeric: tabular-nums; font-weight: 600; }
   .trend { display: flex; align-items: flex-end; gap: 12px; height: 120px; }
   .tcol { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
-  .tbar { width: 100%; background: #343538; border-radius: 4px 4px 0 0; }
-  .tbar.cur { background: rgba(173,199,255,0.5); border-top: 2px solid #adc7ff; }
-  .tlab { font-size: 10px; color: #8e909a; margin-top: 6px; }
-  .track { height: 6px; border-radius: 9999px; background: #1e2023; overflow: hidden; margin-top: 6px; }
+  .tbar { width: 100%; background: ${colors.surfaceContainerHighest}; border-radius: 4px 4px 0 0; }
+  .tbar.cur { background: rgba(173,199,255,0.5); border-top: 2px solid ${colors.primaryContainer}; }
+  .tlab { font-size: 10px; color: ${colors.outline}; margin-top: 6px; }
+  .track { height: 6px; border-radius: 9999px; background: ${colors.surfaceContainer}; overflow: hidden; margin-top: 6px; }
   .fill { height: 100%; border-radius: 9999px; }
   .brow { margin-bottom: 14px; }
-  .reason { font-size: 10px; text-transform: uppercase; color: #c3f400; margin-bottom: 8px; }
-  .summary { border-left: 2px solid #adc7ff; padding-left: 12px; }
-  .summary p { color: #c4c6d0; line-height: 1.6; font-size: 14px; margin: 0; }
+  .reason { font-size: 10px; text-transform: uppercase; color: ${colors.anomaly}; margin-bottom: 8px; }
+  .summary { border-left: 2px solid ${colors.primaryContainer}; padding-left: 12px; }
+  .summary p { color: ${colors.onSurfaceVariant}; line-height: 1.6; font-size: 14px; margin: 0; }
 </style></head>
 <body>
   <div class="head"><img src="${logoDataUri}" alt="Teftera" /><div class="brand">Месечен отчет</div></div>
