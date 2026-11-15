@@ -2,6 +2,29 @@
 
 const LOCALE = 'bg-BG';
 
+// Intl formatter construction is the expensive part (locale data lookup), and
+// these run once per transaction row — build each variant once, lazily.
+// Mirrors getBgNumberFormat in formatCurrency.ts.
+let timeFmt: Intl.DateTimeFormat | undefined;
+let dayMonthFmt: Intl.DateTimeFormat | undefined;
+let dayMonthYearFmt: Intl.DateTimeFormat | undefined;
+
+function timeFormat(): Intl.DateTimeFormat {
+  return (timeFmt ??= new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit' }));
+}
+
+function dayMonthFormat(): Intl.DateTimeFormat {
+  return (dayMonthFmt ??= new Intl.DateTimeFormat(LOCALE, { day: 'numeric', month: 'short' }));
+}
+
+function dayMonthYearFormat(): Intl.DateTimeFormat {
+  return (dayMonthYearFmt ??= new Intl.DateTimeFormat(LOCALE, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }));
+}
+
 /** YYYY-MM-DD in local time (the canonical `date` column format). */
 export function toISODate(date: Date = new Date()): string {
   const y = date.getFullYear();
@@ -27,18 +50,12 @@ export function relativeDay(iso: string, now: Date = new Date()): string {
   if (diffDays === 0) return 'Днес';
   if (diffDays === 1) return 'Вчера';
 
-  return new Intl.DateTimeFormat(LOCALE, {
-    day: 'numeric',
-    month: 'short',
-    year: target.getFullYear() === today.getFullYear() ? undefined : 'numeric',
-  }).format(date);
+  const fmt = target.getFullYear() === today.getFullYear() ? dayMonthFormat() : dayMonthYearFormat();
+  return fmt.format(date);
 }
 
 export function formatTime(date: Date): string {
-  return new Intl.DateTimeFormat(LOCALE, {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
+  return timeFormat().format(date);
 }
 
 export function parseISODate(iso: string): Date {

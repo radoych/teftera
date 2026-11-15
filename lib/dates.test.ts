@@ -1,4 +1,4 @@
-import { isValidISODate, monthAbbr, windowStartISO } from './dates';
+import { formatTime, isValidISODate, monthAbbr, relativeDay, windowStartISO } from './dates';
 
 describe('isValidISODate', () => {
   it('accepts a real date', () => {
@@ -34,5 +34,51 @@ describe('windowStartISO', () => {
   });
   it('1-month window is the first of the current month', () => {
     expect(windowStartISO(1, new Date(2026, 6, 15))).toBe('2026-07-01');
+  });
+});
+
+describe('relativeDay / formatTime (cached Intl formatters)', () => {
+  const NOW = new Date(2026, 5, 15, 12, 0); // 15 Jun 2026
+
+  it('labels today and yesterday', () => {
+    expect(relativeDay('2026-06-15', NOW)).toBe('Днес');
+    expect(relativeDay('2026-06-14', NOW)).toBe('Вчера');
+  });
+
+  it('formats same-year and other-year dates with the matching variant', () => {
+    const sameYear = new Intl.DateTimeFormat('bg-BG', { day: 'numeric', month: 'short' });
+    const otherYear = new Intl.DateTimeFormat('bg-BG', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    expect(relativeDay('2026-06-01', NOW)).toBe(sameYear.format(new Date(2026, 5, 1)));
+    expect(relativeDay('2025-12-31', NOW)).toBe(otherYear.format(new Date(2025, 11, 31)));
+    // Interleaving the two variants must not leak one into the other.
+    expect(relativeDay('2026-06-01', NOW)).toBe(sameYear.format(new Date(2026, 5, 1)));
+  });
+
+  it('formats time as 2-digit hour:minute', () => {
+    const expected = new Intl.DateTimeFormat('bg-BG', { hour: '2-digit', minute: '2-digit' });
+    const d = new Date(2026, 5, 15, 9, 5);
+    expect(formatTime(d)).toBe(expected.format(d));
+  });
+
+  it('constructs no new formatter on repeated calls', () => {
+    // Warm every lazy singleton first.
+    formatTime(NOW);
+    relativeDay('2026-06-01', NOW);
+    relativeDay('2025-06-01', NOW);
+    const spy = jest.spyOn(Intl, 'DateTimeFormat');
+    try {
+      for (let i = 0; i < 5; i++) {
+        formatTime(NOW);
+        relativeDay('2026-06-01', NOW);
+        relativeDay('2025-06-01', NOW);
+      }
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
