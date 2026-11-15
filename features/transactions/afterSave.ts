@@ -4,6 +4,7 @@ import { runBudgetCheck } from '@/features/budgets/runBudgetCheck';
 import { useBudgetsStore } from '@/features/budgets/store';
 import type { BudgetRow } from '@/features/budgets/types';
 import { usePreferencesStore } from '@/features/preferences/store';
+import { recordVendor } from '@/features/vendors/save';
 import type { CategoryLite } from './groupByDay';
 import type { TxKind } from './kind';
 import { useTransactionsStore } from './store';
@@ -18,6 +19,11 @@ export interface AfterSaveInput {
   amountCents: number;
   categoryId: string | null;
   merchant: string;
+  /**
+   * Receipt flow only: the raw merchant Gemini read off the receipt. When it
+   * differs from `merchant` it is learned as a recognized name of the vendor.
+   */
+  extractedMerchant?: string;
 }
 
 /** Store + preference state the post-save steps read, taken after the refresh. */
@@ -39,6 +45,8 @@ export interface AfterSaveDeps {
   snapshot: () => AfterSaveSnapshot;
   detect: typeof runDetection;
   budgetCheck: typeof runBudgetCheck;
+  /** Ensure the merchant's vendor exists + learn a receipt alias (features/vendors). */
+  vendor: typeof recordVendor;
 }
 
 function readSnapshot(): AfterSaveSnapshot {
@@ -58,6 +66,7 @@ export const defaultAfterSaveDeps: AfterSaveDeps = {
   snapshot: readSnapshot,
   detect: runDetection,
   budgetCheck: runBudgetCheck,
+  vendor: recordVendor,
 };
 
 /** Run one best-effort step; a failure is logged in dev and never propagates. */
@@ -73,12 +82,14 @@ async function step(name: string, fn: () => Promise<void>): Promise<boolean> {
 
 /**
  * Post-save orchestration shared by every entry screen: refresh the store,
- * then — for a newly created expense — anomaly detection and the budget alert
- * check. Best-effort and never throws: the save already succeeded, so nothing
+ * vendor bookkeeping (every save), then — for a newly created expense —
+ * anomaly detection and the budget alert check. Best-effort and never throws: the save already succeeded, so nothing
  * here may invite a retry that would double-insert.
  *
  * Rules (enforced here, not per screen):
- * - edits (`transactionId === null`) only refresh;
+ * - the vendor step runs for every save (edits and income too) and does not
+ *   depend on the transactions refresh;
+ * - edits (`transactionId === null`) otherwise only refresh;
  * - detection and budget checks run only for `kind === 'expense'`;
  * - if the refresh fails the store-dependent steps are skipped (they would
  *   read stale data); the list reconciles on the next realtime event / focus.
@@ -88,6 +99,15 @@ export async function runAfterSave(
   deps: AfterSaveDeps = defaultAfterSaveDeps,
 ): Promise<void> {
   const refreshed = await step('refresh', () => deps.refresh(input.householdId));
+
+  await step('vendor', () =>
+    deps.vendor({
+      householdId: input.householdId,
+      merchant: input.merchant,
+      extractedMerchant: input.extractedMerchant,
+    }),
+  );
+
   if (!refreshed) return;
 
   const { transactionId } = input;

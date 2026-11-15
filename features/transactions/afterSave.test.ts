@@ -36,6 +36,9 @@ function makeDeps(overrides: Partial<AfterSaveDeps> = {}) {
     budgetCheck: jest.fn(async () => {
       calls.push('budgetCheck');
     }),
+    vendor: jest.fn(async () => {
+      calls.push('vendor');
+    }),
     ...overrides,
   } satisfies AfterSaveDeps;
   return { deps, calls };
@@ -47,10 +50,10 @@ describe('runAfterSave', () => {
   });
   afterEach(() => jest.restoreAllMocks());
 
-  it('refreshes, then reads the store snapshot, then runs detection and the budget check', async () => {
+  it('refreshes, records the vendor, then reads the snapshot and runs detection + budget check', async () => {
     const { deps, calls } = makeDeps();
     await runAfterSave(newExpense, deps);
-    expect(calls).toEqual(['refresh', 'snapshot', 'detect', 'budgetCheck']);
+    expect(calls).toEqual(['refresh', 'vendor', 'snapshot', 'detect', 'budgetCheck']);
     expect(deps.refresh).toHaveBeenCalledWith('h1');
   });
 
@@ -81,16 +84,36 @@ describe('runAfterSave', () => {
     });
   });
 
-  it('only refreshes after an edit (no transactionId)', async () => {
+  it('only refreshes + records the vendor after an edit (no transactionId)', async () => {
     const { deps, calls } = makeDeps();
     await runAfterSave({ ...newExpense, transactionId: null }, deps);
-    expect(calls).toEqual(['refresh']);
+    expect(calls).toEqual(['refresh', 'vendor']);
   });
 
-  it('only refreshes after saving income — detection and budgets are expense rules', async () => {
+  it('only refreshes + records the vendor after saving income — detection and budgets are expense rules', async () => {
     const { deps, calls } = makeDeps();
     await runAfterSave({ ...newExpense, kind: 'income' }, deps);
-    expect(calls).toEqual(['refresh']);
+    expect(calls).toEqual(['refresh', 'vendor']);
+  });
+
+  it('passes the merchant and the raw extracted merchant to the vendor step', async () => {
+    const { deps } = makeDeps();
+    await runAfterSave({ ...newExpense, extractedMerchant: 'LIDL BALGARIYA EOOD' }, deps);
+    expect(deps.vendor).toHaveBeenCalledWith({
+      householdId: 'h1',
+      merchant: 'Lidl',
+      extractedMerchant: 'LIDL BALGARIYA EOOD',
+    });
+  });
+
+  it('records the vendor even when the refresh fails', async () => {
+    const { deps } = makeDeps({
+      refresh: jest.fn(async () => {
+        throw new Error('offline');
+      }),
+    });
+    await runAfterSave(newExpense, deps);
+    expect(deps.vendor).toHaveBeenCalledTimes(1);
   });
 
   it('never throws, and skips the store-dependent steps when the refresh fails', async () => {

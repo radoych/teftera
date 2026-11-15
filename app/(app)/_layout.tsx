@@ -3,12 +3,14 @@ import { BottomNav } from '@/components/BottomNav';
 import { useTransactionsSync } from '@/features/transactions/sync';
 import { usePreferencesSync } from '@/features/preferences/sync';
 import { useHouseholdMembersSync } from '@/features/household/sync';
+import { useVendorsSync } from '@/features/vendors/sync';
 
 /** Main app tab navigator with the floating frosted pill nav. */
 export default function AppTabsLayout() {
   useTransactionsSync();
   usePreferencesSync();
   useHouseholdMembersSync();
+  useVendorsSync();
 
   return (
     <Tabs
