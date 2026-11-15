@@ -5,6 +5,7 @@ import { usePreferencesSync } from '@/features/preferences/sync';
 import { useHouseholdMembersSync } from '@/features/household/sync';
 import { useVendorsSync } from '@/features/vendors/sync';
 import { useLoyaltySync } from '@/features/loyalty/sync';
+import { useShoppingSync } from '@/features/shopping/sync';
 import { colors } from '@/lib/theme';
 
 /** Main app tab navigator with the floating frosted pill nav. */
@@ -14,6 +15,7 @@ export default function AppTabsLayout() {
   useHouseholdMembersSync();
   useVendorsSync();
   useLoyaltySync();
+  useShoppingSync();
 
   return (
     <Tabs
