@@ -47,7 +47,7 @@ const keyExtractor = (item: TransactionView) => item.id;
 const renderItem: SectionListRenderItem<TransactionView, DaySection> = ({ item, index, section }) => (
   <TransactionRow
     tx={item}
-    onPress={() => router.navigate(`/transaction/${item.id}`)}
+    onPress={() => router.push(`/transaction/${item.id}`)}
     showDivider={index < section.data.length - 1}
   />
 );
@@ -172,7 +172,7 @@ export default function HistoryScreen() {
         icon="receipt-long"
         title="Все още няма транзакции"
         message="Добави първата ръчно, сканирай бележка или импортирай извлечение от ДСК."
-        cta={{ label: 'Добави транзакция', onPress: () => router.navigate('/manual-entry') }}
+        cta={{ label: 'Добави транзакция', onPress: () => router.push('/manual-entry') }}
       />
     );
 
