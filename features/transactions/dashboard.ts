@@ -1,5 +1,5 @@
 // features/transactions/dashboard.ts — pure aggregation helpers for the dashboard.
-import { toISODate } from '@/lib/dates';
+import { isInMonth, toISODate } from '@/lib/dates';
 import type { MaterialIconName } from '@/lib/categories';
 import type { CategoryLite } from './groupByDay';
 import type { Transaction } from './types';
@@ -13,17 +13,6 @@ const FALLBACK_NAME = 'Other';
 export function dayTotalCents(txs: Transaction[], now: Date = new Date()): number {
   const today = toISODate(now);
   return txs.reduce((sum, tx) => (tx.date === today ? sum + tx.amount_eur : sum), 0);
-}
-
-function monthPrefix(year: number, monthIndex: number): string {
-  return `${year}-${String(monthIndex + 1).padStart(2, '0')}-`;
-}
-
-/** Sum of amount_eur (cents) for the previous calendar month. */
-export function prevMonthTotalCents(txs: Transaction[], now: Date = new Date()): number {
-  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const prefix = monthPrefix(prev.getFullYear(), prev.getMonth());
-  return txs.reduce((sum, tx) => (tx.date.startsWith(prefix) ? sum + tx.amount_eur : sum), 0);
 }
 
 /** Signed, rounded percentage change from previous→current. Null when there is no baseline. */
@@ -99,9 +88,8 @@ export function spendingByCategory(
   categories: CategoryLite[],
   now: Date = new Date(),
 ): CategorySpend[] {
-  const prefix = monthPrefix(now.getFullYear(), now.getMonth());
   return categoryBreakdown(
-    txs.filter((tx) => tx.date.startsWith(prefix)),
+    txs.filter((tx) => isInMonth(tx.date, now)),
     categories,
   );
 }

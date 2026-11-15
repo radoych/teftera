@@ -36,19 +36,16 @@ import {
   categoryBreakdown,
   filterByUser,
   pctChange,
-  spendingByCategory,
 } from '@/features/transactions/dashboard';
 import { expensesOnly, incomeOnly } from '@/features/transactions/kind';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { useBudgetsStore } from '@/features/budgets/store';
-import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
-import { budgetProgress } from '@/features/budgets/progress';
+import { currentMonthBudgetProgress } from '@/features/budgets/currentMonth';
 import { exportMonthlyReport, EmptyMonthError } from '@/features/reports/export';
 import { monthPickerOptions } from '@/features/reports/reportData';
 import type { MonthOption } from '@/features/reports/types';
 import { formatCurrency } from '@/lib/formatCurrency';
-import { firstOfMonth } from '@/lib/dates';
 
 type Scope = 'me' | 'household';
 
@@ -172,17 +169,9 @@ export default function InsightsScreen() {
     () => new Map(categories.map((c) => [c.id, c])),
     [categories],
   );
-  const currentMonthHouseholdSpend = useMemo(
-    () => spendingByCategory(expenseTxs, categories),
-    [expenseTxs, categories],
-  );
   const budgetSection = useMemo(
-    () =>
-      budgetProgress(
-        resolveBudgetsForMonth(budgetRows, firstOfMonth()),
-        currentMonthHouseholdSpend,
-      ),
-    [budgetRows, currentMonthHouseholdSpend],
+    () => currentMonthBudgetProgress({ transactions: expenseTxs, categories, budgets: budgetRows }),
+    [expenseTxs, categories, budgetRows],
   );
 
   const onReview = async (anomalyId: string, transactionId: string) => {

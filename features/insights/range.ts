@@ -1,4 +1,4 @@
-import { toISODate } from '@/lib/dates';
+import { monthBounds, startOfMonth, toISODate } from '@/lib/dates';
 import type { Transaction } from '@/features/transactions/types';
 
 export type TimeRange = 'this_month' | 'last_month' | 'last_3_months' | 'year';
@@ -19,9 +19,9 @@ export function rangeBounds(range: TimeRange, now: Date = new Date()): DateBound
   const lastOfThisMonth = new Date(y, m + 1, 0); // day 0 = last day of month m
   switch (range) {
     case 'this_month':
-      return bounds(new Date(y, m, 1), lastOfThisMonth);
+      return monthBounds(now);
     case 'last_month':
-      return bounds(new Date(y, m - 1, 1), new Date(y, m, 0));
+      return monthBounds(startOfMonth(now, -1));
     case 'last_3_months':
       return bounds(new Date(y, m - 2, 1), lastOfThisMonth);
     case 'year':
@@ -35,9 +35,9 @@ export function comparisonRange(range: TimeRange, now: Date = new Date()): DateB
   const m = now.getMonth();
   switch (range) {
     case 'this_month':
-      return bounds(new Date(y, m - 1, 1), new Date(y, m, 0));
+      return monthBounds(startOfMonth(now, -1));
     case 'last_month':
-      return bounds(new Date(y, m - 2, 1), new Date(y, m - 1, 0));
+      return monthBounds(startOfMonth(now, -2));
     case 'last_3_months':
       return bounds(new Date(y, m - 5, 1), new Date(y, m - 2, 0));
     case 'year':

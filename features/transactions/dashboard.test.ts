@@ -3,7 +3,6 @@ import {
   dayTotalCents,
   filterByUser,
   pctChange,
-  prevMonthTotalCents,
   sortByCreatedAtDesc,
   spendingByCategory,
 } from './dashboard';
@@ -54,33 +53,6 @@ describe('dayTotalCents', () => {
 
   it('is zero when nothing is dated today', () => {
     expect(dayTotalCents([tx({ date: '2026-06-21' })], NOW)).toBe(0);
-  });
-});
-
-describe('prevMonthTotalCents', () => {
-  it('sums only the previous calendar month', () => {
-    const total = prevMonthTotalCents(
-      [
-        tx({ id: '1', date: '2026-05-01', amount_eur: 500 }),
-        tx({ id: '2', date: '2026-05-31', amount_eur: 1500 }),
-        tx({ id: '3', date: '2026-06-01', amount_eur: 9999 }), // current month, excluded
-        tx({ id: '4', date: '2026-04-30', amount_eur: 8888 }), // two months ago, excluded
-      ],
-      NOW,
-    );
-    expect(total).toBe(2000);
-  });
-
-  it('rolls back across the year boundary', () => {
-    const jan = new Date(2026, 0, 15); // 15 Jan 2026
-    const total = prevMonthTotalCents(
-      [
-        tx({ id: '1', date: '2025-12-25', amount_eur: 700 }),
-        tx({ id: '2', date: '2026-01-02', amount_eur: 9999 }), // current month, excluded
-      ],
-      jan,
-    );
-    expect(total).toBe(700);
   });
 });
 

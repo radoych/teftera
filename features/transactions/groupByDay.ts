@@ -67,9 +67,3 @@ export function groupTransactionsByDay(
   }
   return groups;
 }
-
-/** Sum of amount_eur (cents) for transactions in the current calendar month. */
-export function monthTotalCents(txs: Transaction[], now: Date = new Date()): number {
-  const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`;
-  return txs.reduce((sum, tx) => (tx.date.startsWith(prefix) ? sum + tx.amount_eur : sum), 0);
-}

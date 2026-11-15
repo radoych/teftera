@@ -16,22 +16,20 @@ import {
   dayTotalCents,
   filterByUser,
   pctChange,
-  prevMonthTotalCents,
   sortByCreatedAtDesc,
   spendingByCategory,
 } from '@/features/transactions/dashboard';
 import { reasonByTxId } from '@/features/anomalies/reasons';
-import { monthTotalCents, toTransactionView } from '@/features/transactions/groupByDay';
+import { toTransactionView } from '@/features/transactions/groupByDay';
 import { expensesOnly } from '@/features/transactions/kind';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { useIsOnline } from '@/lib/useIsOnline';
 import { useBudgetsStore } from '@/features/budgets/store';
-import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
-import { budgetProgress } from '@/features/budgets/progress';
+import { monthBudgetProgress } from '@/features/budgets/currentMonth';
 import type { BudgetProgress } from '@/features/budgets/types';
-import { firstOfMonth } from '@/lib/dates';
+import { startOfMonth, sumInMonth } from '@/lib/dates';
 
 type Timeframe = 'day' | 'month';
 type Scope = 'me' | 'household';
@@ -73,14 +71,9 @@ export default function DashboardScreen() {
       const today = dayTotalCents(filtered, now);
       return { total: today, comparison: pctChange(today, dayTotalCents(filtered, yesterday(now))) };
     }
-    const month = monthTotalCents(filtered, now);
-    return { total: month, comparison: pctChange(month, prevMonthTotalCents(filtered, now)) };
+    const month = sumInMonth(filtered, now);
+    return { total: month, comparison: pctChange(month, sumInMonth(filtered, startOfMonth(now, -1))) };
   }, [filtered, timeframe]);
-
-  const categoryRows = useMemo(
-    () => spendingByCategory(filtered, categories),
-    [filtered, categories],
-  );
 
   // Household-scoped category spend: always uses all household transactions,
   // ignoring the per-person toggle, so budget progress is household-level.
@@ -89,11 +82,16 @@ export default function DashboardScreen() {
     [expenseTxs, categories],
   );
 
+  // In household scope the visible rows ARE the household rows — derive once.
+  const categoryRows = useMemo(
+    () => (scope === 'me' ? spendingByCategory(filtered, categories) : householdCategoryRows),
+    [scope, filtered, categories, householdCategoryRows],
+  );
+
   const budgetRows = useBudgetsStore((s) => s.rows);
 
   const budgetMap = useMemo((): Map<string, BudgetProgress> => {
-    const resolved = resolveBudgetsForMonth(budgetRows, firstOfMonth());
-    const progress = budgetProgress(resolved, householdCategoryRows);
+    const progress = monthBudgetProgress(budgetRows, householdCategoryRows, new Date());
     return new Map(progress.map((p) => [p.categoryId, p]));
   }, [budgetRows, householdCategoryRows]);
 
