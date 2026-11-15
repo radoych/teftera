@@ -139,7 +139,13 @@ export default function ProfileScreen() {
           <Text className="font-inter text-body-lg text-on-surface">Търговци</Text>
           <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
         </Pressable>
-        {/* "Клиентски карти" / "Списъци за пазаруване" rows: added by the loyalty / shopping waves. */}
+        <Pressable
+          onPress={() => router.push('/loyalty-cards')}
+          className="flex-row items-center justify-between py-5 active:bg-white/5">
+          <Text className="font-inter text-body-lg text-on-surface">Клиентски карти</Text>
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
+        </Pressable>
+        {/* "Списъци за пазаруване" row: added by the shopping wave. */}
         <Pressable
           onPress={() => router.push('/categories')}
           className="flex-row items-center justify-between py-5 active:bg-white/5">
