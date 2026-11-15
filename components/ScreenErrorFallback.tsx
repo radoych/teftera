@@ -3,6 +3,7 @@ import type { ErrorBoundaryProps } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
+import { colors } from '@/lib/theme';
 
 /**
  * Route-level error fallback (expo-router ErrorBoundary contract). Exported as
@@ -15,7 +16,7 @@ export function ScreenErrorFallback({ error, retry }: ErrorBoundaryProps) {
       <BackgroundGlow />
       <SafeAreaView className="flex-1 items-center justify-center px-8" edges={['top', 'bottom']}>
         <View className="mb-md h-16 w-16 items-center justify-center rounded-full bg-surface-container">
-          <MaterialIcons name="error-outline" size={28} color="#ffb4ab" />
+          <MaterialIcons name="error-outline" size={28} color={colors.error} />
         </View>
         <Text className="text-center font-jakarta-semibold text-headline-md text-on-surface">
           Нещо се обърка

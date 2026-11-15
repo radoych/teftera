@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
+import { colors } from '@/lib/theme';
 
 /**
  * Flat, borderless input: transparent background with a single bottom hairline
@@ -25,7 +26,7 @@ export function FlatInput({
       className="flex-row items-center"
       style={{
         borderBottomWidth: 1,
-        borderBottomColor: focused ? '#adc7ff' : 'rgba(255,255,255,0.1)',
+        borderBottomColor: focused ? colors.primaryContainer : 'rgba(255,255,255,0.1)',
       }}>
       <TextInput
         placeholderTextColor="rgba(196,198,208,0.5)"
@@ -47,7 +48,7 @@ export function FlatInput({
           <MaterialIcons
             name={hidden ? 'visibility-off' : 'visibility'}
             size={20}
-            color="#8e909a"
+            color={colors.outline}
           />
         </Pressable>
       ) : null}

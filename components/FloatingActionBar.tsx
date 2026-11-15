@@ -3,6 +3,7 @@ import type { ComponentProps } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '@/lib/useKeyboardHeight';
+import { colors } from '@/lib/theme';
 
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
@@ -17,9 +18,12 @@ export interface FloatingAction {
 }
 
 const VARIANTS = {
-  filled: { container: 'bg-primary-container', content: '#112f5e' },
-  ghost: { container: 'border border-white/10 bg-surface-container-high', content: '#e3e2e6' },
-  destructive: { container: 'bg-error-container', content: '#ffb4ab' },
+  filled: { container: 'bg-primary-container', content: colors.onPrimary },
+  ghost: {
+    container: 'border border-white/10 bg-surface-container-high',
+    content: colors.onSurface,
+  },
+  destructive: { container: 'bg-error-container', content: colors.error },
 } as const;
 
 interface FloatingActionBarProps {

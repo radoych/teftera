@@ -12,6 +12,7 @@
 import type { ComponentProps } from 'react';
 import type { MaterialIcons } from '@expo/vector-icons';
 import type { CategoryLite } from '@/features/transactions/types';
+import { colors } from '@/lib/theme';
 
 export type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
 
@@ -26,7 +27,7 @@ export interface CategoryPresentation {
 export const FALLBACK_CATEGORY: Readonly<CategoryPresentation> = {
   name: 'Other',
   icon: 'category',
-  color: '#8e909a',
+  color: colors.outline,
 };
 
 /**

@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Pressable, Text, View } from 'react-native';
 import type { MaterialIconName } from '@/lib/categories';
+import { colors } from '@/lib/theme';
 
 interface EmptyStateProps {
   icon: MaterialIconName;
@@ -15,7 +16,7 @@ export function EmptyState({ icon, title, message, cta }: EmptyStateProps) {
     <View className="items-center px-8 py-xxl">
       <View className="mb-md h-28 w-28 items-center justify-center rounded-full bg-primary-container/5">
         <View className="h-20 w-20 items-center justify-center rounded-full bg-surface-container">
-          <MaterialIcons name={icon} size={32} color="#8e909a" />
+          <MaterialIcons name={icon} size={32} color={colors.outline} />
         </View>
       </View>
       <Text className="text-center font-jakarta-semibold text-headline-md text-on-surface">
