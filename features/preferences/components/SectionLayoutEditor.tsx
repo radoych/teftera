@@ -16,6 +16,7 @@ const ROW_HEIGHT = 56;
 const LABELS: Record<DashboardSectionKey, string> = {
   categories: 'По категория',
   recent: 'Последни',
+  lists: 'Списъци',
 };
 
 interface RowProps {

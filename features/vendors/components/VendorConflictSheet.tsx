@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { SheetActions } from '@/components/SheetActions';
+import { useListsByVendor } from '@/features/shopping/sync';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 import { deleteVendor, mergeVendors, moveAlias } from '../api';
@@ -73,6 +74,7 @@ function optionCopy(option: ConflictOption, c: AliasConflict, editing: Vendor) {
 /** One side of the side-by-side summary. Cards / list counts arrive with phases 2–3. */
 function VendorSummary({ vendor, index }: { vendor: Vendor; index: VendorIndex }) {
   const aliases = index.aliasesByVendor.get(vendor.id)?.length ?? 0;
+  const hasList = useListsByVendor().has(vendor.id);
   return (
     <View className="flex-1 gap-xs py-sm">
       <Text className="font-inter-semibold text-body-md text-on-surface" numberOfLines={2}>
@@ -82,6 +84,9 @@ function VendorSummary({ vendor, index }: { vendor: Vendor; index: VendorIndex }
         {aliasCountLabel(aliases)}
       </Text>
       {/* Cards + shopping-list summary lines: added by the loyalty / shopping waves. */}
+      <Text className="font-inter text-label-md text-on-surface-variant opacity-70">
+        {hasList ? 'списък ✓' : 'списък –'}
+      </Text>
     </View>
   );
 }

@@ -82,6 +82,8 @@ export default function RootLayout() {
             <Stack.Screen name="vendor/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="loyalty-cards" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="card/[id]" options={{ presentation: 'modal', animation: 'fade' }} />
+            <Stack.Screen name="lists" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="list/[id]" options={{ animation: 'slide_from_right' }} />
           </Stack>
         )}
         <OfflineBanner />

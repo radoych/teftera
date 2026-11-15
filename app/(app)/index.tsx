@@ -12,6 +12,10 @@ import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { useAuthStore } from '@/features/auth/store';
 import { usePreferencesStore } from '@/features/preferences/store';
+import type { DashboardSectionKey } from '@/features/preferences/types';
+import { ListRow } from '@/features/shopping/components/ListRow';
+import { useListViews } from '@/features/shopping/hooks';
+import { useShoppingStore } from '@/features/shopping/store';
 import { TransactionRow } from '@/features/transactions/components/TransactionRow';
 import {
   dayTotalCents,
@@ -34,6 +38,9 @@ import type { BudgetProgress } from '@/features/budgets/types';
 import { startOfMonth, sumInMonth } from '@/lib/dates';
 import { colors } from '@/lib/theme';
 
+/** Shopping lists shown on the dashboard before "Виж всички". */
+const DASHBOARD_LISTS = 3;
+
 type Timeframe = 'day' | 'month';
 type Scope = 'me' | 'household';
 
@@ -51,6 +58,8 @@ export default function DashboardScreen() {
   const userId = useAuthStore((s) => s.session?.user.id ?? null);
 
   const dashboardSections = usePreferencesStore((s) => s.preferences.dashboardSections);
+  const listViews = useListViews();
+  const listsLoaded = useShoppingStore((s) => s.loaded);
 
   const [timeframe, setTimeframe] = useState<Timeframe>('month');
   const [scope, setScope] = useState<Scope>('household');
@@ -182,9 +191,45 @@ export default function DashboardScreen() {
     </View>
   );
 
-  const sectionContent: Record<'categories' | 'recent', ReactNode> = {
+  // `sortLists` order: lists with something left to take come first.
+  const listsSection: ReactNode = listsLoaded ? (
+    <View className="mt-xl">
+      <View className="mb-sm flex-row items-center justify-between">
+        <SectionLabel>Списъци за пазаруване</SectionLabel>
+        {listViews.length > 0 ? (
+          <Pressable onPress={() => router.push('/lists')} className="flex-row items-center gap-1">
+            <Text className="font-inter-semibold text-label-md text-primary">Виж всички</Text>
+            <MaterialIcons name="chevron-right" size={16} color={colors.primary} />
+          </Pressable>
+        ) : null}
+      </View>
+      {listViews.length === 0 ? (
+        <Pressable
+          onPress={() => router.push({ pathname: '/lists', params: { new: '1' } })}
+          accessibilityRole="button"
+          className="flex-row items-center gap-3 py-md active:opacity-70">
+          <MaterialIcons name="playlist-add" size={20} color={colors.onSurfaceVariant} />
+          <Text className="font-inter text-body-md text-on-surface-variant">
+            Създай списък за магазин
+          </Text>
+        </Pressable>
+      ) : (
+        listViews.slice(0, DASHBOARD_LISTS).map((view, i, shown) => (
+          <ListRow
+            key={view.list.id}
+            view={view}
+            showDivider={i < shown.length - 1}
+            onPress={() => router.push({ pathname: '/list/[id]', params: { id: view.list.id } })}
+          />
+        ))
+      )}
+    </View>
+  ) : null;
+
+  const sectionContent: Record<DashboardSectionKey, ReactNode> = {
     categories: categoriesSection,
     recent: recentSection,
+    lists: listsSection,
   };
 
   return (
@@ -212,8 +257,17 @@ export default function DashboardScreen() {
         />
       }>
       {/* Top app bar */}
-      <View className="mb-lg mt-md">
+      <View className="mb-lg mt-md flex-row items-center justify-between">
         <Text className="font-jakarta-bold text-headline-xl text-primary">Teftera</Text>
+        <Pressable
+          onPress={() => router.push('/loyalty-cards')}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Клиентски карти"
+          className="h-10 w-10 items-center justify-center bg-surface-container active:opacity-80"
+          style={{ borderRadius: 9999 }}>
+          <MaterialIcons name="card-membership" size={22} color={colors.onSurfaceVariant} />
+        </Pressable>
       </View>
 
       {/* Hero spending */}

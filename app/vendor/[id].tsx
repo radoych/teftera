@@ -12,6 +12,9 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SheetActions } from '@/components/SheetActions';
 import { useAuthStore } from '@/features/auth/store';
+import { NewListSheet } from '@/features/shopping/components/NewListSheet';
+import { listMetaLabel } from '@/features/shopping/copy';
+import { useListCounts, useListsByVendor } from '@/features/shopping/sync';
 import { addAlias, deleteVendor, removeAlias, renameVendor } from '@/features/vendors/api';
 import { AliasRow } from '@/features/vendors/components/AliasRow';
 import { VendorConflictSheet } from '@/features/vendors/components/VendorConflictSheet';
@@ -35,6 +38,10 @@ export default function VendorDetailScreen() {
   const index = useVendorIndex();
   const vendor = id ? index.byId.get(id) : undefined;
   const aliases = (id && index.aliasesByVendor.get(id)) || [];
+  const listsByVendor = useListsByVendor();
+  const shoppingList = id ? listsByVendor.get(id) : undefined;
+  const listCounts = useListCounts();
+  const [newListOpen, setNewListOpen] = useState(false);
 
   const [newAlias, setNewAlias] = useState('');
   const [aliasHint, setAliasHint] = useState<string | null>(null);
@@ -244,6 +251,41 @@ export default function VendorDetailScreen() {
         Shopping list ("Списък за пазаруване" link) — the shopping-lists wave
         renders it here.
       */}
+      <SectionLabel className="mb-xs mt-xl">Списък за пазаруване</SectionLabel>
+      <Pressable
+        onPress={() =>
+          shoppingList
+            ? router.push({ pathname: '/list/[id]', params: { id: shoppingList.id } })
+            : setNewListOpen(true)
+        }
+        accessibilityRole="button"
+        className="flex-row items-center justify-between py-md active:bg-white/5">
+        <View className="flex-row items-center gap-3">
+          <MaterialIcons
+            name={shoppingList ? 'checklist' : 'playlist-add'}
+            size={20}
+            color={shoppingList ? colors.onSurfaceVariant : colors.primaryContainer}
+          />
+          <Text
+            className={`font-inter text-body-lg ${
+              shoppingList ? 'text-on-surface' : 'text-primary-container'
+            }`}>
+            {shoppingList
+              ? listMetaLabel(
+                  listCounts.get(shoppingList.id) ?? { total: 0, open: 0, done: 0 },
+                )
+              : 'Създай списък'}
+          </Text>
+        </View>
+        {shoppingList ? (
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
+        ) : null}
+      </Pressable>
+      <NewListSheet
+        visible={newListOpen}
+        onClose={() => setNewListOpen(false)}
+        initialVendorName={vendor.name}
+      />
 
       {/* Rename */}
       <BottomSheet visible={renameDraft !== null} onClose={() => setRenameDraft(null)}>
