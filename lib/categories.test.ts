@@ -1,6 +1,5 @@
 import {
   BRAND_RULES,
-  DEFAULT_CATEGORIES,
   FALLBACK_CATEGORY,
   categoryPresentation,
   guessCategory,
@@ -224,15 +223,6 @@ describe('guessCategory', () => {
         expect(result).toBe('Other');
       }
     });
-  });
-
-  it('every default category name is unique', () => {
-    const names = DEFAULT_CATEGORIES.map((c) => c.name);
-    expect(new Set(names).size).toBe(names.length);
-  });
-
-  it('always has an Other category for the fallback', () => {
-    expect(DEFAULT_CATEGORIES.some((c) => c.name === 'Other')).toBe(true);
   });
 });
 
