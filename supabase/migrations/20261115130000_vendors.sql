@@ -25,7 +25,9 @@ immutable
 strict
 set search_path = ''
 as $$
-  select lower(normalize(regexp_replace(btrim(raw), '\s+', ' ', 'g'), NFKC));
+  -- NFKC first (as in the TS mirror) so NBSP / other Unicode spaces become
+  -- U+0020 before the whitespace collapse; otherwise keys could diverge.
+  select lower(btrim(regexp_replace(normalize(raw, NFKC), '\s+', ' ', 'g')));
 $$;
 revoke all on function private.merchant_key(text) from public;
 grant execute on function private.merchant_key(text) to authenticated;
