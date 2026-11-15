@@ -2,7 +2,8 @@ import { Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { SectionLabel } from '@/components/SectionLabel';
 
-interface ImportSummary {
+/** Counts shown after an import. */
+export interface ImportSummary {
   imported: number;
   duplicates: number;
   other: number;
