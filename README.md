@@ -118,6 +118,12 @@ eas build --profile preview --platform android   # internal-distribution APK
 eas build --profile preview --platform ios       # dev-signed, sideload via AltStore
 ```
 
+> **iOS builds expire after 7 days.** Signing uses a free Apple ID (Personal
+> Team), so iOS revokes the app on day 8 and it silently stops launching — no
+> data is lost. Keeping it alive, and the recommended SideStore migration that
+> makes the refresh automatic, are in
+> [`docs/ios-sideload-refresh.md`](docs/ios-sideload-refresh.md).
+
 > **Native dependency added — rebuild your dev client once.** This branch adds
 > `react-native-keyboard-controller` (keyboard-aware scrolling on manual entry /
 > confirm receipt), which is a native module — a plain Expo Go / JS-only reload
@@ -143,3 +149,5 @@ Z-score, report data, budget progress, network-state derivation.
   [`docs/superpowers/`](docs/superpowers/) — the project is built spec-first.
 - The portfolio narrative (what was interesting to build and why) is in
   [`docs/portfolio-writeup.md`](docs/portfolio-writeup.md).
+- Keeping the free-signed iOS build from expiring every 7 days:
+  [`docs/ios-sideload-refresh.md`](docs/ios-sideload-refresh.md).
