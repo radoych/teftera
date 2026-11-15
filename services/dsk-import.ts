@@ -8,6 +8,7 @@
  * Fixed conversion rate lives in formatCurrency.ts.
  */
 import { bgnToEurCents } from '@/lib/formatCurrency';
+import { merchantKey } from '@/features/vendors/key';
 import { BRAND_RULES, guessCategory } from '@/lib/categories';
 
 /** A mapped transaction row from the DSK table (raw, pre-normalization). */
@@ -156,17 +157,30 @@ function stripCardAcceptor(s: string): string {
 }
 
 /**
- * Normalize a raw counterparty into a readable merchant. Known brands map to a
+ * Household knowledge for the import: a merchant key (`merchantKey`) → the
+ * vendor name it is a recognized name of. Imports only READ aliases; they never
+ * learn them (spec 2026-09-09 §1 #5).
+ */
+export type MerchantLookup = (key: string) => string | undefined;
+
+/**
+ * Normalize a raw counterparty into a readable merchant. The household's
+ * recognized names win over the static rules (tried on the cleaned string,
+ * then once more on the stripped acceptor). Otherwise known brands map to a
  * clean name; unknown Latin acceptors get their country/city prefix and address
  * suffix stripped; Cyrillic counterparties pass through cleaned.
  */
-export function normalizeMerchant(raw: string): string {
+export function normalizeMerchant(raw: string, lookup?: MerchantLookup): string {
   const cleaned = cleanMerchant(raw);
+  const hit = lookup?.(merchantKey(cleaned));
+  if (hit) return hit;
   for (const [pattern, name] of BRAND_RULES) {
     if (pattern.test(cleaned)) return name;
   }
   const isLatin = /[A-Za-z]/.test(cleaned) && !/[Ѐ-ӿ]/.test(cleaned);
-  return isLatin ? stripCardAcceptor(cleaned) || cleaned : cleaned;
+  if (!isLatin) return cleaned;
+  const stripped = stripCardAcceptor(cleaned) || cleaned;
+  return (stripped !== cleaned && lookup?.(merchantKey(stripped))) || stripped;
 }
 
 /**
@@ -193,12 +207,15 @@ export function occurredAtISO(isoDate: string, time: string): string {
  * expenses, credit rows are income. BGN statements convert to EUR and retain
  * the original; EUR statements store cents directly.
  */
-export function normalizeDskRow(row: DskParsedRow): NormalizedTransaction | null {
+export function normalizeDskRow(
+  row: DskParsedRow,
+  lookup?: MerchantLookup,
+): NormalizedTransaction | null {
   const isIncome = row.debit === '' && row.credit !== '';
   const amountStr = isIncome ? row.credit : row.debit;
   const rawCents = Math.abs(parseBgAmount(amountStr));
   if (rawCents === 0) return null; // info rows / both columns empty — nothing to import
-  const merchant = normalizeMerchant(row.merchantRaw);
+  const merchant = normalizeMerchant(row.merchantRaw, lookup);
   const isoDate = parseDskDate(row.date);
   const base = {
     kind: (isIncome ? 'income' : 'expense') as 'income' | 'expense',

@@ -27,6 +27,9 @@ import type { TxKind } from '@/features/transactions/kind';
 import { expenseCategories, incomeCategories } from '@/features/transactions/kind';
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
+import { VendorAutocomplete } from '@/features/vendors/components/VendorAutocomplete';
+import { resolveVendor } from '@/features/vendors/resolve';
+import { getVendorIndex } from '@/features/vendors/store';
 import { guessCategory, guessIncomeCategory, resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
@@ -131,9 +134,14 @@ export default function ManualEntryScreen() {
       Alert.alert('Грешка', 'Няма активно домакинство.');
       return;
     }
+    // A typed raw name that is a recognized name is saved as its vendor's
+    // name. Purely local — creating a new vendor happens after the save
+    // (runAfterSave), so vendor bookkeeping can never block saving.
+    const merchantName =
+      resolveVendor(parsed.data.merchant, getVendorIndex())?.name ?? parsed.data.merchant;
     const resolvedCategoryId = categoryTouched
       ? categoryId
-      : resolveCategoryId(parsed.data.merchant, categories, kind);
+      : resolveCategoryId(merchantName, categories, kind);
 
     setSaving(true);
     let createdId: string | null = null;
@@ -141,7 +149,7 @@ export default function ManualEntryScreen() {
       if (isEdit && id) {
         await updateTransaction(id, {
           amountCents: parsed.data.amountCents,
-          merchant: parsed.data.merchant,
+          merchant: merchantName,
           categoryId: resolvedCategoryId,
           date: parsed.data.date,
           note: parsed.data.note,
@@ -152,7 +160,7 @@ export default function ManualEntryScreen() {
           householdId,
           userId: session?.user.id ?? null,
           amountCents: parsed.data.amountCents,
-          merchant: parsed.data.merchant,
+          merchant: merchantName,
           categoryId: resolvedCategoryId,
           date: parsed.data.date,
           note: parsed.data.note,
@@ -176,7 +184,7 @@ export default function ManualEntryScreen() {
       kind,
       amountCents: parsed.data.amountCents,
       categoryId: resolvedCategoryId,
-      merchant: parsed.data.merchant,
+      merchant: merchantName,
     });
     router.back();
   };
@@ -224,16 +232,13 @@ export default function ManualEntryScreen() {
 
           {/* Merchant */}
           <FieldRow label="Търговец">
-            <TextInput
+            <VendorAutocomplete
+              variant="field"
               value={merchant}
               onChangeText={setMerchant}
               placeholder="напр. Starbucks"
-              placeholderTextColor="rgba(196,198,208,0.3)"
-              className="font-inter text-body-lg text-on-surface"
+              error={errors.merchant}
             />
-            {errors.merchant ? (
-              <Text className="font-inter text-body-md text-error">{errors.merchant}</Text>
-            ) : null}
           </FieldRow>
 
           {/* Category — opens the picker */}

@@ -19,6 +19,7 @@ import { PreferenceToggles } from '@/features/preferences/components/PreferenceT
 import { lastDskSyncAt, formatLastSync } from '@/features/transactions/lastSync';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { usePreferencesStore } from '@/features/preferences/store';
+import { colors } from '@/lib/theme';
 import { upsertMyPreferences } from '@/features/preferences/api';
 import type { UserPreferences } from '@/features/preferences/types';
 
@@ -132,6 +133,13 @@ export default function ProfileScreen() {
       {/* General */}
       <View className="mt-lg">
         <SectionLabel className="mb-md">Общи</SectionLabel>
+        <Pressable
+          onPress={() => router.push('/vendors')}
+          className="flex-row items-center justify-between py-5 active:bg-white/5">
+          <Text className="font-inter text-body-lg text-on-surface">Търговци</Text>
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
+        </Pressable>
+        {/* "Клиентски карти" / "Списъци за пазаруване" rows: added by the loyalty / shopping waves. */}
         <Pressable
           onPress={() => router.push('/categories')}
           className="flex-row items-center justify-between py-5 active:bg-white/5">

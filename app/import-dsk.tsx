@@ -4,8 +4,12 @@ import { Pressable, Text, View } from 'react-native';
 import { ImportDoneView } from '@/features/transactions/components/import/ImportDoneView';
 import { ImportIdleView } from '@/features/transactions/components/import/ImportIdleView';
 import { ImportPreviewView } from '@/features/transactions/components/import/ImportPreviewView';
+import type { ImportNormalizers } from '@/features/transactions/import/importFlow';
 import { useImportFlow } from '@/features/transactions/import/useImportFlow';
+import { vendorNameForKey } from '@/features/vendors/store';
 import { useIsOnline } from '@/lib/useIsOnline';
+import { normalizeEbTransaction } from '@/services/bank-sync';
+import { normalizeDskRow } from '@/services/dsk-import';
 
 function Header() {
   return (
@@ -21,13 +25,22 @@ function Header() {
 }
 
 /**
+ * Household recognized names sit in front of the static brand rules. The
+ * lookup reads the vendors store at call time (useImportFlow reads its
+ * overrides once per mount), so a vendor added mid-session still applies.
+ */
+const vendorAwareNormalizers: ImportNormalizers = {
+  csv: (row) => normalizeDskRow(row, vendorNameForKey),
+  bank: (tx) => normalizeEbTransaction(tx, vendorNameForKey),
+};
+
+/**
  * DSK import: CSV file or live bank sync → preview → import → summary.
  * State and pipelines live in `useImportFlow`; this screen only picks the view.
- * (Vendor-alias normalisers plug in via `useImportFlow({ normalizers })`.)
  */
 export default function ImportDskScreen() {
   const online = useIsOnline();
-  const flow = useImportFlow();
+  const flow = useImportFlow({ normalizers: vendorAwareNormalizers });
   const header = <Header />;
 
   if (flow.status === 'done' && flow.summary) {

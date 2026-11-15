@@ -31,6 +31,9 @@ import { DateField } from '@/features/transactions/components/DateField';
 import { runAfterSave } from '@/features/transactions/afterSave';
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
+import { VendorAutocomplete } from '@/features/vendors/components/VendorAutocomplete';
+import { resolveVendor } from '@/features/vendors/resolve';
+import { getVendorIndex } from '@/features/vendors/store';
 import { resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
@@ -48,6 +51,8 @@ export default function ConfirmReceiptScreen() {
 
   const [phase, setPhase] = useState<Phase>('extracting');
   const [merchant, setMerchant] = useState('');
+  // The raw merchant as Gemini read it — learned as a recognized name on save.
+  const [extractedMerchant, setExtractedMerchant] = useState('');
   const [total, setTotal] = useState('');
   const [date, setDate] = useState(toISODate());
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -70,7 +75,9 @@ export default function ConfirmReceiptScreen() {
       const result = await extractReceipt(base64);
       if (result.ok) {
         const seed = extractionToForm(result.data);
-        setMerchant(seed.merchant);
+        setExtractedMerchant(seed.merchant);
+        // A store scanned before pre-fills as its vendor's name.
+        setMerchant(resolveVendor(seed.merchant, getVendorIndex())?.name ?? seed.merchant);
         setTotal(formatDigitsAsAmount(seed.total));
         setDate(seed.date);
         setItems(seed.items.map((i) => ({ ...i, amount: formatDigitsAsAmount(i.amount) })));
@@ -119,9 +126,11 @@ export default function ConfirmReceiptScreen() {
       Alert.alert('Грешка', 'Липсва домакинство или бележка.');
       return;
     }
+    const merchantName =
+      resolveVendor(parsed.data.merchant, getVendorIndex())?.name ?? parsed.data.merchant;
     const resolvedCategoryId = categoryTouched
       ? categoryId
-      : resolveCategoryId(parsed.data.merchant, categories);
+      : resolveCategoryId(merchantName, categories);
 
     setSaving(true);
     let newId: string;
@@ -132,7 +141,7 @@ export default function ConfirmReceiptScreen() {
         storagePath,
         rawGeminiJson,
         amountCents: parsed.data.amountCents,
-        merchant: parsed.data.merchant,
+        merchant: merchantName,
         categoryId: resolvedCategoryId,
         date: parsed.data.date,
         note: parsed.data.note,
@@ -149,7 +158,8 @@ export default function ConfirmReceiptScreen() {
       kind: 'expense',
       amountCents: parsed.data.amountCents,
       categoryId: resolvedCategoryId,
-      merchant: parsed.data.merchant,
+      merchant: merchantName,
+      extractedMerchant,
     });
     router.replace('/(app)');
   };
@@ -201,16 +211,13 @@ export default function ConfirmReceiptScreen() {
               {/* Merchant */}
               <View className="mb-xl">
                 <SectionLabel className="mb-1">Търговец</SectionLabel>
-                <TextInput
+                <VendorAutocomplete
+                  variant="headline"
                   value={merchant}
                   onChangeText={setMerchant}
                   placeholder="Въведи търговец"
-                  placeholderTextColor="rgba(142,144,154,0.5)"
-                  className="font-jakarta-semibold text-headline-lg-mobile text-on-surface"
+                  error={errors.merchant}
                 />
-                {errors.merchant ? (
-                  <Text className="mt-1 font-inter text-body-md text-error">{errors.merchant}</Text>
-                ) : null}
                 <HairlineDivider className="mt-xs" />
               </View>
 

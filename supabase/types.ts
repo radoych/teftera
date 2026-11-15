@@ -388,6 +388,90 @@ export type Database = {
           },
         ]
       }
+      // vendors + vendor_aliases (and merge_vendors under Functions) hand-added from migration 20261115130000_vendors.sql pending regeneration.
+      vendor_aliases: {
+        Row: {
+          alias: string
+          alias_key: string
+          created_at: string
+          household_id: string
+          id: string
+          is_primary: boolean
+          source: string
+          vendor_id: string
+        }
+        Insert: {
+          alias: string
+          alias_key: string
+          created_at?: string
+          household_id: string
+          id?: string
+          is_primary?: boolean
+          source?: string
+          vendor_id: string
+        }
+        Update: {
+          alias?: string
+          alias_key?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          is_primary?: boolean
+          source?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_aliases_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_aliases_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendors: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          name: string
+          name_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          name: string
+          name_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          name?: string
+          name_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendors_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -403,6 +487,10 @@ export type Database = {
       join_household_by_code: {
         Args: { p_code: string; p_display_name: string }
         Returns: string
+      }
+      merge_vendors: {
+        Args: { p_source: string; p_target: string }
+        Returns: undefined
       }
     }
     Enums: {
