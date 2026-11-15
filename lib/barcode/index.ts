@@ -4,7 +4,14 @@ import type { BarcodeFormat, Modules } from './types';
 
 export type { BarcodeFormat, Modules } from './types';
 export { encodeCode128 } from './code128';
-export { eanCheckDigit, encodeEan13, encodeEan8, isValidEan13, isValidEan8, upcAToEan13 } from './ean';
+export {
+  eanCheckDigit,
+  encodeEan13,
+  encodeEan8,
+  isValidEan13,
+  isValidEan8,
+  upcAToEan13,
+} from './ean';
 
 /**
  * Encodes `value` in `format`. Returns null for QR (drawn by

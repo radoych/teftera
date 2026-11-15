@@ -7,6 +7,7 @@ import type { Modules } from './types';
 // cross-check both derived sets against an independent transcription.
 
 /** L-codes (left half, odd parity), index = digit. */
+// prettier-ignore
 export const EAN_L_CODES: readonly string[] = [
   '0001101', '0011001', '0010011', '0111101', '0100011',
   '0110001', '0101111', '0111011', '0110111', '0001011',
@@ -19,9 +20,12 @@ const complement = (bits: string): string =>
 export const EAN_R_CODES: readonly string[] = EAN_L_CODES.map(complement);
 
 /** G-codes (left half, even parity). */
-export const EAN_G_CODES: readonly string[] = EAN_R_CODES.map((c) => c.split('').reverse().join(''));
+export const EAN_G_CODES: readonly string[] = EAN_R_CODES.map((c) =>
+  c.split('').reverse().join(''),
+);
 
 /** EAN-13 left-half parity per leading (13th) digit. */
+// prettier-ignore
 export const EAN_PARITY: readonly string[] = [
   'LLLLLL', 'LLGLGG', 'LLGGLG', 'LLGGGL', 'LGLLGG',
   'LGGLLG', 'LGGGLL', 'LGLGLG', 'LGLGGL', 'LGGLGL',
@@ -50,8 +54,10 @@ export function eanCheckDigit(payload: string): number {
 const hasValidCheck = (code: string): boolean =>
   eanCheckDigit(code.slice(0, -1)) === Number(code[code.length - 1]);
 
-export const isValidEan13 = (code: string): boolean => isDigits(code, 13) && hasValidCheck(code);
-export const isValidEan8 = (code: string): boolean => isDigits(code, 8) && hasValidCheck(code);
+export const isValidEan13 = (code: string): boolean =>
+  isDigits(code, 13) && hasValidCheck(code);
+export const isValidEan8 = (code: string): boolean =>
+  isDigits(code, 8) && hasValidCheck(code);
 
 /** A valid 12-digit UPC-A is an EAN-13 with a leading 0; null when invalid. */
 export function upcAToEan13(code: string): string | null {

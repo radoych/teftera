@@ -22,7 +22,9 @@ export const haptics = {
   /** Success notification — last item taken, card scanned, list created. */
   success: (): void => {
     if (isWeb) return;
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(swallow);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+      swallow,
+    );
   },
   /** Error notification — a reverted optimistic write. */
   error: (): void => {

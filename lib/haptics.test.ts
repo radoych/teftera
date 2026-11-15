@@ -19,8 +19,12 @@ describe('haptics', () => {
     haptics.error();
     expect(mocked.impactAsync).toHaveBeenCalledWith(Haptics.ImpactFeedbackStyle.Light);
     expect(mocked.selectionAsync).toHaveBeenCalledTimes(1);
-    expect(mocked.notificationAsync).toHaveBeenCalledWith(Haptics.NotificationFeedbackType.Success);
-    expect(mocked.notificationAsync).toHaveBeenCalledWith(Haptics.NotificationFeedbackType.Error);
+    expect(mocked.notificationAsync).toHaveBeenCalledWith(
+      Haptics.NotificationFeedbackType.Success,
+    );
+    expect(mocked.notificationAsync).toHaveBeenCalledWith(
+      Haptics.NotificationFeedbackType.Error,
+    );
   });
 
   it('swallows rejections from unsupported devices', async () => {

@@ -6,6 +6,7 @@ import type { Modules } from './types';
 // widths (bar first), each symbol 11 modules wide. Index 106 is the 7-width,
 // 13-module stop pattern. Transcribed from ISO/IEC 15417 and guarded by the
 // table self-check tests (widths sum, bar-parity, uniqueness).
+// prettier-ignore
 export const CODE128_PATTERNS: readonly string[] = [
   '212222', '222122', '222221', '121223', '121322', '131222', '122213', '122312', '132212', '221213', // 0–9
   '221312', '231212', '112232', '122132', '122231', '113222', '123122', '123221', '223211', '221132', // 10–19
@@ -53,7 +54,10 @@ export function code128Values(value: string): number[] | null {
   let set: 'B' | 'C';
 
   const first = tokens[0] ?? '';
-  if (/^\d+$/.test(first) && (first.length >= MIN_C_RUN || (tokens.length === 1 && first.length % 2 === 0))) {
+  if (
+    /^\d+$/.test(first) &&
+    (first.length >= MIN_C_RUN || (tokens.length === 1 && first.length % 2 === 0))
+  ) {
     // Leading digit run → start directly in C. An odd trailing digit drops to B.
     out.push(CODE128_START_C);
     const even = first.length - (first.length % 2);
@@ -109,6 +113,7 @@ export function encodeCode128(value: string): Modules | null {
   const checksum = data.reduce((sum, v, i) => sum + v * (i + 1), start!) % 103;
 
   const modules: Modules = [];
-  for (const v of [...values, checksum, CODE128_STOP]) widthsToModules(CODE128_PATTERNS[v]!, modules);
+  for (const v of [...values, checksum, CODE128_STOP])
+    widthsToModules(CODE128_PATTERNS[v]!, modules);
   return modules;
 }

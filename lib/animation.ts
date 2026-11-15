@@ -1,4 +1,10 @@
-import { Easing, FadeInDown, FadeOutLeft, FadeOutUp, LinearTransition } from 'react-native-reanimated';
+import {
+  Easing,
+  FadeInDown,
+  FadeOutLeft,
+  FadeOutUp,
+  LinearTransition,
+} from 'react-native-reanimated';
 
 // One motion vocabulary so every list in the app moves the same way.
 // Springs for anything that changes position; TIMING_FAST only for
