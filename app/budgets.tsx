@@ -1,11 +1,12 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Text, View } from 'react-native';
 import { AmountInput } from '@/components/AmountInput';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionLabel } from '@/components/SectionLabel';
 import { useAuthStore } from '@/features/auth/store';
 import { deleteBudget, upsertBudget } from '@/features/budgets/api';
@@ -16,19 +17,7 @@ import { useTransactionsStore } from '@/features/transactions/store';
 import { expenseCategories } from '@/features/transactions/kind';
 import type { MaterialIconName } from '@/lib/categories';
 import { firstOfMonth } from '@/lib/dates';
-
-function Header() {
-  return (
-    <View className="mb-md flex-row items-center gap-3 py-2">
-      <Pressable onPress={() => router.back()} hitSlop={8} className="-ml-2 p-2">
-        <MaterialIcons name="arrow-back" size={24} color="#e3e2e6" />
-      </Pressable>
-      <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-        Бюджети
-      </Text>
-    </View>
-  );
-}
+import { colors } from '@/lib/theme';
 
 export default function BudgetsScreen() {
   const householdId = useAuthStore((s) => s.householdId);
@@ -115,9 +104,9 @@ export default function BudgetsScreen() {
   if (!loaded) {
     return (
       <Screen>
-        <Header />
+        <ScreenHeader title="Бюджети" />
         <View className="items-center py-xxl">
-          <ActivityIndicator color="#adc7ff" />
+          <ActivityIndicator color={colors.primaryContainer} />
           <Text className="mt-md font-inter text-body-md text-on-surface-variant opacity-70">
             Зареждане на бюджети…
           </Text>
@@ -130,7 +119,7 @@ export default function BudgetsScreen() {
   if (categories.length === 0) {
     return (
       <Screen>
-        <Header />
+        <ScreenHeader title="Бюджети" />
         <Text className="mt-lg font-inter text-body-md text-on-surface-variant opacity-70">
           Няма налични категории. Добави транзакция, за да заредиш категориите.
         </Text>
@@ -154,7 +143,7 @@ export default function BudgetsScreen() {
           ]}
         />
       }>
-      <Header />
+      <ScreenHeader title="Бюджети" />
       <SectionLabel className="mb-md">Месечни лимити</SectionLabel>
       {categories.map((cat) => (
         <View key={cat.id}>

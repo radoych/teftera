@@ -23,51 +23,34 @@ import { CategoryBreakdownList } from '@/features/insights/components/CategoryBr
 import { MonthlyTrendBars } from '@/features/insights/components/MonthlyTrendBars';
 import { MonthPickerSheet } from '@/features/insights/components/MonthPickerSheet';
 import { TopMerchantsList } from '@/features/insights/components/TopMerchantsList';
-import { monthlyTrend, sumCents, topMerchants } from '@/features/insights/aggregate';
 import { refreshSummary } from '@/features/insights/summary';
 import { useSummaryStore } from '@/features/insights/summaryStore';
-import {
-  comparisonRange,
-  filterByDateBounds,
-  filterByRange,
-  type TimeRange,
-} from '@/features/insights/range';
-import {
-  categoryBreakdown,
-  filterByUser,
-  pctChange,
-  spendingByCategory,
-} from '@/features/transactions/dashboard';
-import { expensesOnly, incomeOnly } from '@/features/transactions/kind';
+import type { InsightsScope } from '@/features/insights/deriveInsights';
+import type { TimeRange } from '@/features/insights/range';
+import { useInsightsData } from '@/features/insights/useInsightsData';
+import { expensesOnly } from '@/features/transactions/kind';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { useBudgetsStore } from '@/features/budgets/store';
-import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
-import { budgetProgress } from '@/features/budgets/progress';
 import { exportMonthlyReport, EmptyMonthError } from '@/features/reports/export';
 import { monthPickerOptions } from '@/features/reports/reportData';
 import type { MonthOption } from '@/features/reports/types';
 import { formatCurrency } from '@/lib/formatCurrency';
-import { firstOfMonth } from '@/lib/dates';
-
-type Scope = 'me' | 'household';
+import { colors } from '@/lib/theme';
 
 export default function InsightsScreen() {
   const transactions = useTransactionsStore((s) => s.transactions);
   const categories = useTransactionsStore((s) => s.categories);
-  const openAnomalies = useTransactionsStore((s) => s.openAnomalies);
   const loaded = useTransactionsStore((s) => s.loaded);
   const loading = useTransactionsStore((s) => s.loading);
-  const userId = useAuthStore((s) => s.session?.user.id ?? null);
   const householdId = useAuthStore((s) => s.householdId);
 
   const summaryStatus = useSummaryStore((s) => s.status);
   const summaryText = useSummaryStore((s) => s.text);
-  const budgetRows = useBudgetsStore((s) => s.rows);
   const [refreshing, setRefreshing] = useState(false);
 
   const [range, setRange] = useState<TimeRange>('this_month');
-  const [scope, setScope] = useState<Scope>('household');
+  const [scope, setScope] = useState<InsightsScope>('household');
 
   const [pickerVisible, setPickerVisible] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -107,83 +90,10 @@ export default function InsightsScreen() {
     }
   };
 
-  const expenseTxs = useMemo(() => expensesOnly(transactions), [transactions]);
-  const personFiltered = useMemo(
-    () => filterByUser(expenseTxs, scope === 'me' ? userId : null),
-    [expenseTxs, scope, userId],
-  );
-  const rangeFiltered = useMemo(
-    () => filterByRange(personFiltered, range, now),
-    [personFiltered, range, now],
-  );
-  const incomeRangeTotal = useMemo(
-    () =>
-      sumCents(
-        filterByRange(
-          filterByUser(incomeOnly(transactions), scope === 'me' ? userId : null),
-          range,
-          now,
-        ),
-      ),
-    [transactions, scope, userId, range, now],
-  );
-
-  const heroTotal = useMemo(() => sumCents(rangeFiltered), [rangeFiltered]);
-  const comparison = useMemo(() => {
-    const c = comparisonRange(range, now);
-    return pctChange(
-      heroTotal,
-      sumCents(filterByDateBounds(personFiltered, c.startISO, c.endISO)),
-    );
-  }, [heroTotal, personFiltered, range, now]);
+  const { hero, categoryRows, trend, merchants, budgetRows, categoryById, anomalyCards } =
+    useInsightsData(range, scope, now);
   const comparisonLabel =
     range === 'this_month' ? 'спрямо миналия месец' : 'спрямо предходния период';
-
-  const categoryRows = useMemo(
-    () => categoryBreakdown(rangeFiltered, categories),
-    [rangeFiltered, categories],
-  );
-  const trend = useMemo(
-    () => monthlyTrend(personFiltered, 6, now),
-    [personFiltered, now],
-  );
-  const merchants = useMemo(() => topMerchants(rangeFiltered, 5), [rangeFiltered]);
-
-  const anomalyCards = useMemo(() => {
-    const txById = new Map(transactions.map((t) => [t.id, t]));
-    return openAnomalies
-      .map((a) => {
-        const t = txById.get(a.transactionId);
-        return t
-          ? {
-              id: a.id,
-              transactionId: a.transactionId,
-              merchant: t.merchant,
-              amountCents: t.amount_eur,
-              reason: a.reason,
-            }
-          : null;
-      })
-      .filter((x): x is NonNullable<typeof x> => x !== null);
-  }, [openAnomalies, transactions]);
-
-  // Budget vs Actual: always current-month + full household; range/person pills do NOT affect this.
-  const categoryById = useMemo(
-    () => new Map(categories.map((c) => [c.id, c])),
-    [categories],
-  );
-  const currentMonthHouseholdSpend = useMemo(
-    () => spendingByCategory(expenseTxs, categories),
-    [expenseTxs, categories],
-  );
-  const budgetSection = useMemo(
-    () =>
-      budgetProgress(
-        resolveBudgetsForMonth(budgetRows, firstOfMonth()),
-        currentMonthHouseholdSpend,
-      ),
-    [budgetRows, currentMonthHouseholdSpend],
-  );
 
   const onReview = async (anomalyId: string, transactionId: string) => {
     try {
@@ -237,9 +147,9 @@ export default function InsightsScreen() {
             style={{ opacity: exporting ? 0.5 : 1 }}
           >
             {exporting ? (
-              <ActivityIndicator size="small" color="#adc7ff" />
+              <ActivityIndicator size="small" color={colors.primaryContainer} />
             ) : (
-              <MaterialIcons name="ios-share" size={20} color="#adc7ff" />
+              <MaterialIcons name="ios-share" size={20} color={colors.primaryContainer} />
             )}
           </Pressable>
         ) : null}
@@ -275,7 +185,7 @@ export default function InsightsScreen() {
               />
             </ScrollView>
             <View className="items-start">
-              <SegmentedToggle<Scope>
+              <SegmentedToggle<InsightsScope>
                 value={scope}
                 onChange={setScope}
                 options={[
@@ -289,12 +199,12 @@ export default function InsightsScreen() {
           {/* Hero total */}
           <View className="gap-xs">
             <Text className="font-jakarta-semibold text-headline-xl text-primary">
-              {formatCurrency(heroTotal)}
+              {formatCurrency(hero.totalCents)}
             </Text>
-            <Comparison pct={comparison} label={comparisonLabel} />
-            {incomeRangeTotal > 0 ? (
+            <Comparison pct={hero.comparisonPct} label={comparisonLabel} />
+            {hero.incomeCents > 0 ? (
               <Text className="font-inter-semibold text-body-md text-tertiary">
-                Приходи: +{formatCurrency(incomeRangeTotal)}
+                Приходи: +{formatCurrency(hero.incomeCents)}
               </Text>
             ) : null}
           </View>
@@ -307,7 +217,7 @@ export default function InsightsScreen() {
 
           <TopMerchantsList merchants={merchants} />
 
-          <BudgetSection rows={budgetSection} categoryById={categoryById} />
+          <BudgetSection rows={budgetRows} categoryById={categoryById} />
 
           <AnomalyCards cards={anomalyCards} onReview={onReview} />
         </>

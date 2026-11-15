@@ -1,4 +1,5 @@
-import { budgetProgress } from './progress';
+import { colors } from '@/lib/theme';
+import { budgetProgress, budgetStateColor } from './progress';
 
 describe('budgetProgress', () => {
   const spend = [
@@ -41,5 +42,13 @@ describe('budgetProgress', () => {
     const resolved = new Map([['a', 10000], ['b', 10000]]);
     const rows = budgetProgress(resolved, [{ id: 'a', totalCents: 2000 }, { id: 'b', totalCents: 9000 }]);
     expect(rows.map((r) => r.categoryId)).toEqual(['b', 'a']);
+  });
+});
+
+describe('budgetStateColor', () => {
+  it('maps each state to its theme token', () => {
+    expect(budgetStateColor('over')).toBe(colors.error);
+    expect(budgetStateColor('warning')).toBe(colors.tertiary);
+    expect(budgetStateColor('under')).toBe(colors.primaryContainer);
   });
 });

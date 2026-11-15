@@ -46,7 +46,7 @@ describe('runDetection', () => {
     const arg = d.insertAnomaly.mock.calls[0]![0];
     expect(arg.transactionId).toBe('new');
     expect(arg.householdId).toBe('h');
-    expect(typeof arg.reason).toBe('string');
+    expect(arg.reason).toMatch(/^Над обичайното за тази категория \(z=\d+\.\d\)$/);
   });
 
   it('persists nothing for a normal amount', async () => {

@@ -22,6 +22,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { AuthErrorScreen } from '@/components/AuthErrorScreen';
 import { useAuthStore } from '@/features/auth/store';
 import { retryBootstrap, useAuthBootstrap, useProtectedRoute } from '@/features/auth/bootstrap';
+import { colors } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -60,7 +61,7 @@ export default function RootLayout() {
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: '#121316' },
+              contentStyle: { backgroundColor: colors.background },
               animation: 'slide_from_right',
             }}>
             <Stack.Screen name="(app)" />
@@ -77,6 +78,12 @@ export default function RootLayout() {
             <Stack.Screen name="transaction/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="import-dsk" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="categories" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="vendors" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="vendor/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="loyalty-cards" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="card/[id]" options={{ presentation: 'modal', animation: 'fade' }} />
+            <Stack.Screen name="lists" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="list/[id]" options={{ animation: 'slide_from_right' }} />
           </Stack>
         )}
         <OfflineBanner />

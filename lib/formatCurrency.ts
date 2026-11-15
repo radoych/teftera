@@ -73,14 +73,6 @@ export function bgnToEurCents(bgnMinorUnits: number): number {
   return Math.round(bgnMinorUnits / BGN_PER_EUR);
 }
 
-/**
- * Convert an integer EUR cent amount to integer BGN minor units (stotinki).
- * Rounds to the nearest stotinka.
- */
-export function eurToBgnCents(eurMinorUnits: number): number {
-  return Math.round(eurMinorUnits * BGN_PER_EUR);
-}
-
 /** Parse a user-entered decimal string (e.g. "12,50" or "12.50") to integer cents. */
 export function parseAmountToCents(input: string): number | null {
   const normalized = input.trim().replace(/\s/g, '').replace(',', '.');

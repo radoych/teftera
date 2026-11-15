@@ -2,7 +2,6 @@ import {
   BGN_PER_EUR,
   bgnToEurCents,
   centsToInput,
-  eurToBgnCents,
   formatCurrency,
   parseAmountToCents,
 } from './formatCurrency';
@@ -35,12 +34,6 @@ describe('BGN <-> EUR conversion', () => {
   it('converts BGN stotinki to EUR cents (round)', () => {
     // 195583 stotinki (1955.83 BGN) = exactly 1000.00 EUR
     expect(bgnToEurCents(195583)).toBe(100000);
-  });
-
-  it('round-trips approximately', () => {
-    const eur = 5000; // 50.00 EUR
-    const bgn = eurToBgnCents(eur);
-    expect(bgnToEurCents(bgn)).toBe(eur);
   });
 });
 

@@ -5,33 +5,15 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 import { AuthShell } from '@/components/AuthShell';
 import { PillButton } from '@/components/PillButton';
 import { SectionLabel } from '@/components/SectionLabel';
+import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { mapAuthError } from '@/features/auth/errors';
 import { useAuthStore } from '@/features/auth/store';
 import { createHousehold, joinHouseholdByCode } from '@/features/household/api';
 import { formatInviteCode, normalizeInviteCode } from '@/features/household/inviteCode';
+import { useHouseholdStore } from '@/features/household/store';
+import { colors } from '@/lib/theme';
 
 type Tab = 'create' | 'join';
-
-function SegmentButton({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      className={`flex-1 items-center rounded-full py-3 ${active ? 'bg-primary-container' : ''}`}>
-      <Text
-        className={`font-inter-medium text-label-md ${active ? 'text-on-primary' : 'text-on-surface-variant'}`}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
 
 export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab }) {
   const displayName = useAuthStore((s) => s.displayName) ?? '';
@@ -57,6 +39,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
       const { householdId, inviteCode } = await createHousehold(name.trim(), displayName);
       setCreatedId(householdId);
       setCreatedCode(inviteCode);
+      useHouseholdStore.getState().setInviteCode(householdId, inviteCode);
     } catch (e) {
       setError(mapAuthError(e));
     } finally {
@@ -86,7 +69,8 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
     setError(null);
     setLoading(true);
     try {
-      const { householdId } = await createHousehold('Моето домакинство', displayName);
+      const { householdId, inviteCode } = await createHousehold('Моето домакинство', displayName);
+      useHouseholdStore.getState().setInviteCode(householdId, inviteCode);
       enterHousehold(householdId, displayName);
     } catch (e) {
       setError(mapAuthError(e));
@@ -126,7 +110,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
                 <MaterialIcons
                   name={copied ? 'check' : 'content-copy'}
                   size={22}
-                  color={copied ? '#c3f400' : '#adc7ff'}
+                  color={copied ? colors.secondaryFixed : colors.primaryContainer}
                 />
               </Pressable>
             </View>
@@ -143,16 +127,15 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
           </View>
         ) : (
           <>
-            <View className="mb-xl flex-row rounded-full border border-white/5 bg-surface-container-low p-1">
-              <SegmentButton
-                label="Създай"
-                active={tab === 'create'}
-                onPress={() => setTab('create')}
-              />
-              <SegmentButton
-                label="Присъедини се"
-                active={tab === 'join'}
-                onPress={() => setTab('join')}
+            <View className="mb-xl">
+              <SegmentedToggle<Tab>
+                block
+                value={tab}
+                onChange={setTab}
+                options={[
+                  { value: 'create', label: 'Създай' },
+                  { value: 'join', label: 'Присъедини се' },
+                ]}
               />
             </View>
 
@@ -164,7 +147,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
                     value={name}
                     onChangeText={setName}
                     placeholder="напр. Дом Джечеви"
-                    placeholderTextColor="rgba(196,198,208,0.3)"
+                    placeholderTextColor={colors.placeholder}
                     className="border-b border-white/10 py-4 font-jakarta-medium text-headline-md text-on-surface"
                   />
                 </View>
@@ -184,7 +167,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
                     value={code}
                     onChangeText={(t) => setCode(t.toUpperCase())}
                     placeholder="9F4K-7X2B"
-                    placeholderTextColor="rgba(196,198,208,0.3)"
+                    placeholderTextColor={colors.placeholder}
                     autoCapitalize="characters"
                     autoCorrect={false}
                     maxLength={9}
@@ -220,7 +203,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
 
             <Pressable onPress={onSkip} disabled={loading} className="mb-xl mt-xxl items-center">
               {loading ? (
-                <ActivityIndicator color="#c4c6d0" />
+                <ActivityIndicator color={colors.onSurfaceVariant} />
               ) : (
                 <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
                   Пропусни засега — ще поканя по-късно

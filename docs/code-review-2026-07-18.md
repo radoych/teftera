@@ -98,6 +98,10 @@ dm purchase lands in "Other". I'd merge into one table
 (`[pattern, brandName, category]`) in `lib/categories.ts` that both consumers derive
 from — and add the dm → Shopping (or Health) rule either way.
 
+> **Update (2026-11):** done — one merchant table now feeds both, and household
+> vendor aliases (`features/vendors`) sit in front of it: an import first resolves
+> a recognized name, then falls back to the static rules.
+
 ### 10. Auth listener churns on every token refresh
 `features/auth/bootstrap.ts:38-40` — `onAuthStateChange` re-runs the full
 `applySession` (including the `getMyHousehold()` DB query and a status write) on

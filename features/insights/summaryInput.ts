@@ -2,8 +2,8 @@ import type { SummaryInput } from '@/services/gemini';
 import { categoryBreakdown, pctChange } from '@/features/transactions/dashboard';
 import type { CategoryLite } from '@/features/transactions/groupByDay';
 import type { Transaction } from '@/features/transactions/types';
+import { isInMonth, startOfMonth, sumInMonth } from '@/lib/dates';
 import { sumCents, topMerchants } from './aggregate';
-import { comparisonRange, filterByDateBounds, filterByRange } from './range';
 
 /**
  * Build the compact current-month snapshot for the AI summary. Pass the already
@@ -15,12 +15,9 @@ export function buildSummaryInput(
   categories: CategoryLite[],
   now: Date = new Date(),
 ): SummaryInput {
-  const monthTxs = filterByRange(txs, 'this_month', now);
-  const c = comparisonRange('this_month', now);
-  const prevTxs = filterByDateBounds(txs, c.startISO, c.endISO);
-
+  const monthTxs = txs.filter((tx) => isInMonth(tx.date, now));
   const monthTotalCents = sumCents(monthTxs);
-  const prevMonthTotalCents = sumCents(prevTxs);
+  const prevMonthTotalCents = sumInMonth(txs, startOfMonth(now, -1));
 
   const top = categoryBreakdown(monthTxs, categories)[0];
   const merch = topMerchants(monthTxs, 1)[0];

@@ -9,12 +9,14 @@ import Animated, {
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { moveItem, setSectionVisible } from '@/features/preferences/layout';
 import type { DashboardSection, DashboardSectionKey } from '@/features/preferences/types';
+import { colors } from '@/lib/theme';
 
 const ROW_HEIGHT = 56;
 
 const LABELS: Record<DashboardSectionKey, string> = {
   categories: 'По категория',
   recent: 'Последни',
+  lists: 'Списъци',
 };
 
 interface RowProps {
@@ -60,7 +62,7 @@ function DraggableRow({ section, index, count, onMove, onVisible }: RowProps) {
         <View className="flex-1 flex-row items-center gap-3">
           <GestureDetector gesture={pan}>
             <View hitSlop={8} className="py-2 pr-1">
-              <MaterialIcons name="drag-handle" size={22} color="#8e909a" />
+              <MaterialIcons name="drag-handle" size={22} color={colors.outline} />
             </View>
           </GestureDetector>
           <Text className="font-inter text-body-lg text-on-surface">{LABELS[section.key]}</Text>

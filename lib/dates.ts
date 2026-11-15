@@ -2,6 +2,29 @@
 
 const LOCALE = 'bg-BG';
 
+// Intl formatter construction is the expensive part (locale data lookup), and
+// these run once per transaction row — build each variant once, lazily.
+// Mirrors getBgNumberFormat in formatCurrency.ts.
+let timeFmt: Intl.DateTimeFormat | undefined;
+let dayMonthFmt: Intl.DateTimeFormat | undefined;
+let dayMonthYearFmt: Intl.DateTimeFormat | undefined;
+
+function timeFormat(): Intl.DateTimeFormat {
+  return (timeFmt ??= new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit' }));
+}
+
+function dayMonthFormat(): Intl.DateTimeFormat {
+  return (dayMonthFmt ??= new Intl.DateTimeFormat(LOCALE, { day: 'numeric', month: 'short' }));
+}
+
+function dayMonthYearFormat(): Intl.DateTimeFormat {
+  return (dayMonthYearFmt ??= new Intl.DateTimeFormat(LOCALE, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }));
+}
+
 /** YYYY-MM-DD in local time (the canonical `date` column format). */
 export function toISODate(date: Date = new Date()): string {
   const y = date.getFullYear();
@@ -10,11 +33,45 @@ export function toISODate(date: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+// ── Month toolkit ───────────────────────────────────────────────────────────
+// One definition of "calendar month": LOCAL time, zero-padded, bounds inclusive.
+// Transaction `date` columns are YYYY-MM-DD strings, so month membership is a
+// string-prefix test against `monthKey`.
+
+/** 'YYYY-MM' for the local calendar month containing `date`. */
+export function monthKey(date: Date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** First day of the month containing `date`, shifted by `offset` whole months. */
+export function startOfMonth(date: Date = new Date(), offset = 0): Date {
+  return new Date(date.getFullYear(), date.getMonth() + offset, 1);
+}
+
 /** First day of the month for a given date (used for budgets.month). */
 export function firstOfMonth(date: Date = new Date()): string {
+  return `${monthKey(date)}-01`;
+}
+
+/** Inclusive [first, last] YYYY-MM-DD bounds of the month containing `date`. */
+export function monthBounds(date: Date = new Date()): { startISO: string; endISO: string } {
   const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  return `${y}-${m}-01`;
+  const m = date.getMonth();
+  return { startISO: toISODate(new Date(y, m, 1)), endISO: toISODate(new Date(y, m + 1, 0)) };
+}
+
+/** True when the YYYY-MM-DD `isoDate` falls in the calendar month containing `date`. */
+export function isInMonth(isoDate: string, date: Date): boolean {
+  return isoDate.startsWith(`${monthKey(date)}-`);
+}
+
+/** Sum of `amount_eur` (integer cents) over rows dated in the month containing `date`. */
+export function sumInMonth(
+  rows: ReadonlyArray<{ date: string; amount_eur: number }>,
+  date: Date,
+): number {
+  const prefix = `${monthKey(date)}-`;
+  return rows.reduce((sum, r) => (r.date.startsWith(prefix) ? sum + r.amount_eur : sum), 0);
 }
 
 /** Human day label: "Днес", "Вчера", or a localized date. */
@@ -27,21 +84,15 @@ export function relativeDay(iso: string, now: Date = new Date()): string {
   if (diffDays === 0) return 'Днес';
   if (diffDays === 1) return 'Вчера';
 
-  return new Intl.DateTimeFormat(LOCALE, {
-    day: 'numeric',
-    month: 'short',
-    year: target.getFullYear() === today.getFullYear() ? undefined : 'numeric',
-  }).format(date);
+  const fmt = target.getFullYear() === today.getFullYear() ? dayMonthFormat() : dayMonthYearFormat();
+  return fmt.format(date);
 }
 
 export function formatTime(date: Date): string {
-  return new Intl.DateTimeFormat(LOCALE, {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
+  return timeFormat().format(date);
 }
 
-export function parseISODate(iso: string): Date {
+function parseISODate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
 }
@@ -64,7 +115,7 @@ export function isValidISODate(iso: string): boolean {
 }
 
 /** Bulgarian 3-letter month abbreviations; index 0 = January. */
-export const MONTH_ABBR_BG = [
+const MONTH_ABBR_BG = [
   'ЯНУ', 'ФЕВ', 'МАР', 'АПР', 'МАЙ', 'ЮНИ',
   'ЮЛИ', 'АВГ', 'СЕП', 'ОКТ', 'НОЕ', 'ДЕК',
 ] as const;

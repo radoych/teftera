@@ -4,6 +4,8 @@ import { HairlineDivider } from '@/components/HairlineDivider';
 import { SectionLabel } from '@/components/SectionLabel';
 import { type HouseholdMember } from '@/features/household/api';
 import { formatInviteCode } from '@/features/household/inviteCode';
+import { initials } from '@/lib/initials';
+import { colors } from '@/lib/theme';
 
 interface MembersSectionProps {
   members: HouseholdMember[];
@@ -16,14 +18,7 @@ export function MembersSection({ members, inviteCode, onInvite }: MembersSection
     <View className="mt-xl">
       <SectionLabel className="mb-md">Домакинство</SectionLabel>
       {members.map((m) => {
-        const memberInitials =
-          m.displayName
-            .split(' ')
-            .map((p) => p[0])
-            .filter(Boolean)
-            .slice(0, 2)
-            .join('')
-            .toUpperCase() || '?';
+        const memberInitials = initials(m.displayName);
         const memberName = m.displayName || 'Без име';
         const roleLabel = m.role === 'owner' ? 'Собственик' : 'Член';
         return (
@@ -48,7 +43,7 @@ export function MembersSection({ members, inviteCode, onInvite }: MembersSection
         );
       })}
       <Pressable onPress={onInvite} className="flex-row items-center gap-3 py-5 active:opacity-70">
-        <MaterialIcons name="person-add" size={20} color="#adc7ff" />
+        <MaterialIcons name="person-add" size={20} color={colors.primaryContainer} />
         <Text className="font-inter text-body-md text-primary-container">
           Покани член
         </Text>

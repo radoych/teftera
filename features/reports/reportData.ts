@@ -2,21 +2,11 @@
 import { sumCents, monthlyTrend, topMerchants } from '@/features/insights/aggregate';
 import { pctChange, categoryBreakdown } from '@/features/transactions/dashboard';
 import { filterByDateBounds } from '@/features/insights/range';
-import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
-import { budgetProgress } from '@/features/budgets/progress';
+import { monthBudgetProgress } from '@/features/budgets/currentMonth';
 import { expensesOnly, incomeOnly } from '@/features/transactions/kind';
-import { toISODate, firstOfMonth } from '@/lib/dates';
+import { categoryPresentation } from '@/lib/categories';
+import { monthBounds, monthKey, startOfMonth, sumInMonth } from '@/lib/dates';
 import type { BuildReportInput, MonthOption, ReportData } from './types';
-
-function monthBounds(month: Date): { startISO: string; endISO: string } {
-  const y = month.getFullYear();
-  const m = month.getMonth();
-  return { startISO: toISODate(new Date(y, m, 1)), endISO: toISODate(new Date(y, m + 1, 0)) };
-}
-
-function monthISOof(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
 
 function monthLabelOf(d: Date): string {
   const s = new Intl.DateTimeFormat('bg-BG', { month: 'long', year: 'numeric' }).format(d);
@@ -32,9 +22,7 @@ export function buildReportData(input: BuildReportInput): ReportData {
 
   const totalCents = sumCents(expenseMonthTxs);
 
-  const prev = new Date(month.getFullYear(), month.getMonth() - 1, 1);
-  const pb = monthBounds(prev);
-  const prevTotal = sumCents(expensesOnly(filterByDateBounds(input.transactions, pb.startISO, pb.endISO)));
+  const prevTotal = sumInMonth(expensesOnly(input.transactions), startOfMonth(month, -1));
   const pctVsPrevMonth = pctChange(totalCents, prevTotal);
 
   const catRows = categoryBreakdown(expenseMonthTxs, input.categories);
@@ -55,14 +43,12 @@ export function buildReportData(input: BuildReportInput): ReportData {
 
   const incomeTotalCents = sumCents(incomeOnly(monthTxs));
 
-  const resolved = resolveBudgetsForMonth(input.budgetRows, firstOfMonth(month));
-  const spend = catRows.map((c) => ({ id: c.id, totalCents: c.totalCents }));
   const catById = new Map(input.categories.map((c) => [c.id, c]));
-  const budgets = budgetProgress(resolved, spend).map((b) => {
-    const cat = catById.get(b.categoryId);
+  const budgets = monthBudgetProgress(input.budgetRows, catRows, month).map((b) => {
+    const { name, color } = categoryPresentation(catById.get(b.categoryId));
     return {
-      name: cat?.name ?? 'Other',
-      color: cat?.color ?? '#8e909a',
+      name,
+      color,
       budgetCents: b.budgetCents,
       spentCents: b.spentCents,
       pct: b.pct,
@@ -78,12 +64,12 @@ export function buildReportData(input: BuildReportInput): ReportData {
       return { merchant: t.merchant, amountCents: t.amount_eur, reason: a.reason };
     });
 
-  const isCurrentMonth = firstOfMonth(month) === firstOfMonth(now);
+  const isCurrentMonth = monthKey(month) === monthKey(now);
   const aiSummary = isCurrentMonth ? (input.aiSummaryText ?? null) : null;
 
   return {
     monthLabel: monthLabelOf(month),
-    monthISO: monthISOof(month),
+    monthISO: monthKey(month),
     totalCents,
     pctVsPrevMonth,
     categories,
@@ -99,8 +85,8 @@ export function buildReportData(input: BuildReportInput): ReportData {
 export function monthPickerOptions(now: Date = new Date(), count = 12): MonthOption[] {
   const out: MonthOption[] = [];
   for (let i = 0; i < count; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    out.push({ monthISO: monthISOof(d), label: monthLabelOf(d), date: d });
+    const d = startOfMonth(now, -i);
+    out.push({ monthISO: monthKey(d), label: monthLabelOf(d), date: d });
   }
   return out;
 }

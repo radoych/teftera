@@ -13,31 +13,36 @@ export interface HouseholdMember {
   role: string;
 }
 
-/** The current user's household, or null if they have none yet. */
-export async function getMyHousehold(): Promise<MyHousehold | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: membership } = await supabase
+/**
+ * The user's household, or null if they have none yet. One round-trip: the
+ * membership row embeds its household's invite code. Takes the id from the session
+ * the caller already holds (no `auth.getUser()` hop). Throws on a query error so
+ * bootstrap shows its retry screen instead of misrouting to household setup.
+ */
+export async function getMyHousehold(userId: string): Promise<MyHousehold | null> {
+  const { data: membership, error } = await supabase
     .from('household_members')
-    .select('household_id, display_name')
-    .eq('user_id', user.id)
+    .select('household_id, display_name, households(invite_code)')
+    .eq('user_id', userId)
     .maybeSingle();
+  if (error) throw error;
   if (!membership) return null;
-
-  const { data: household } = await supabase
-    .from('households')
-    .select('invite_code')
-    .eq('id', membership.household_id)
-    .maybeSingle();
-
   return {
     householdId: membership.household_id,
     displayName: membership.display_name ?? '',
-    inviteCode: household?.invite_code ?? '',
+    inviteCode: membership.households?.invite_code ?? '',
   };
+}
+
+/** The household's invite code ('' if not visible). */
+export async function getInviteCode(householdId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('households')
+    .select('invite_code')
+    .eq('id', householdId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.invite_code ?? '';
 }
 
 /** Create a household + the creator's membership (atomic, via RPC). */
@@ -67,7 +72,7 @@ export async function joinHouseholdByCode(
   if (error) throw error;
   const householdId = Array.isArray(data) ? data[0] : data;
   if (!householdId) throw new Error('join_household_by_code RPC returned no data');
-  return { householdId: householdId as string };
+  return { householdId };
 }
 
 /** Update the current user's display name (membership row + auth metadata mirror). */
@@ -85,15 +90,15 @@ export async function updateMyDisplayName(name: string): Promise<void> {
   await supabase.auth.updateUser({ data: { display_name: name } });
 }
 
-/** All members of a household, oldest first. */
+/** All members of a household, oldest first. Throws on failure (callers keep the cache). */
 export async function getMembers(householdId: string): Promise<HouseholdMember[]> {
   const { data, error } = await supabase
     .from('household_members')
     .select('user_id, display_name, role')
     .eq('household_id', householdId)
     .order('joined_at', { ascending: true });
-  if (error || !data) return [];
-  return data.map((m) => ({
+  if (error) throw error;
+  return (data ?? []).map((m) => ({
     userId: m.user_id,
     displayName: m.display_name ?? '',
     role: m.role,

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TextInput } from 'react-native';
+import { colors } from '@/lib/theme';
 
 /** Interpret a raw digit string as euro cents and render "1234" -> "12,34". */
 export function formatDigitsAsAmount(digits: string): string {
@@ -42,8 +43,8 @@ export function AmountInput({ valueCents, onChangeCents, placeholder = '0,00' }:
       onChangeText={handleChange}
       keyboardType="number-pad"
       placeholder={placeholder}
-      placeholderTextColor="#8e909a"
-      style={{ color: '#e3e2e6', fontSize: 16 }}
+      placeholderTextColor={colors.outline}
+      style={{ color: colors.onSurface, fontSize: 16 }}
     />
   );
 }

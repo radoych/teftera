@@ -1,20 +1,16 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
-import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { signOut } from '@/features/auth/api';
 import { useAuthStore } from '@/features/auth/store';
 import { BankConnectionSection } from '@/features/transactions/components/BankConnectionSection';
-import {
-  getMembers,
-  getMyHousehold,
-  updateMyDisplayName,
-  type HouseholdMember,
-} from '@/features/household/api';
+import { updateMyDisplayName } from '@/features/household/api';
+import { useHouseholdStore } from '@/features/household/store';
+import { refreshMembers } from '@/features/household/sync';
 import { formatInviteCode } from '@/features/household/inviteCode';
 import { MembersSection } from '@/features/household/components/MembersSection';
 import { ProfileHeader } from '@/features/household/components/ProfileHeader';
@@ -23,17 +19,9 @@ import { PreferenceToggles } from '@/features/preferences/components/PreferenceT
 import { lastDskSyncAt, formatLastSync } from '@/features/transactions/lastSync';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { usePreferencesStore } from '@/features/preferences/store';
+import { colors } from '@/lib/theme';
 import { upsertMyPreferences } from '@/features/preferences/api';
 import type { UserPreferences } from '@/features/preferences/types';
-
-function Pill({ label }: { label: string }) {
-  return (
-    <Pressable className="flex-row items-center gap-2 rounded-full bg-surface-container px-4 py-1 active:bg-white/5">
-      <Text className="font-inter text-label-md text-primary-container">{label}</Text>
-      <MaterialIcons name="expand-more" size={20} color="#adc7ff" />
-    </Pressable>
-  );
-}
 
 export default function ProfileScreen() {
   const session = useAuthStore((s) => s.session);
@@ -43,16 +31,10 @@ export default function ProfileScreen() {
   const preferences = usePreferencesStore((s) => s.preferences);
   const setPreferences = usePreferencesStore((s) => s.setPreferences);
   const transactions = useTransactionsStore((s) => s.transactions);
-  const [members, setMembers] = useState<HouseholdMember[]>([]);
-  const [inviteCode, setInviteCode] = useState('');
+  const members = useHouseholdStore((s) => s.members);
+  const inviteCode = useHouseholdStore((s) => s.inviteCode);
 
   const email = session?.user.email ?? '';
-
-  useEffect(() => {
-    if (!householdId) return;
-    getMembers(householdId).then(setMembers);
-    getMyHousehold().then((h) => setInviteCode(h?.inviteCode ?? ''));
-  }, [householdId]);
 
   const onSignOut = async () => {
     await signOut();
@@ -100,7 +82,7 @@ export default function ProfileScreen() {
   const onSaveName = async (name: string) => {
     await updateMyDisplayName(name);
     setHousehold(householdId, name);
-    if (householdId) getMembers(householdId).then(setMembers);
+    if (householdId) void refreshMembers(householdId);
   };
 
   const lastSyncLabel = useMemo(() => {
@@ -128,7 +110,7 @@ export default function ProfileScreen() {
           <Text className="font-inter text-body-lg text-on-surface">
             Подреди секциите
           </Text>
-          <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
         </Pressable>
       </View>
 
@@ -138,20 +120,6 @@ export default function ProfileScreen() {
         onChange={onLayoutChange}
         onClose={() => setLayoutSheetOpen(false)}
       />
-
-      {/* Preferences */}
-      <View className="mt-lg">
-        <SectionLabel className="mb-md">Предпочитания</SectionLabel>
-        <View className="flex-row items-center justify-between py-md">
-          <Text className="font-inter text-body-lg text-on-surface">Валута</Text>
-          <Pill label="EUR" />
-        </View>
-        <HairlineDivider />
-        <View className="flex-row items-center justify-between py-md">
-          <Text className="font-inter text-body-lg text-on-surface">Език</Text>
-          <Pill label="BG" />
-        </View>
-      </View>
 
       <BankConnectionSection lastSyncLabel={lastSyncLabel} />
 
@@ -166,18 +134,36 @@ export default function ProfileScreen() {
       <View className="mt-lg">
         <SectionLabel className="mb-md">Общи</SectionLabel>
         <Pressable
+          onPress={() => router.push('/vendors')}
+          className="flex-row items-center justify-between py-5 active:bg-white/5">
+          <Text className="font-inter text-body-lg text-on-surface">Търговци</Text>
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/loyalty-cards')}
+          className="flex-row items-center justify-between py-5 active:bg-white/5">
+          <Text className="font-inter text-body-lg text-on-surface">Клиентски карти</Text>
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/lists')}
+          className="flex-row items-center justify-between py-5 active:bg-white/5">
+          <Text className="font-inter text-body-lg text-on-surface">Списъци за пазаруване</Text>
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
+        </Pressable>
+        <Pressable
           onPress={() => router.push('/categories')}
           className="flex-row items-center justify-between py-5 active:bg-white/5">
           <Text className="font-inter text-body-lg text-on-surface">
             Управление на категории
           </Text>
-          <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
         </Pressable>
         <Pressable
           onPress={onSignOut}
           className="flex-row items-center gap-3 py-5 active:opacity-70"
         >
-          <MaterialIcons name="logout" size={22} color="#ffb4ab" />
+          <MaterialIcons name="logout" size={22} color={colors.error} />
           <Text className="font-inter text-body-lg text-error">Изход</Text>
         </Pressable>
       </View>

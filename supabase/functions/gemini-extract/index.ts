@@ -4,6 +4,12 @@ import { getCallerHousehold, json } from '../_shared/auth.ts';
 
 const MODEL = 'gemini-2.5-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+// The client sends a downscaled JPEG (~300–500 KB of base64). Anything past this
+// cap is a runaway client burning Gemini quota → 413. ~2 MB of base64 ≈ 1.5 MB image.
+const MAX_IMAGE_BASE64_CHARS = 2_000_000;
+// Whole-body guard checked before parsing, so an oversized request is never buffered
+// into JSON. Leaves headroom for the JSON wrapper and mimeType.
+const MAX_BODY_BYTES = MAX_IMAGE_BASE64_CHARS + 4_096;
 
 const EXTRACTION_PROMPT = `You are a receipt parser. Extract the data from this receipt image.
 Amounts are decimal major units (e.g. 12.50). Use EUR unless the receipt is clearly in Bulgarian leva (лв/BGN). date is the receipt date as YYYY-MM-DD, or null if not visible.`;
@@ -34,6 +40,9 @@ Deno.serve(async (req) => {
   const key = Deno.env.get('GEMINI_API_KEY');
   if (!key) return json(500, { error: 'not_configured' });
 
+  const declaredLength = Number(req.headers.get('Content-Length') ?? '0');
+  if (declaredLength > MAX_BODY_BYTES) return json(413, { error: 'payload_too_large' });
+
   let body: { image?: unknown; mimeType?: unknown };
   try {
     body = await req.json();
@@ -42,6 +51,9 @@ Deno.serve(async (req) => {
   }
   if (typeof body.image !== 'string' || body.image.length === 0) {
     return json(400, { error: 'bad_request' });
+  }
+  if (body.image.length > MAX_IMAGE_BASE64_CHARS) {
+    return json(413, { error: 'payload_too_large' });
   }
   const mimeType = typeof body.mimeType === 'string' ? body.mimeType : 'image/jpeg';
 

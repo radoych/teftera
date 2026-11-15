@@ -1,5 +1,6 @@
 // features/receipts/api.ts — the ONLY module that writes the `receipts` table.
 import { supabase } from '@/services/supabase';
+import type { Json } from '@/supabase/types';
 
 export interface NewReceipt {
   householdId: string;
@@ -19,11 +20,12 @@ export async function insertReceipt(input: NewReceipt): Promise<{ id: string }> 
       household_id: input.householdId,
       user_id: input.userId,
       storage_path: input.storagePath,
-      raw_gemini_json: input.rawGeminiJson,
+      // The extraction payload came out of JSON.parse on the edge function, so it is Json.
+      raw_gemini_json: input.rawGeminiJson as Json,
       processed_at: new Date().toISOString(),
     })
     .select('id')
     .single();
   if (error) throw error;
-  return { id: (data as { id: string }).id };
+  return { id: data.id };
 }

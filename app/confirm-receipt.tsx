@@ -19,27 +19,28 @@ import { HairlineDivider } from '@/components/HairlineDivider';
 import { PillButton } from '@/components/PillButton';
 import { SectionLabel } from '@/components/SectionLabel';
 import { useAuthStore } from '@/features/auth/store';
+import { useCardCount } from '@/features/loyalty/sync';
 import {
   extractionToForm,
   itemsSumCents,
   itemsToNote,
   type ReceiptFormItem,
 } from '@/features/receipts/extraction';
-import { runDetection } from '@/features/anomalies/runDetection';
-import { runBudgetCheck } from '@/features/budgets/runBudgetCheck';
-import { useBudgetsStore } from '@/features/budgets/store';
-import { usePreferencesStore } from '@/features/preferences/store';
 import { saveReceiptTransaction } from '@/features/receipts/save';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
+import { runAfterSave } from '@/features/transactions/afterSave';
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
-import { refreshTransactions } from '@/features/transactions/sync';
+import { VendorAutocomplete } from '@/features/vendors/components/VendorAutocomplete';
+import { resolveVendor } from '@/features/vendors/resolve';
+import { getVendorIndex } from '@/features/vendors/store';
 import { resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
 import { extractReceipt } from '@/services/gemini';
 import { formatCurrency, parseAmountToCents } from '@/lib/formatCurrency';
+import { colors } from '@/lib/theme';
 
 type Phase = 'extracting' | 'ready';
 
@@ -52,6 +53,9 @@ export default function ConfirmReceiptScreen() {
 
   const [phase, setPhase] = useState<Phase>('extracting');
   const [merchant, setMerchant] = useState('');
+  const cardCount = useCardCount();
+  // The raw merchant as Gemini read it — learned as a recognized name on save.
+  const [extractedMerchant, setExtractedMerchant] = useState('');
   const [total, setTotal] = useState('');
   const [date, setDate] = useState(toISODate());
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -74,7 +78,9 @@ export default function ConfirmReceiptScreen() {
       const result = await extractReceipt(base64);
       if (result.ok) {
         const seed = extractionToForm(result.data);
-        setMerchant(seed.merchant);
+        setExtractedMerchant(seed.merchant);
+        // A store scanned before pre-fills as its vendor's name.
+        setMerchant(resolveVendor(seed.merchant, getVendorIndex())?.name ?? seed.merchant);
         setTotal(formatDigitsAsAmount(seed.total));
         setDate(seed.date);
         setItems(seed.items.map((i) => ({ ...i, amount: formatDigitsAsAmount(i.amount) })));
@@ -123,9 +129,11 @@ export default function ConfirmReceiptScreen() {
       Alert.alert('Грешка', 'Липсва домакинство или бележка.');
       return;
     }
+    const merchantName =
+      resolveVendor(parsed.data.merchant, getVendorIndex())?.name ?? parsed.data.merchant;
     const resolvedCategoryId = categoryTouched
       ? categoryId
-      : resolveCategoryId(parsed.data.merchant, categories);
+      : resolveCategoryId(merchantName, categories);
 
     setSaving(true);
     let newId: string;
@@ -136,7 +144,7 @@ export default function ConfirmReceiptScreen() {
         storagePath,
         rawGeminiJson,
         amountCents: parsed.data.amountCents,
-        merchant: parsed.data.merchant,
+        merchant: merchantName,
         categoryId: resolvedCategoryId,
         date: parsed.data.date,
         note: parsed.data.note,
@@ -146,29 +154,16 @@ export default function ConfirmReceiptScreen() {
       Alert.alert('Грешка', 'Неуспешно записване. Опитай отново.');
       return;
     }
-    try {
-      await refreshTransactions(householdId);
-      await runDetection({
-        transactionId: newId,
-        householdId,
-        amountCents: parsed.data.amountCents,
-        categoryId: resolvedCategoryId,
-        transactions: useTransactionsStore.getState().transactions,
-        merchant: parsed.data.merchant,
-        alertsEnabled:
-          usePreferencesStore.getState().preferences.anomalyAlertsEnabled ?? true,
-      });
-      await runBudgetCheck({
-        householdId,
-        savedCategoryId: resolvedCategoryId,
-        alertsEnabled: usePreferencesStore.getState().preferences.budgetAlertsEnabled ?? true,
-        transactions: useTransactionsStore.getState().transactions,
-        categories: useTransactionsStore.getState().categories,
-        budgets: useBudgetsStore.getState().rows,
-      });
-    } catch {
-      // Non-fatal: the save already succeeded; the list reconciles on next focus.
-    }
+    // Non-fatal: the save already succeeded; the list reconciles on next focus.
+    await runAfterSave({
+      householdId,
+      transactionId: newId,
+      kind: 'expense',
+      amountCents: parsed.data.amountCents,
+      categoryId: resolvedCategoryId,
+      merchant: merchantName,
+      extractedMerchant,
+    });
     router.replace('/(app)');
   };
 
@@ -183,7 +178,7 @@ export default function ConfirmReceiptScreen() {
             Потвърди бележката
           </Text>
           <Pressable onPress={() => router.back()} hitSlop={8}>
-            <MaterialIcons name="close" size={24} color="#e3e2e6" />
+            <MaterialIcons name="close" size={24} color={colors.onSurface} />
           </Pressable>
         </View>
 
@@ -209,7 +204,7 @@ export default function ConfirmReceiptScreen() {
 
           {phase === 'extracting' ? (
             <View className="items-center gap-md py-xl">
-              <ActivityIndicator size="large" color="#adc7ff" />
+              <ActivityIndicator size="large" color={colors.primaryContainer} />
               <Text className="font-inter text-body-lg text-on-surface-variant">
                 Разчитане на бележката…
               </Text>
@@ -219,16 +214,14 @@ export default function ConfirmReceiptScreen() {
               {/* Merchant */}
               <View className="mb-xl">
                 <SectionLabel className="mb-1">Търговец</SectionLabel>
-                <TextInput
+                <VendorAutocomplete
+                  variant="headline"
                   value={merchant}
                   onChangeText={setMerchant}
                   placeholder="Въведи търговец"
-                  placeholderTextColor="rgba(142,144,154,0.5)"
-                  className="font-jakarta-semibold text-headline-lg-mobile text-on-surface"
+                  error={errors.merchant}
+                  cardCount={cardCount}
                 />
-                {errors.merchant ? (
-                  <Text className="mt-1 font-inter text-body-md text-error">{errors.merchant}</Text>
-                ) : null}
                 <HairlineDivider className="mt-xs" />
               </View>
 
@@ -273,7 +266,7 @@ export default function ConfirmReceiptScreen() {
                     </Text>
                     <Text className="font-inter text-body-lg text-on-surface">{categoryLabel}</Text>
                   </View>
-                  <MaterialIcons name="expand-more" size={22} color="#c4c6d0" />
+                  <MaterialIcons name="expand-more" size={22} color={colors.onSurfaceVariant} />
                 </View>
               </Pressable>
               <HairlineDivider className="mb-xl" />
@@ -311,7 +304,7 @@ export default function ConfirmReceiptScreen() {
                         />
                       </View>
                       <Pressable onPress={() => removeItem(item.id)} hitSlop={8}>
-                        <MaterialIcons name="delete" size={18} color="#ffb4ab" />
+                        <MaterialIcons name="delete" size={18} color={colors.error} />
                       </Pressable>
                     </View>
                   </View>
@@ -320,7 +313,7 @@ export default function ConfirmReceiptScreen() {
               ))}
 
               <Pressable onPress={addItem} className="flex-row items-center py-md active:opacity-70">
-                <MaterialIcons name="add" size={20} color="#adc7ff" />
+                <MaterialIcons name="add" size={20} color={colors.primaryContainer} />
                 <Text className="ml-md font-inter text-body-md text-on-surface-variant">
                   Добави артикул
                 </Text>

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { subscribeToTransactions } from './realtimeChannel';
+import { subscribeToHouseholdTable, subscribeToTransactions } from './realtimeChannel';
 
 /**
  * Faithful fake of realtime-js's channel reuse semantics (RealtimeClient.js):
@@ -74,5 +74,25 @@ describe('subscribeToTransactions', () => {
 
     // Remount before the async removal completes (the production race).
     expect(() => subscribeToTransactions(client, 'H', () => {})).not.toThrow();
+  });
+});
+
+describe('subscribeToHouseholdTable', () => {
+  it('filters the named table by household and gives each table its own topic', () => {
+    const { client, fake } = fakeClient();
+    const on = jest.spyOn(FakeChannel.prototype, 'on');
+    const a = subscribeToHouseholdTable(client, 'vendors', 'H', () => {});
+    const b = subscribeToHouseholdTable(client, 'vendor_aliases', 'H', () => {});
+
+    expect(fake.channels.map((c) => c.topic.split(':')[1])).toEqual(['vendors', 'vendor_aliases']);
+    expect(on.mock.calls[0]).toEqual([
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'vendors', filter: 'household_id=eq.H' },
+      expect.any(Function),
+    ]);
+
+    on.mockRestore();
+    a();
+    b();
   });
 });

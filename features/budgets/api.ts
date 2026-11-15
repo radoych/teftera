@@ -8,7 +8,7 @@ export async function fetchBudgets(householdId: string): Promise<BudgetRow[]> {
     .select('id, household_id, category_id, amount_eur, month')
     .eq('household_id', householdId);
   if (error) throw error;
-  return (data ?? []) as BudgetRow[];
+  return data ?? [];
 }
 
 export async function upsertBudget(input: {

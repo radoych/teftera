@@ -1,11 +1,12 @@
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { colors } from '@/lib/theme';
 
 type Variant = 'filled' | 'ghost' | 'destructive';
 
 const VARIANTS: Record<Variant, { container: string; content: string }> = {
-  filled: { container: 'bg-primary-container', content: '#112f5e' },
-  ghost: { container: 'border border-white/10 active:bg-white/5', content: '#e3e2e6' },
-  destructive: { container: 'bg-error-container', content: '#ffb4ab' },
+  filled: { container: 'bg-primary-container', content: colors.onPrimary },
+  ghost: { container: 'border border-white/10 active:bg-white/5', content: colors.onSurface },
+  destructive: { container: 'bg-error-container', content: colors.error },
 };
 
 export interface SheetAction {

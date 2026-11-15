@@ -4,7 +4,7 @@ import type { Transaction } from '@/features/transactions/types';
 const mockGenerateReportPdf = jest.fn();
 const mockIsAvailableAsync = jest.fn();
 const mockShareAsync = jest.fn();
-const mockWriteAsStringAsync = jest.fn();
+const mockWrite = jest.fn();
 
 jest.mock('./generatePdf', () => ({ generateReportPdf: (d: unknown) => mockGenerateReportPdf(d) }));
 jest.mock('expo-sharing', () => ({
@@ -13,9 +13,17 @@ jest.mock('expo-sharing', () => ({
 }));
 // The PDF base64 must be written into the scoped document dir before sharing —
 // expo-print's own file lives outside it and Expo Go can't read it back.
-jest.mock('expo-file-system/legacy', () => ({
-  documentDirectory: 'file:///doc/',
-  writeAsStringAsync: (...a: unknown[]) => mockWriteAsStringAsync(...a),
+jest.mock('expo-file-system', () => ({
+  Paths: { document: { uri: 'file:///doc/' } },
+  File: class {
+    uri: string;
+    constructor(dir: { uri: string }, name: string) {
+      this.uri = `${dir.uri}${name}`;
+    }
+    write(...a: unknown[]) {
+      mockWrite(this.uri, ...a);
+    }
+  },
 }));
 
 import { exportMonthlyReport, EmptyMonthError } from './export';
@@ -38,7 +46,7 @@ beforeEach(() => {
   mockGenerateReportPdf.mockReset().mockResolvedValue('BASE64PDFDATA');
   mockIsAvailableAsync.mockReset().mockResolvedValue(true);
   mockShareAsync.mockReset().mockResolvedValue(undefined);
-  mockWriteAsStringAsync.mockReset().mockResolvedValue(undefined);
+  mockWrite.mockReset();
 });
 
 describe('exportMonthlyReport', () => {
@@ -51,7 +59,7 @@ describe('exportMonthlyReport', () => {
   it('writes the PDF base64 into the scoped document dir and shares that branded path', async () => {
     await exportMonthlyReport({ ...baseInput, transactions: [tx({})] });
     expect(mockGenerateReportPdf).toHaveBeenCalledTimes(1);
-    expect(mockWriteAsStringAsync).toHaveBeenCalledWith(
+    expect(mockWrite).toHaveBeenCalledWith(
       'file:///doc/Teftera-2026-06.pdf',
       'BASE64PDFDATA',
       { encoding: 'base64' },

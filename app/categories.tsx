@@ -1,5 +1,4 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -7,6 +6,7 @@ import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { FlatInput } from '@/components/FlatInput';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { SheetActions } from '@/components/SheetActions';
@@ -21,6 +21,8 @@ import { expenseCategories, incomeCategories } from '@/features/transactions/kin
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import type { MaterialIconName } from '@/lib/categories';
+import { COLOR_CHOICES } from '@/lib/palette';
+import { colors } from '@/lib/theme';
 
 const ICON_CHOICES: MaterialIconName[] = [
   'restaurant', 'local-cafe', 'shopping-basket', 'directions-car', 'home', 'bolt',
@@ -28,9 +30,6 @@ const ICON_CHOICES: MaterialIconName[] = [
   'flight', 'fitness-center', 'card-giftcard', 'savings',
   'payments', 'account-balance-wallet', 'trending-up',
 ];
-
-// Design-palette tones only — never the anomaly accent #c3f400.
-const COLOR_CHOICES = ['#ffdfa7', '#d8e3ff', '#adc7ff', '#a8c8ff', '#c4c6d0', '#ffb4ab', '#8e909a'];
 
 type Draft = {
   id: string | null;
@@ -118,11 +117,11 @@ export default function CategoriesScreen() {
           ) : null}
         </Pressable>
         <Pressable onPress={() => openEdit(c)} hitSlop={8} className="p-1">
-          <MaterialIcons name="edit" size={18} color="#8e909a" />
+          <MaterialIcons name="edit" size={18} color={colors.outline} />
         </Pressable>
         {c.is_default ? null : (
           <Pressable onPress={() => setToDelete(c)} hitSlop={8} className="p-1">
-            <MaterialIcons name="delete" size={18} color="#ffb4ab" />
+            <MaterialIcons name="delete" size={18} color={colors.error} />
           </Pressable>
         )}
       </View>
@@ -132,15 +131,7 @@ export default function CategoriesScreen() {
 
   return (
     <Screen>
-      {/* Top app bar */}
-      <View className="mb-md flex-row items-center gap-3 py-2">
-        <Pressable onPress={() => router.back()} hitSlop={8} className="-ml-2 p-2">
-          <MaterialIcons name="arrow-back" size={24} color="#e3e2e6" />
-        </Pressable>
-        <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-          Категории
-        </Text>
-      </View>
+      <ScreenHeader title="Категории" />
 
       <SectionLabel className="mb-sm">Разходи</SectionLabel>
       {expenseList.map((c) => (
@@ -154,7 +145,7 @@ export default function CategoriesScreen() {
       <Pressable
         onPress={() => setDraft(emptyDraft)}
         className="flex-row items-center gap-3 py-5 active:opacity-70">
-        <MaterialIcons name="add" size={20} color="#adc7ff" />
+        <MaterialIcons name="add" size={20} color={colors.primaryContainer} />
         <Text className="font-inter text-body-md text-primary-container">Нова категория</Text>
       </Pressable>
 
@@ -198,7 +189,7 @@ export default function CategoriesScreen() {
                       <MaterialIcons
                         name={icon}
                         size={20}
-                        color={active ? '#112f5e' : '#c4c6d0'}
+                        color={active ? colors.onPrimary : colors.onSurfaceVariant}
                       />
                     </Pressable>
                   );
@@ -218,9 +209,11 @@ export default function CategoriesScreen() {
                       style={{
                         backgroundColor: color,
                         borderWidth: active ? 3 : 0,
-                        borderColor: '#e3e2e6',
+                        borderColor: colors.onSurface,
                       }}>
-                      {active ? <MaterialIcons name="check" size={18} color="#121316" /> : null}
+                      {active ? (
+                        <MaterialIcons name="check" size={18} color={colors.background} />
+                      ) : null}
                     </Pressable>
                   );
                 })}

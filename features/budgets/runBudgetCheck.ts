@@ -1,12 +1,9 @@
 // features/budgets/runBudgetCheck.ts
 import type { Transaction } from '@/features/transactions/types';
 import type { CategoryLite } from '@/features/transactions/groupByDay';
-import { spendingByCategory } from '@/features/transactions/dashboard';
-import { expensesOnly } from '@/features/transactions/kind';
 import { firstOfMonth } from '@/lib/dates';
 import { formatCurrency } from '@/lib/formatCurrency';
-import { resolveBudgetsForMonth } from './resolve';
-import { budgetProgress } from './progress';
+import { currentMonthBudgetProgress } from './currentMonth';
 import { hasAlerted, markerKey, recordAlerted } from './alertStore';
 import { sendBudgetNotification } from './notify';
 import type { BudgetRow } from './types';
@@ -42,9 +39,12 @@ export async function runBudgetCheck(
     if (!input.alertsEnabled || input.savedCategoryId === null) return;
     const now = input.now ?? new Date();
     const month = firstOfMonth(now);
-    const resolved = resolveBudgetsForMonth(input.budgets, month);
-    const spend = spendingByCategory(expensesOnly(input.transactions), input.categories, now);
-    const rows = budgetProgress(resolved, spend);
+    const rows = currentMonthBudgetProgress({
+      transactions: input.transactions,
+      categories: input.categories,
+      budgets: input.budgets,
+      now,
+    });
     const row = rows.find((r) => r.categoryId === input.savedCategoryId);
     if (!row) return;
 

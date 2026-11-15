@@ -1,5 +1,5 @@
 // features/reports/export.ts
-import { documentDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
+import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { buildReportData } from './reportData';
 import { generateReportPdf } from './generatePdf';
@@ -23,9 +23,9 @@ export async function exportMonthlyReport(input: BuildReportInput): Promise<void
   // as base64 straight from expo-print and write those bytes into the scoped
   // document directory ourselves — a readable, shareable location, with a branded name.
   const base64 = await generateReportPdf(data);
-  if (!documentDirectory) throw new Error('Няма достъпна директория за запис.');
-  const shareUri = `${documentDirectory}Teftera-${data.monthISO}.pdf`;
-  await writeAsStringAsync(shareUri, base64, { encoding: 'base64' });
+  const file = new File(Paths.document, `Teftera-${data.monthISO}.pdf`);
+  file.write(base64, { encoding: 'base64' }); // creates or overwrites
+  const shareUri = file.uri;
 
   if (!(await Sharing.isAvailableAsync())) {
     throw new Error(`Файлът е запазен: ${shareUri}`);

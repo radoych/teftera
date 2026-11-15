@@ -1,4 +1,4 @@
-import { groupTransactionsByDay, monthTotalCents, toTransactionView } from './groupByDay';
+import { groupTransactionsByDay, toTransactionView } from './groupByDay';
 import { formatTime } from '@/lib/dates';
 import type { Transaction } from './types';
 
@@ -103,19 +103,5 @@ describe('groupTransactionsByDay', () => {
 
   it('returns an empty array for no transactions', () => {
     expect(groupTransactionsByDay([], cats, NOW)).toEqual([]);
-  });
-});
-
-describe('monthTotalCents', () => {
-  it('sums only the current calendar month', () => {
-    const total = monthTotalCents(
-      [
-        tx({ id: '1', date: '2026-06-01', amount_eur: 500 }),
-        tx({ id: '2', date: '2026-06-30', amount_eur: 1500 }),
-        tx({ id: '3', date: '2026-05-31', amount_eur: 9999 }), // previous month, excluded
-      ],
-      NOW,
-    );
-    expect(total).toBe(2000);
   });
 });

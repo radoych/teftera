@@ -1,69 +1,52 @@
-// features/transactions/sync.ts — single realtime subscription for the app.
-import { useEffect } from 'react';
-import { supabase } from '@/services/supabase';
-import { useAuthStore } from '@/features/auth/store';
+// features/transactions/sync.ts — load + live-sync of the household's transactions.
 import { listOpenAnomalies } from '@/features/anomalies/api';
 import { loadBudgets, useBudgetsStore } from '@/features/budgets/store';
-import { trailingDebounce } from '@/lib/debounce';
+import { createHouseholdSync } from '@/features/sync/householdSync';
+import { useHouseholdSync } from '@/features/sync/useHouseholdSync';
 import { listCategories, listTransactions } from './api';
-import { subscribeToTransactions } from './realtimeChannel';
 import { useTransactionsStore } from './store';
 
-/** Fetch the household's categories + transactions + open anomalies into the store. */
-export async function refreshTransactions(householdId: string): Promise<void> {
-  const [categories, transactions, openAnomalies] = await Promise.all([
-    listCategories(householdId),
-    listTransactions(householdId),
-    listOpenAnomalies(householdId),
-  ]);
-  useTransactionsStore.getState().setData(transactions, categories, openAnomalies);
-}
+/**
+ * Categories + transactions + open anomalies, kept live from the
+ * `transactions` realtime channel. On any change we refetch rather than decode
+ * individual payloads (we trust RLS + a fresh query — robust and simple for a
+ * two-person household). Reloads are coalesced; see `createHouseholdSync`.
+ *
+ * Budgets are deliberately NOT reloaded here: a transaction change cannot
+ * change a budget row. They load once per household mount and again after the
+ * budgets screen saves.
+ */
+export const transactionsSync = createHouseholdSync({
+  label: 'transactions',
+  tables: ['transactions'],
+  load: (householdId) =>
+    Promise.all([
+      listCategories(householdId),
+      listTransactions(householdId),
+      listOpenAnomalies(householdId),
+    ]),
+  apply: ([categories, transactions, openAnomalies]) =>
+    useTransactionsStore.getState().setData(transactions, categories, openAnomalies),
+  reset: () => {
+    useTransactionsStore.getState().reset();
+    useBudgetsStore.getState().reset();
+  },
+  onStart: (householdId) => {
+    useTransactionsStore.getState().setLoading(true);
+    void loadBudgets(householdId);
+  },
+  onError: () => useTransactionsStore.getState().setLoading(false),
+});
 
 /**
- * Load the household's transactions + categories into the store and keep them
- * live. On any change to the household's transactions, refetch the list (we
- * trust RLS + a fresh query over decoding individual payloads — robust and
- * simple for a two-person household). Call once, in the (app) layout.
+ * Fetch the household's categories + transactions + open anomalies into the
+ * store. Resolves once the store holds data fetched after this call — safe to
+ * await right after a write. Rejects if that fetch fails.
  */
+export const refreshTransactions = (householdId: string): Promise<void> =>
+  transactionsSync.refresh(householdId);
+
+/** Keep the household's transactions live. Call once, in the (app) layout. */
 export function useTransactionsSync(): void {
-  const householdId = useAuthStore((s) => s.householdId);
-
-  useEffect(() => {
-    if (!householdId) {
-      useTransactionsStore.getState().reset();
-      useBudgetsStore.getState().reset();
-      return;
-    }
-
-    let active = true;
-    const store = useTransactionsStore.getState();
-
-    async function load() {
-      try {
-        const [categories, transactions, openAnomalies] = await Promise.all([
-          listCategories(householdId!),
-          listTransactions(householdId!),
-          listOpenAnomalies(householdId!),
-        ]);
-        if (!active) return;
-        store.setData(transactions, categories, openAnomalies);
-        void loadBudgets(householdId!);
-      } catch (err) {
-        if (__DEV__) console.warn('[transactions] load failed', err);
-        if (active) store.setLoading(false);
-      }
-    }
-
-    store.setLoading(true);
-    load();
-
-    const reload = trailingDebounce(() => void load(), 400);
-    const unsubscribe = subscribeToTransactions(supabase, householdId, () => reload.call());
-
-    return () => {
-      active = false;
-      reload.cancel();
-      unsubscribe();
-    };
-  }, [householdId]);
+  useHouseholdSync(transactionsSync);
 }

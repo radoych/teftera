@@ -5,10 +5,19 @@
  * v1: simple per-category Z-score over historical amounts (in EUR cents).
  */
 
+/** Which side of the category's mean an anomalous amount falls on. */
+export type AnomalyDirection = 'over' | 'under';
+
+/**
+ * Machine-readable result — no UI copy (that lives in `features/anomalies/reasons`).
+ * `score` is z rounded to 2 dp (persisted); `z` is the unrounded value.
+ */
 export interface AnomalyResult {
   score: number;
+  z: number;
   isAnomaly: boolean;
-  reason: string | null;
+  /** Null when not anomalous. */
+  direction: AnomalyDirection | null;
 }
 
 const DEFAULT_THRESHOLD = 2.5;
@@ -35,7 +44,7 @@ export function zScore(value: number, history: number[]): number {
 
 /**
  * Score one transaction amount against the category's historical amounts.
- * Returns a flag + human reason. Below the minimum sample size we never flag.
+ * Returns a flag + direction code. Below the minimum sample size we never flag.
  */
 export function scoreTransaction(
   amountCents: number,
@@ -43,7 +52,7 @@ export function scoreTransaction(
   threshold = DEFAULT_THRESHOLD,
 ): AnomalyResult {
   if (history.length < MIN_SAMPLE) {
-    return { score: 0, isAnomaly: false, reason: null };
+    return { score: 0, z: 0, isAnomaly: false, direction: null };
   }
 
   const z = zScore(amountCents, history);
@@ -52,9 +61,8 @@ export function scoreTransaction(
 
   return {
     score: Number(z.toFixed(2)),
+    z,
     isAnomaly,
-    reason: isAnomaly
-      ? `${amountCents > avg ? 'Над' : 'Под'} обичайното за тази категория (z=${z.toFixed(1)})`
-      : null,
+    direction: isAnomaly ? (amountCents > avg ? 'over' : 'under') : null,
   };
 }

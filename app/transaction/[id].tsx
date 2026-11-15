@@ -1,19 +1,21 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { HairlineDivider } from '@/components/HairlineDivider';
+import { NotFoundView } from '@/components/NotFoundView';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { useAuthStore } from '@/features/auth/store';
-import { getMembers, type HouseholdMember } from '@/features/household/api';
+import { useHouseholdStore } from '@/features/household/store';
 import { deleteTransaction } from '@/features/transactions/api';
 import { memberName } from '@/features/transactions/edit';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
-import type { MaterialIconName } from '@/lib/categories';
+import { categoryPresentation } from '@/lib/categories';
 import { relativeDay } from '@/lib/dates';
 import { formatCurrency } from '@/lib/formatCurrency';
 
@@ -38,36 +40,21 @@ export default function TransactionDetailScreen() {
   const tx = useTransactionsStore((s) => s.transactions.find((t) => t.id === id));
   const categories = useTransactionsStore((s) => s.categories);
   const householdId = useAuthStore((s) => s.householdId);
-  const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const members = useHouseholdStore((s) => s.members);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
 
-  useEffect(() => {
-    if (householdId) getMembers(householdId).then(setMembers);
-  }, [householdId]);
-
   if (!tx) {
-    return (
-      <View className="flex-1 bg-background">
-        <BackgroundGlow />
-        <SafeAreaView className="flex-1 items-center justify-center px-8" edges={['top']}>
-          <Text className="text-center font-inter text-body-lg text-on-surface-variant">
-            {'Транзакцията не е намерена.'}
-          </Text>
-          <Pressable
-            onPress={() => router.back()}
-            className="mt-lg rounded-full border border-primary-container px-6 py-2">
-            <Text className="font-inter text-label-md text-primary-container">{'Назад'}</Text>
-          </Pressable>
-        </SafeAreaView>
-      </View>
-    );
+    return <NotFoundView message="Транзакцията не е намерена." />;
   }
 
-  const cat = tx.category_id ? categories.find((c) => c.id === tx.category_id) : undefined;
-  const catName = cat?.name ?? 'Other';
-  const catIcon = (cat?.icon as MaterialIconName) ?? 'category';
-  const catColor = cat?.color ?? '#8e909a';
+  const {
+    name: catName,
+    icon: catIcon,
+    color: catColor,
+  } = categoryPresentation(
+    tx.category_id ? categories.find((c) => c.id === tx.category_id) : undefined,
+  );
   const addedBy = memberName(tx.user_id, members);
 
   const onConfirmDelete = async () => {
@@ -86,16 +73,7 @@ export default function TransactionDetailScreen() {
     <View className="flex-1 bg-background">
       <BackgroundGlow />
       <SafeAreaView className="flex-1" edges={['top']}>
-        {/* Top app bar */}
-        <View className="flex-row items-center justify-between px-6 py-4">
-          <Pressable onPress={() => router.back()} hitSlop={8} className="-ml-2 p-2">
-            <MaterialIcons name="arrow-back" size={24} color="#e3e2e6" />
-          </Pressable>
-          <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-            {'Транзакция'}
-          </Text>
-          <View className="w-8" />
-        </View>
+        <ScreenHeader centered title="Транзакция" className="px-6" />
 
         <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
           {/* Hero */}
@@ -136,7 +114,7 @@ export default function TransactionDetailScreen() {
             label: 'Редакция',
             icon: 'edit',
             variant: 'filled',
-            onPress: () => router.navigate(`/manual-entry?id=${tx.id}`),
+            onPress: () => router.push(`/manual-entry?id=${tx.id}`),
           },
         ]}
       />

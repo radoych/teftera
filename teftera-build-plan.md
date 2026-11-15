@@ -327,6 +327,39 @@ Days 1–5 are covered by the starter prompt. This plan extends the full build.
 
 **Checkpoint:** App installs from EAS on both phones. README has screenshots. You can walk through the whole app in a demo without hitting any crashes or missing states. *(Doubles as the pending Day 15 budget-notification check; also verify the error fallback and the airplane-mode banner on device.)*
 
+
+---
+
+## Day 19 — Vendors & recognized names
+
+- [x] Migration `vendors` + `vendor_aliases` (unique alias key per household, merge RPC, backfill from existing merchants) — **written, not yet applied**
+- [x] Merchant key (NFKC → lowercase → collapse whitespace), resolve/suggest, conflict parsing, ensure, alias learning — TDD
+- [x] `VendorAutocomplete` in manual entry + receipt confirm; DSK CSV / bank import resolve recognized names first
+- [x] Vendors list, vendor detail, conflict sheet (merge / move / delete options)
+
+**Checkpoint:** typing "ka" suggests Kaufland; a receipt's raw merchant is learned as an alias of the chosen vendor; a raw name can never belong to two vendors.
+
+## Day 20 — Loyalty cards
+
+- [x] Own EAN-13 / EAN-8 / Code128 encoders (`lib/barcode`), QR via react-native-qrcode-svg
+- [x] Migration `loyalty_cards` — **written, not yet applied**
+- [x] Camera scanner, card form with vendor autocomplete, cards list grouped by vendor, full-screen presenter at max brightness
+- [x] Cards on vendor detail; card count in autocomplete; profile entry
+
+**Checkpoint:** a real EAN-13 card scans in; the presenter barcode is read by a supermarket till; brightness restores after closing.
+
+## Day 21 — Shopping lists
+
+- [x] Migration `shopping_lists` + `shopping_list_items` — **written, not yet applied**
+- [x] Quick-add parsing, ordering, optimistic engine (commit clock, so stale reloads never undo a check) — TDD
+- [x] List screen with animated + haptic check-off, lists index, new-list sheet that attaches the vendor's card, dashboard `lists` section + cards icon
+
+**Checkpoint:** two phones see items and checks within ~1 s; airplane mode on one reverts a check with an error haptic.
+
+> Built on branch `claude/vendor-loyalty-shopping-features-5pazrl` from spec
+> `docs/specs/2026-09-09-vendors-loyalty-shopping-lists.md`, together with the
+> 2026-09-10 audit fix plan (`docs/code-review-2026-09-10.md`, steps 1–18).
+
 ---
 
 ## Summary Timeline

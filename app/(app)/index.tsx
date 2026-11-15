@@ -6,32 +6,40 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Comparison } from '@/components/Comparison';
 import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
+import { ProgressBar } from '@/components/ProgressBar';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { useAuthStore } from '@/features/auth/store';
 import { usePreferencesStore } from '@/features/preferences/store';
+import type { DashboardSectionKey } from '@/features/preferences/types';
+import { ListRow } from '@/features/shopping/components/ListRow';
+import { useListViews } from '@/features/shopping/hooks';
+import { useShoppingStore } from '@/features/shopping/store';
 import { TransactionRow } from '@/features/transactions/components/TransactionRow';
 import {
   dayTotalCents,
   filterByUser,
   pctChange,
-  prevMonthTotalCents,
   sortByCreatedAtDesc,
   spendingByCategory,
 } from '@/features/transactions/dashboard';
 import { reasonByTxId } from '@/features/anomalies/reasons';
-import { monthTotalCents, toTransactionView } from '@/features/transactions/groupByDay';
+import { toTransactionView } from '@/features/transactions/groupByDay';
 import { expensesOnly } from '@/features/transactions/kind';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { useIsOnline } from '@/lib/useIsOnline';
 import { useBudgetsStore } from '@/features/budgets/store';
-import { resolveBudgetsForMonth } from '@/features/budgets/resolve';
-import { budgetProgress } from '@/features/budgets/progress';
+import { monthBudgetProgress } from '@/features/budgets/currentMonth';
+import { budgetStateColor } from '@/features/budgets/progress';
 import type { BudgetProgress } from '@/features/budgets/types';
-import { firstOfMonth } from '@/lib/dates';
+import { startOfMonth, sumInMonth } from '@/lib/dates';
+import { colors } from '@/lib/theme';
+
+/** Shopping lists shown on the dashboard before "Виж всички". */
+const DASHBOARD_LISTS = 3;
 
 type Timeframe = 'day' | 'month';
 type Scope = 'me' | 'household';
@@ -50,6 +58,8 @@ export default function DashboardScreen() {
   const userId = useAuthStore((s) => s.session?.user.id ?? null);
 
   const dashboardSections = usePreferencesStore((s) => s.preferences.dashboardSections);
+  const listViews = useListViews();
+  const listsLoaded = useShoppingStore((s) => s.loaded);
 
   const [timeframe, setTimeframe] = useState<Timeframe>('month');
   const [scope, setScope] = useState<Scope>('household');
@@ -73,14 +83,9 @@ export default function DashboardScreen() {
       const today = dayTotalCents(filtered, now);
       return { total: today, comparison: pctChange(today, dayTotalCents(filtered, yesterday(now))) };
     }
-    const month = monthTotalCents(filtered, now);
-    return { total: month, comparison: pctChange(month, prevMonthTotalCents(filtered, now)) };
+    const month = sumInMonth(filtered, now);
+    return { total: month, comparison: pctChange(month, sumInMonth(filtered, startOfMonth(now, -1))) };
   }, [filtered, timeframe]);
-
-  const categoryRows = useMemo(
-    () => spendingByCategory(filtered, categories),
-    [filtered, categories],
-  );
 
   // Household-scoped category spend: always uses all household transactions,
   // ignoring the per-person toggle, so budget progress is household-level.
@@ -89,11 +94,16 @@ export default function DashboardScreen() {
     [expenseTxs, categories],
   );
 
+  // In household scope the visible rows ARE the household rows — derive once.
+  const categoryRows = useMemo(
+    () => (scope === 'me' ? spendingByCategory(filtered, categories) : householdCategoryRows),
+    [scope, filtered, categories, householdCategoryRows],
+  );
+
   const budgetRows = useBudgetsStore((s) => s.rows);
 
   const budgetMap = useMemo((): Map<string, BudgetProgress> => {
-    const resolved = resolveBudgetsForMonth(budgetRows, firstOfMonth());
-    const progress = budgetProgress(resolved, householdCategoryRows);
+    const progress = monthBudgetProgress(budgetRows, householdCategoryRows, new Date());
     return new Map(progress.map((p) => [p.categoryId, p]));
   }, [budgetRows, householdCategoryRows]);
 
@@ -124,13 +134,7 @@ export default function DashboardScreen() {
         <SectionLabel className="mb-md">По категория</SectionLabel>
         {categoryRows.map((row) => {
             const bp = budgetMap.get(row.id);
-            const barColor = bp
-              ? bp.state === 'over'
-                ? '#ffb4ab'
-                : bp.state === 'warning'
-                  ? '#ffdfa7'
-                  : '#adc7ff'
-              : row.color;
+            const barColor = bp ? budgetStateColor(bp.state) : row.color;
             const rightLabel = bp
               ? `${formatCurrency(bp.spentCents)} / ${formatCurrency(bp.budgetCents)}`
               : formatCurrency(row.totalCents);
@@ -145,20 +149,11 @@ export default function DashboardScreen() {
                     {rightLabel}
                   </Text>
                 </View>
-                <View
-                  className="h-1.5 overflow-hidden bg-surface-container"
-                  style={{ borderRadius: 9999 }}>
-                  <View
-                    className="h-full"
-                    style={{
-                      width: bp
-                        ? `${Math.min(bp.pct, 100)}%`
-                        : `${Math.max(row.fraction * 100, 2)}%`,
-                      backgroundColor: barColor,
-                      borderRadius: 9999,
-                    }}
-                  />
-                </View>
+                <ProgressBar
+                  fraction={bp ? bp.pct / 100 : row.fraction}
+                  color={barColor}
+                  minFraction={bp ? 0 : 0.02}
+                />
               </View>
             );
           })}
@@ -173,7 +168,7 @@ export default function DashboardScreen() {
           onPress={() => router.navigate('/(app)/history')}
           className="flex-row items-center gap-1">
           <Text className="font-inter-semibold text-label-md text-primary">Виж всички</Text>
-          <MaterialIcons name="chevron-right" size={16} color="#d8e3ff" />
+          <MaterialIcons name="chevron-right" size={16} color={colors.primary} />
         </Pressable>
       </View>
       {loaded && recent.length === 0 ? (
@@ -181,14 +176,14 @@ export default function DashboardScreen() {
           icon="receipt-long"
           title="Все още няма транзакции"
           message="Последните движения на домакинството ще се показват тук."
-          cta={{ label: 'Добави транзакция', onPress: () => router.navigate('/manual-entry') }}
+          cta={{ label: 'Добави транзакция', onPress: () => router.push('/manual-entry') }}
         />
       ) : (
         recent.map((tx, i) => (
           <TransactionRow
             key={tx.id}
             tx={tx}
-            onPress={() => router.navigate(`/transaction/${tx.id}`)}
+            onPress={() => router.push(`/transaction/${tx.id}`)}
             showDivider={i < recent.length - 1}
           />
         ))
@@ -196,9 +191,45 @@ export default function DashboardScreen() {
     </View>
   );
 
-  const sectionContent: Record<'categories' | 'recent', ReactNode> = {
+  // `sortLists` order: lists with something left to take come first.
+  const listsSection: ReactNode = listsLoaded ? (
+    <View className="mt-xl">
+      <View className="mb-sm flex-row items-center justify-between">
+        <SectionLabel>Списъци за пазаруване</SectionLabel>
+        {listViews.length > 0 ? (
+          <Pressable onPress={() => router.push('/lists')} className="flex-row items-center gap-1">
+            <Text className="font-inter-semibold text-label-md text-primary">Виж всички</Text>
+            <MaterialIcons name="chevron-right" size={16} color={colors.primary} />
+          </Pressable>
+        ) : null}
+      </View>
+      {listViews.length === 0 ? (
+        <Pressable
+          onPress={() => router.push({ pathname: '/lists', params: { new: '1' } })}
+          accessibilityRole="button"
+          className="flex-row items-center gap-3 py-md active:opacity-70">
+          <MaterialIcons name="playlist-add" size={20} color={colors.onSurfaceVariant} />
+          <Text className="font-inter text-body-md text-on-surface-variant">
+            Създай списък за магазин
+          </Text>
+        </Pressable>
+      ) : (
+        listViews.slice(0, DASHBOARD_LISTS).map((view, i, shown) => (
+          <ListRow
+            key={view.list.id}
+            view={view}
+            showDivider={i < shown.length - 1}
+            onPress={() => router.push({ pathname: '/list/[id]', params: { id: view.list.id } })}
+          />
+        ))
+      )}
+    </View>
+  ) : null;
+
+  const sectionContent: Record<DashboardSectionKey, ReactNode> = {
     categories: categoriesSection,
     recent: recentSection,
+    lists: listsSection,
   };
 
   return (
@@ -213,21 +244,30 @@ export default function DashboardScreen() {
               label: 'Ръчно',
               icon: 'add',
               variant: 'ghost',
-              onPress: () => router.navigate('/manual-entry'),
+              onPress: () => router.push('/manual-entry'),
             },
             {
               label: 'Сканирай',
               icon: 'photo-camera',
               variant: 'filled',
               disabled: !online,
-              onPress: () => router.navigate('/scanner'),
+              onPress: () => router.push('/scanner'),
             },
           ]}
         />
       }>
       {/* Top app bar */}
-      <View className="mb-lg mt-md">
+      <View className="mb-lg mt-md flex-row items-center justify-between">
         <Text className="font-jakarta-bold text-headline-xl text-primary">Teftera</Text>
+        <Pressable
+          onPress={() => router.push('/loyalty-cards')}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Клиентски карти"
+          className="h-10 w-10 items-center justify-center bg-surface-container active:opacity-80"
+          style={{ borderRadius: 9999 }}>
+          <MaterialIcons name="card-membership" size={22} color={colors.onSurfaceVariant} />
+        </Pressable>
       </View>
 
       {/* Hero spending */}
@@ -251,7 +291,7 @@ export default function DashboardScreen() {
           </Text>
         ) : (
           <View className="h-20 justify-center">
-            <ActivityIndicator color="#adc7ff" />
+            <ActivityIndicator color={colors.primaryContainer} />
           </View>
         )}
         {loaded ? <Comparison pct={comparison} label={comparisonLabel} /> : null}

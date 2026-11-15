@@ -4,6 +4,7 @@ import { useRouter, useSegments } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/services/supabase';
 import { getMyHousehold } from '@/features/household/api';
+import { useHouseholdStore } from '@/features/household/store';
 import { resolveRedirect } from './resolveRedirect';
 import { shouldSkipAuthEvent } from './sessionEvents';
 import { useAuthStore } from './store';
@@ -16,13 +17,15 @@ async function applySession(session: Session | null): Promise<void> {
   if (!session) {
     lastAppliedUserId = null;
     reset();
+    useHouseholdStore.getState().reset();
     return;
   }
   setSession(session);
   try {
-    const household = await getMyHousehold();
+    const household = await getMyHousehold(session.user.id);
     lastAppliedUserId = session.user.id;
     if (household) {
+      useHouseholdStore.getState().setInviteCode(household.householdId, household.inviteCode);
       setHousehold(household.householdId, household.displayName);
       setStatus('ready');
     } else {

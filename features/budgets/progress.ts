@@ -1,3 +1,4 @@
+import { colors } from '@/lib/theme';
 import type { BudgetProgress, BudgetState, ResolvedBudgets } from './types';
 
 /**
@@ -32,4 +33,11 @@ export function budgetProgress(
   }
   rows.sort((a, b) => b.pct - a.pct);
   return rows;
+}
+
+/** Progress-bar fill for a budget state: over → error, warning → tertiary, under → primary-container. */
+export function budgetStateColor(state: BudgetState): string {
+  if (state === 'over') return colors.error;
+  if (state === 'warning') return colors.tertiary;
+  return colors.primaryContainer;
 }

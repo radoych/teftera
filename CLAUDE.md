@@ -38,6 +38,9 @@ npm run format
 # run tests
 npm test
 
+# supabase: regenerate DB types after every applied migration (main checkout is linked)
+npm run db:types
+
 # supabase: new migration (CLI installed as a devDependency)
 npx supabase migration new <name>
 
@@ -71,7 +74,9 @@ eas build --profile preview --platform all
 | Icons | @expo/vector-icons (MaterialIcons) or lucide-react-native |
 | Auth | Supabase Auth — email/password + Google OAuth |
 | Keyboard | react-native-keyboard-controller (KeyboardProvider in root layout) |
-| CI/CD | Expo EAS |
+| Barcodes | own EAN-13 / EAN-8 / Code128 encoders in `lib/barcode` + react-native-qrcode-svg, rendered with react-native-svg |
+| Feedback | expo-haptics (`lib/haptics.ts`), Reanimated presets (`lib/animation.ts`), expo-brightness (card presenter) |
+| CI/CD | Expo EAS · GitHub Actions (tsc + lint + jest on PRs and main) |
 
 **Future (not yet built):** thin FastAPI service on GCP Cloud Run for the anomaly model. (Gemini calls are already server-side — see Non-Negotiable Rules #5.) Isolate all AI and ML logic behind service modules now so the move is a one-file change later.
 
@@ -90,6 +95,10 @@ eas build --profile preview --platform all
   /scanner               Camera capture (no nav bar)
   /confirm-receipt       Gemini extraction review
   /manual-entry          Manual transaction form
+  /vendors, /vendor/[id] Vendors & recognized names
+  /loyalty-cards         Loyalty cards (grouped by vendor)
+  /card/[id]             Full-screen barcode presenter (max brightness)
+  /lists, /list/[id]     Shopping lists
 
 /features
   /transactions          components, hooks, types
@@ -97,6 +106,10 @@ eas build --profile preview --platform all
   /insights              charts, AI summary
   /budgets               goals, progress
   /household             members, invite codes
+  /sync                  realtime channels + createHouseholdSync (coalesced reloads)
+  /vendors               normalized merchant names, aliases, autocomplete, conflict flow
+  /loyalty               cards, scanner, presenter
+  /shopping              lists, optimistic items (commit-clock engine), quick-add
 
 /services
   /supabase.ts           client init — single export, used everywhere
@@ -107,10 +120,15 @@ eas build --profile preview --platform all
 /lib
   /formatCurrency.ts     canonical money formatter
   /categories.ts         category rules + icons
-  /dates.ts              date helpers, bg-BG locale
+  /dates.ts              date helpers, bg-BG locale, month toolkit
+  /theme.ts              colour tokens — single source for tailwind.config.js; use `colors.*`, never raw hex
+  /barcode/              pure barcode encoders (tested)
+  /haptics.ts            haptic feedback wrapper
+  /animation.ts          Reanimated presets
 
 /supabase
   /migrations            all schema changes in SQL files, versioned
+  /types.ts              generated Database types (`npm run db:types`) — regenerate after each migration
 ```
 
 ---
@@ -125,6 +143,8 @@ eas build --profile preview --platform all
 6. **Gemini always has a fallback.** Wrap all JSON parsing in try/catch. A bad or empty receipt response falls back to the manual-edit screen — never crash, never block.
 7. **Log Gemini calls in dev.** Build a receipt image test set as you go.
 8. **Ask before adding paid deps.** Free tiers only unless explicitly agreed.
+9. **The barcode presenter is the one white surface in the app.** Everything else follows the dark design tokens.
+10. **Cross-table references stay in one household.** Foreign keys bypass RLS, so any new FK between household tables gets a same-household check trigger (see the vendors/loyalty/shopping migrations).
 
 ---
 
@@ -142,6 +162,11 @@ receipts            id, household_id, user_id, storage_path, raw_gemini_json,
                     processed_at, created_at
 budgets             id, household_id, category_id, amount_eur (int), month, created_at
 anomalies           id, household_id, transaction_id, reason, score, reviewed, created_at
+vendors             id, household_id, name, name_key, created_at, updated_at
+vendor_aliases      id, household_id, vendor_id, alias, alias_key, is_primary, source, created_at
+loyalty_cards       id, household_id, vendor_id (nullable), nickname, code, code_format, color, note, created_by, …
+shopping_lists      id, household_id, vendor_id (nullable), name, loyalty_card_id (nullable), created_by, …
+shopping_list_items id, household_id, list_id, name, quantity, position, checked_at, checked_by, created_by, created_at
 ```
 
 RLS policy pattern for every table:

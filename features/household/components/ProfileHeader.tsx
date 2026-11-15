@@ -3,6 +3,7 @@ import { Alert, Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { FlatInput } from '@/components/FlatInput';
 import { SheetActions } from '@/components/SheetActions';
+import { initials } from '@/lib/initials';
 
 interface ProfileHeaderProps {
   displayName: string;
@@ -20,14 +21,7 @@ export function ProfileHeader({ displayName, email, onSaveName }: ProfileHeaderP
   const [nameDraft, setNameDraft] = useState('');
   const [savingName, setSavingName] = useState(false);
 
-  const initials =
-    displayName
-      .split(' ')
-      .map((p) => p[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join('')
-      .toUpperCase() || '?';
+  const avatarInitials = initials(displayName);
 
   const handleSaveName = async () => {
     const name = nameDraft.trim();
@@ -49,7 +43,7 @@ export function ProfileHeader({ displayName, email, onSaveName }: ProfileHeaderP
         <View className="flex-1 flex-row items-center gap-md">
           <View className="h-16 w-16 items-center justify-center rounded-full bg-primary-container">
             <Text className="font-jakarta-semibold text-headline-md text-on-primary">
-              {initials}
+              {avatarInitials}
             </Text>
           </View>
           <View className="flex-1">

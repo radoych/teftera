@@ -14,12 +14,12 @@ import { formatDigitsAsAmount } from '@/components/AmountInput';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { HairlineDivider } from '@/components/HairlineDivider';
+import { NotFoundView } from '@/components/NotFoundView';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { useAuthStore } from '@/features/auth/store';
-import { runDetection } from '@/features/anomalies/runDetection';
-import { runBudgetCheck } from '@/features/budgets/runBudgetCheck';
-import { useBudgetsStore } from '@/features/budgets/store';
-import { usePreferencesStore } from '@/features/preferences/store';
+import { useCardCount } from '@/features/loyalty/sync';
+import { runAfterSave } from '@/features/transactions/afterSave';
 import { createTransaction, updateTransaction } from '@/features/transactions/api';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
@@ -28,10 +28,13 @@ import type { TxKind } from '@/features/transactions/kind';
 import { expenseCategories, incomeCategories } from '@/features/transactions/kind';
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
-import { refreshTransactions } from '@/features/transactions/sync';
+import { VendorAutocomplete } from '@/features/vendors/components/VendorAutocomplete';
+import { resolveVendor } from '@/features/vendors/resolve';
+import { getVendorIndex } from '@/features/vendors/store';
 import { guessCategory, guessIncomeCategory, resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
+import { colors } from '@/lib/theme';
 
 function FieldRow({
   label,
@@ -52,7 +55,7 @@ function FieldRow({
         </Text>
         {children}
       </View>
-      {chevron ? <MaterialIcons name="expand-more" size={22} color="#c4c6d0" /> : null}
+      {chevron ? <MaterialIcons name="expand-more" size={22} color={colors.onSurfaceVariant} /> : null}
     </View>
   );
   return (
@@ -84,6 +87,7 @@ export default function ManualEntryScreen() {
 
   const [amount, setAmount] = useState(seed?.amount ? formatDigitsAsAmount(seed.amount) : '');
   const [merchant, setMerchant] = useState(seed?.merchant ?? '');
+  const cardCount = useCardCount();
   const [note, setNote] = useState(seed?.note ?? '');
   const [date, setDate] = useState(seed?.date ?? toISODate());
   const [categoryId, setCategoryId] = useState<string | null>(seed?.categoryId ?? null);
@@ -96,21 +100,7 @@ export default function ManualEntryScreen() {
 
   // Edit mode but the transaction is gone (deleted on another device).
   if (isEdit && !existing) {
-    return (
-      <View className="flex-1 bg-background">
-        <BackgroundGlow />
-        <SafeAreaView className="flex-1 items-center justify-center px-8" edges={['top']}>
-          <Text className="text-center font-inter text-body-lg text-on-surface-variant">
-            {'Транзакцията не е намерена.'}
-          </Text>
-          <Pressable
-            onPress={() => router.back()}
-            className="mt-lg rounded-full border border-primary-container px-6 py-2">
-            <Text className="font-inter text-label-md text-primary-container">{'Назад'}</Text>
-          </Pressable>
-        </SafeAreaView>
-      </View>
-    );
+    return <NotFoundView message="Транзакцията не е намерена." />;
   }
 
   const selectedCategory = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
@@ -147,9 +137,14 @@ export default function ManualEntryScreen() {
       Alert.alert('Грешка', 'Няма активно домакинство.');
       return;
     }
+    // A typed raw name that is a recognized name is saved as its vendor's
+    // name. Purely local — creating a new vendor happens after the save
+    // (runAfterSave), so vendor bookkeeping can never block saving.
+    const merchantName =
+      resolveVendor(parsed.data.merchant, getVendorIndex())?.name ?? parsed.data.merchant;
     const resolvedCategoryId = categoryTouched
       ? categoryId
-      : resolveCategoryId(parsed.data.merchant, categories, kind);
+      : resolveCategoryId(merchantName, categories, kind);
 
     setSaving(true);
     let createdId: string | null = null;
@@ -157,7 +152,7 @@ export default function ManualEntryScreen() {
       if (isEdit && id) {
         await updateTransaction(id, {
           amountCents: parsed.data.amountCents,
-          merchant: parsed.data.merchant,
+          merchant: merchantName,
           categoryId: resolvedCategoryId,
           date: parsed.data.date,
           note: parsed.data.note,
@@ -168,7 +163,7 @@ export default function ManualEntryScreen() {
           householdId,
           userId: session?.user.id ?? null,
           amountCents: parsed.data.amountCents,
-          merchant: parsed.data.merchant,
+          merchant: merchantName,
           categoryId: resolvedCategoryId,
           date: parsed.data.date,
           note: parsed.data.note,
@@ -184,33 +179,16 @@ export default function ManualEntryScreen() {
       );
       return;
     }
-    // Refresh + detection are non-fatal: the save already succeeded, so a failure
-    // here must not invite a retry that would double-insert.
-    try {
-      await refreshTransactions(householdId);
-      if (createdId !== null && kind === 'expense') {
-        await runDetection({
-          transactionId: createdId,
-          householdId,
-          amountCents: parsed.data.amountCents,
-          categoryId: resolvedCategoryId,
-          transactions: useTransactionsStore.getState().transactions,
-          merchant: parsed.data.merchant,
-          alertsEnabled:
-            usePreferencesStore.getState().preferences.anomalyAlertsEnabled ?? true,
-        });
-        await runBudgetCheck({
-          householdId,
-          savedCategoryId: resolvedCategoryId,
-          alertsEnabled: usePreferencesStore.getState().preferences.budgetAlertsEnabled ?? true,
-          transactions: useTransactionsStore.getState().transactions,
-          categories: useTransactionsStore.getState().categories,
-          budgets: useBudgetsStore.getState().rows,
-        });
-      }
-    } catch {
-      // List reconciles on next focus / realtime refetch.
-    }
+    // Non-fatal: the save already succeeded, so nothing after it may invite a
+    // retry that would double-insert.
+    await runAfterSave({
+      householdId,
+      transactionId: createdId,
+      kind,
+      amountCents: parsed.data.amountCents,
+      categoryId: resolvedCategoryId,
+      merchant: merchantName,
+    });
     router.back();
   };
 
@@ -218,16 +196,7 @@ export default function ManualEntryScreen() {
     <View className="flex-1 bg-background">
       <BackgroundGlow />
       <SafeAreaView className="flex-1" edges={['top']}>
-        {/* Top app bar */}
-        <View className="flex-row items-center justify-between px-6 py-4">
-          <Pressable onPress={() => router.back()} hitSlop={8} className="-ml-2 p-2">
-            <MaterialIcons name="arrow-back" size={24} color="#e3e2e6" />
-          </Pressable>
-          <Text className="font-jakarta-semibold text-headline-lg-mobile text-on-surface">
-            {isEdit ? 'Редактиране' : 'Ръчно въвеждане'}
-          </Text>
-          <View className="w-8" />
-        </View>
+        <ScreenHeader centered title={isEdit ? 'Редактиране' : 'Ръчно въвеждане'} className="px-6" />
 
         <KeyboardAwareScrollView
           bottomOffset={140}
@@ -266,16 +235,14 @@ export default function ManualEntryScreen() {
 
           {/* Merchant */}
           <FieldRow label="Търговец">
-            <TextInput
+            <VendorAutocomplete
+              variant="field"
               value={merchant}
               onChangeText={setMerchant}
               placeholder="напр. Starbucks"
-              placeholderTextColor="rgba(196,198,208,0.3)"
-              className="font-inter text-body-lg text-on-surface"
+              error={errors.merchant}
+              cardCount={cardCount}
             />
-            {errors.merchant ? (
-              <Text className="font-inter text-body-md text-error">{errors.merchant}</Text>
-            ) : null}
           </FieldRow>
 
           {/* Category — opens the picker */}
