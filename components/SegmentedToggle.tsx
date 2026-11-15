@@ -9,6 +9,8 @@ interface SegmentedToggleProps<T extends string> {
   options: SegmentedOption<T>[];
   value: T;
   onChange: (value: T) => void;
+  /** Stretch to the container width with equal-width segments (form tab switchers). */
+  block?: boolean;
 }
 
 /**
@@ -20,10 +22,11 @@ export function SegmentedToggle<T extends string>({
   options,
   value,
   onChange,
+  block = false,
 }: SegmentedToggleProps<T>) {
   return (
     <View
-      className="flex-row items-center bg-surface-container p-1"
+      className={`flex-row items-center bg-surface-container p-1 ${block ? 'self-stretch' : ''}`}
       style={{ borderRadius: 9999 }}>
       {options.map((opt) => {
         const active = opt.value === value;
@@ -31,7 +34,11 @@ export function SegmentedToggle<T extends string>({
           <Pressable
             key={opt.value}
             onPress={() => onChange(opt.value)}
-            className={`px-4 py-1.5 ${active ? 'bg-primary-container' : ''}`}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            className={`${block ? 'flex-1 items-center py-3' : 'px-4 py-1.5'} ${
+              active ? 'bg-primary-container' : ''
+            }`}
             style={{ borderRadius: 9999 }}>
             <Text
               className={`font-inter-semibold text-label-md ${
