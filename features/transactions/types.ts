@@ -1,33 +1,23 @@
 import type { MaterialIconName } from '@/lib/categories';
+import type { Tables } from '@/supabase/types';
+import type { TxKind } from './kind';
 
-/** Mirrors the `categories` table columns the app reads. */
-export interface CategoryLite {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  is_default?: boolean;
-  kind: 'expense' | 'income';
-}
+/** The category fields the UI needs, derived from the generated `categories` Row. */
+export type CategoryLite = Pick<Tables<'categories'>, 'id' | 'name' | 'icon' | 'color'> &
+  Partial<Pick<Tables<'categories'>, 'is_default'>> & { kind: TxKind };
 
-/** Mirrors the `transactions` table. Amounts are integer EUR cents. */
-export interface Transaction {
-  id: string;
-  household_id: string;
-  user_id: string | null;
-  amount_eur: number;
-  original_amount: number | null;
-  original_currency: string | null;
-  merchant: string;
-  category_id: string | null;
-  date: string; // YYYY-MM-DD
-  note: string | null;
-  source: 'manual' | 'dsk_import' | 'receipt';
-  kind: 'expense' | 'income';
-  receipt_id: string | null;
-  is_flagged: boolean;
-  occurred_at: string | null; // actual transaction time; falls back to created_at for display
-  created_at: string;
+/** Where a transaction came from. The DB column is plain text; this is the app's contract. */
+export type TxSource = 'manual' | 'dsk_import' | 'receipt';
+
+/**
+ * One `transactions` row, derived from the generated schema (`supabase/types.ts`) so
+ * column renames / nullability changes are compile errors. Amounts are integer EUR
+ * cents; `date` is YYYY-MM-DD; `occurred_at` is the actual transaction time (display
+ * falls back to `created_at`). `kind` / `source` are text in Postgres and narrowed here.
+ */
+export interface Transaction extends Omit<Tables<'transactions'>, 'kind' | 'source'> {
+  kind: TxKind;
+  source: TxSource;
 }
 
 /** A transaction joined with its category presentation for rendering. */

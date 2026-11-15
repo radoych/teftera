@@ -2,11 +2,13 @@ import { Tabs } from 'expo-router';
 import { BottomNav } from '@/components/BottomNav';
 import { useTransactionsSync } from '@/features/transactions/sync';
 import { usePreferencesSync } from '@/features/preferences/sync';
+import { useHouseholdMembersSync } from '@/features/household/sync';
 
 /** Main app tab navigator with the floating frosted pill nav. */
 export default function AppTabsLayout() {
   useTransactionsSync();
   usePreferencesSync();
+  useHouseholdMembersSync();
 
   return (
     <Tabs

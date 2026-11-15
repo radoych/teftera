@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
@@ -8,7 +8,7 @@ import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { useAuthStore } from '@/features/auth/store';
-import { getMembers, type HouseholdMember } from '@/features/household/api';
+import { useHouseholdStore } from '@/features/household/store';
 import { deleteTransaction } from '@/features/transactions/api';
 import { memberName } from '@/features/transactions/edit';
 import { useTransactionsStore } from '@/features/transactions/store';
@@ -38,13 +38,9 @@ export default function TransactionDetailScreen() {
   const tx = useTransactionsStore((s) => s.transactions.find((t) => t.id === id));
   const categories = useTransactionsStore((s) => s.categories);
   const householdId = useAuthStore((s) => s.householdId);
-  const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const members = useHouseholdStore((s) => s.members);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
-
-  useEffect(() => {
-    if (householdId) getMembers(householdId).then(setMembers);
-  }, [householdId]);
 
   if (!tx) {
     return (

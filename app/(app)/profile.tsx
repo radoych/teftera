@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
@@ -9,12 +9,9 @@ import { SectionLabel } from '@/components/SectionLabel';
 import { signOut } from '@/features/auth/api';
 import { useAuthStore } from '@/features/auth/store';
 import { BankConnectionSection } from '@/features/transactions/components/BankConnectionSection';
-import {
-  getMembers,
-  getMyHousehold,
-  updateMyDisplayName,
-  type HouseholdMember,
-} from '@/features/household/api';
+import { updateMyDisplayName } from '@/features/household/api';
+import { useHouseholdStore } from '@/features/household/store';
+import { refreshMembers } from '@/features/household/sync';
 import { formatInviteCode } from '@/features/household/inviteCode';
 import { MembersSection } from '@/features/household/components/MembersSection';
 import { ProfileHeader } from '@/features/household/components/ProfileHeader';
@@ -43,16 +40,10 @@ export default function ProfileScreen() {
   const preferences = usePreferencesStore((s) => s.preferences);
   const setPreferences = usePreferencesStore((s) => s.setPreferences);
   const transactions = useTransactionsStore((s) => s.transactions);
-  const [members, setMembers] = useState<HouseholdMember[]>([]);
-  const [inviteCode, setInviteCode] = useState('');
+  const members = useHouseholdStore((s) => s.members);
+  const inviteCode = useHouseholdStore((s) => s.inviteCode);
 
   const email = session?.user.email ?? '';
-
-  useEffect(() => {
-    if (!householdId) return;
-    getMembers(householdId).then(setMembers);
-    getMyHousehold().then((h) => setInviteCode(h?.inviteCode ?? ''));
-  }, [householdId]);
 
   const onSignOut = async () => {
     await signOut();
@@ -100,7 +91,7 @@ export default function ProfileScreen() {
   const onSaveName = async (name: string) => {
     await updateMyDisplayName(name);
     setHousehold(householdId, name);
-    if (householdId) getMembers(householdId).then(setMembers);
+    if (householdId) void refreshMembers(householdId);
   };
 
   const lastSyncLabel = useMemo(() => {

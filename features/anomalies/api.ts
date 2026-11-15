@@ -45,10 +45,10 @@ export async function listOpenAnomalies(householdId: string): Promise<OpenAnomal
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map((r) => ({
-    id: r.id as string,
-    transactionId: r.transaction_id as string,
-    reason: r.reason as string,
-    score: (r.score as number | null) ?? null,
+    id: r.id,
+    transactionId: r.transaction_id,
+    reason: r.reason,
+    score: r.score,
   }));
 }
 
