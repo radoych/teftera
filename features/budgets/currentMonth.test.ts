@@ -1,5 +1,4 @@
-import type { CategoryLite } from '@/features/transactions/groupByDay';
-import type { Transaction } from '@/features/transactions/types';
+import type { CategoryLite, Transaction } from '@/features/transactions/types';
 import { spendingByCategory } from '@/features/transactions/dashboard';
 import { expensesOnly } from '@/features/transactions/kind';
 import { firstOfMonth } from '@/lib/dates';

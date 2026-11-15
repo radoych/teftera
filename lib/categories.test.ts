@@ -1,6 +1,8 @@
 import {
   BRAND_RULES,
   DEFAULT_CATEGORIES,
+  FALLBACK_CATEGORY,
+  categoryPresentation,
   guessCategory,
   guessIncomeCategory,
   resolveCategoryId,
@@ -290,5 +292,25 @@ describe('kind-aware resolveCategoryId', () => {
   });
   it('income never resolves to an expense category', () => {
     expect(resolveCategoryId('lidl', cats, 'income')).toBe('i2');
+  });
+});
+
+describe('categoryPresentation', () => {
+  it('passes a known category through', () => {
+    expect(
+      categoryPresentation({ name: 'Groceries', icon: 'shopping-basket', color: '#adc7ff' }),
+    ).toEqual({ name: 'Groceries', icon: 'shopping-basket', color: '#adc7ff' });
+  });
+
+  it('falls back to Other / category / #8e909a for a missing category', () => {
+    const fallback = { name: 'Other', icon: 'category', color: '#8e909a' };
+    expect(categoryPresentation(undefined)).toEqual(fallback);
+    expect(categoryPresentation(null)).toEqual(fallback);
+    expect(categoryPresentation()).toEqual(fallback);
+    expect(FALLBACK_CATEGORY).toEqual(fallback);
+  });
+
+  it('returns a fresh object (callers may not mutate the shared fallback)', () => {
+    expect(categoryPresentation()).not.toBe(FALLBACK_CATEGORY);
   });
 });

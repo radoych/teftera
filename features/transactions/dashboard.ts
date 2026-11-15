@@ -1,13 +1,9 @@
 // features/transactions/dashboard.ts — pure aggregation helpers for the dashboard.
 import { isInMonth, toISODate } from '@/lib/dates';
-import type { MaterialIconName } from '@/lib/categories';
-import type { CategoryLite } from './groupByDay';
-import type { Transaction } from './types';
+import { categoryPresentation, type MaterialIconName } from '@/lib/categories';
+import type { CategoryLite, Transaction } from './types';
 
 const FALLBACK_ID = 'uncategorized';
-const FALLBACK_ICON: MaterialIconName = 'category';
-const FALLBACK_COLOR = '#8e909a';
-const FALLBACK_NAME = 'Other';
 
 /** Sum of amount_eur (cents) for transactions dated today. */
 export function dayTotalCents(txs: Transaction[], now: Date = new Date()): number {
@@ -65,12 +61,9 @@ export function categoryBreakdown(
   }
 
   const rows: CategorySpend[] = [...totals.entries()].map(([id, totalCents]) => {
-    const cat = byId.get(id);
     return {
       id,
-      name: cat?.name ?? FALLBACK_NAME,
-      icon: (cat?.icon as MaterialIconName) ?? FALLBACK_ICON,
-      color: cat?.color ?? FALLBACK_COLOR,
+      ...categoryPresentation(byId.get(id)),
       totalCents,
       fraction: 0,
     };

@@ -1,8 +1,7 @@
 // features/budgets/currentMonth.ts — the one budget-vs-actual selector.
 import { spendingByCategory } from '@/features/transactions/dashboard';
-import type { CategoryLite } from '@/features/transactions/groupByDay';
 import { expensesOnly } from '@/features/transactions/kind';
-import type { Transaction } from '@/features/transactions/types';
+import type { CategoryLite, Transaction } from '@/features/transactions/types';
 import { firstOfMonth } from '@/lib/dates';
 import { budgetProgress } from './progress';
 import { resolveBudgetsForMonth } from './resolve';

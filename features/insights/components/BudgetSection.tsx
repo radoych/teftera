@@ -3,9 +3,9 @@ import { Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { SectionLabel } from '@/components/SectionLabel';
 import type { BudgetProgress } from '@/features/budgets/types';
-import type { CategoryLite } from '@/features/transactions/groupByDay';
+import type { CategoryLite } from '@/features/transactions/types';
+import { categoryPresentation } from '@/lib/categories';
 import { formatCurrency } from '@/lib/formatCurrency';
-import type { MaterialIconName } from '@/lib/categories';
 
 interface BudgetSectionProps {
   rows: BudgetProgress[];
@@ -26,10 +26,9 @@ export function BudgetSection({ rows, categoryById }: BudgetSectionProps) {
       ) : (
         <View className="gap-lg">
           {rows.map((p) => {
-            const cat = categoryById.get(p.categoryId);
-            const icon = (cat?.icon ?? 'category') as MaterialIconName;
-            const iconColor = cat?.color ?? '#8e909a';
-            const name = cat?.name ?? 'Other';
+            const { icon, color: iconColor, name } = categoryPresentation(
+              categoryById.get(p.categoryId),
+            );
             const barColor =
               p.state === 'over'
                 ? '#ffb4ab'

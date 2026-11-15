@@ -4,6 +4,7 @@ import { pctChange, categoryBreakdown } from '@/features/transactions/dashboard'
 import { filterByDateBounds } from '@/features/insights/range';
 import { monthBudgetProgress } from '@/features/budgets/currentMonth';
 import { expensesOnly, incomeOnly } from '@/features/transactions/kind';
+import { categoryPresentation } from '@/lib/categories';
 import { monthBounds, monthKey, startOfMonth, sumInMonth } from '@/lib/dates';
 import type { BuildReportInput, MonthOption, ReportData } from './types';
 
@@ -44,10 +45,10 @@ export function buildReportData(input: BuildReportInput): ReportData {
 
   const catById = new Map(input.categories.map((c) => [c.id, c]));
   const budgets = monthBudgetProgress(input.budgetRows, catRows, month).map((b) => {
-    const cat = catById.get(b.categoryId);
+    const { name, color } = categoryPresentation(catById.get(b.categoryId));
     return {
-      name: cat?.name ?? 'Other',
-      color: cat?.color ?? '#8e909a',
+      name,
+      color,
       budgetCents: b.budgetCents,
       spentCents: b.spentCents,
       pct: b.pct,

@@ -6,8 +6,38 @@
  */
 import type { ComponentProps } from 'react';
 import type { MaterialIcons } from '@expo/vector-icons';
+import type { CategoryLite } from '@/features/transactions/types';
 
 export type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
+
+/** How a category renders: label, glyph and accent colour. */
+export interface CategoryPresentation {
+  name: string;
+  icon: MaterialIconName;
+  color: string;
+}
+
+/** The single "unknown / deleted / null category" presentation. */
+export const FALLBACK_CATEGORY: Readonly<CategoryPresentation> = {
+  name: 'Other',
+  icon: 'category',
+  color: '#8e909a',
+};
+
+/**
+ * Presentation for a (possibly missing) category. Every screen, list, chart and
+ * the PDF report goes through this, so an unknown category looks the same
+ * everywhere.
+ */
+export function categoryPresentation(
+  cat?: Pick<CategoryLite, 'name' | 'icon' | 'color'> | null,
+): CategoryPresentation {
+  return {
+    name: cat?.name ?? FALLBACK_CATEGORY.name,
+    icon: (cat?.icon as MaterialIconName | undefined) ?? FALLBACK_CATEGORY.icon,
+    color: cat?.color ?? FALLBACK_CATEGORY.color,
+  };
+}
 
 export interface DefaultCategory {
   name: string;
