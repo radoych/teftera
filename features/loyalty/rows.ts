@@ -1,6 +1,6 @@
 // features/loyalty/rows.ts — narrow raw `loyalty_cards` rows / errors to the app's types. Pure.
 import type { BarcodeFormat } from '@/lib/barcode';
-import type { LoyaltyCardRow } from './dbTypes';
+import type { Tables } from '@/supabase/types';
 import { detectCodeFormat } from './format';
 import type { LoyaltyCard } from './types';
 
@@ -18,7 +18,7 @@ export function parseCodeFormat(value: string, code: string): BarcodeFormat {
   return isBarcodeFormat(value) ? value : detectCodeFormat(code).format;
 }
 
-export function toLoyaltyCard(row: LoyaltyCardRow): LoyaltyCard {
+export function toLoyaltyCard(row: Tables<'loyalty_cards'>): LoyaltyCard {
   return { ...row, code_format: parseCodeFormat(row.code_format, row.code) };
 }
 

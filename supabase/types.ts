@@ -242,6 +242,64 @@ export type Database = {
         }
         Relationships: []
       }
+      // loyalty_cards hand-added from migration 20261115130100_loyalty_cards.sql pending regeneration.
+      loyalty_cards: {
+        Row: {
+          code: string
+          code_format: string
+          color: string
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          nickname: string
+          note: string | null
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          code: string
+          code_format: string
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          nickname: string
+          note?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          code?: string
+          code_format?: string
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          nickname?: string
+          note?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_cards_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_cards_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       receipts: {
         Row: {
           created_at: string

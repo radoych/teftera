@@ -1,7 +1,7 @@
-import type { LoyaltyCardRow } from './dbTypes';
+import type { Tables } from '@/supabase/types';
 import { isNicknameTakenError, parseCodeFormat, toLoyaltyCard } from './rows';
 
-const row = (over: Partial<LoyaltyCardRow> = {}): LoyaltyCardRow => ({
+const row = (over: Partial<Tables<'loyalty_cards'>> = {}): Tables<'loyalty_cards'> => ({
   id: 'c1',
   household_id: 'h1',
   vendor_id: null,
