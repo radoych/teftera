@@ -77,6 +77,8 @@ export default function RootLayout() {
             <Stack.Screen name="transaction/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="import-dsk" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="categories" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="loyalty-cards" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="card/[id]" options={{ presentation: 'modal', animation: 'fade' }} />
           </Stack>
         )}
         <OfflineBanner />
