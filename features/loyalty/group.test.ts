@@ -1,4 +1,10 @@
-import { cardsForVendor, groupCardsByVendor, NO_VENDOR_KEY, NO_VENDOR_TITLE } from './group';
+import {
+  cardsForVendor,
+  countCardsByVendor,
+  groupCardsByVendor,
+  NO_VENDOR_KEY,
+  NO_VENDOR_TITLE,
+} from './group';
 import type { LoyaltyCard } from './types';
 
 const card = (id: string, vendorId: string | null, nickname: string): LoyaltyCard => ({
@@ -68,5 +74,23 @@ describe('cardsForVendor', () => {
   it('returns orphan cards for null', () => {
     const cards = [card('a', null, 'Б'), card('b', 'v2', 'А'), card('c', null, 'А')];
     expect(cardsForVendor(cards, null).map((c) => c.id)).toEqual(['c', 'a']);
+  });
+});
+
+describe('countCardsByVendor', () => {
+  it('counts cards per vendor id and ignores orphans', () => {
+    const counts = countCardsByVendor([
+      card('a', 'v1', 'A'),
+      card('b', 'v1', 'B'),
+      card('c', 'v2', 'C'),
+      card('d', null, 'D'),
+    ]);
+    expect(counts.get('v1')).toBe(2);
+    expect(counts.get('v2')).toBe(1);
+    expect(counts.size).toBe(2);
+  });
+
+  it('is empty for no cards', () => {
+    expect(countCardsByVendor([]).size).toBe(0);
   });
 });

@@ -19,6 +19,7 @@ import { HairlineDivider } from '@/components/HairlineDivider';
 import { PillButton } from '@/components/PillButton';
 import { SectionLabel } from '@/components/SectionLabel';
 import { useAuthStore } from '@/features/auth/store';
+import { useCardCount } from '@/features/loyalty/sync';
 import {
   extractionToForm,
   itemsSumCents,
@@ -52,6 +53,7 @@ export default function ConfirmReceiptScreen() {
 
   const [phase, setPhase] = useState<Phase>('extracting');
   const [merchant, setMerchant] = useState('');
+  const cardCount = useCardCount();
   // The raw merchant as Gemini read it — learned as a recognized name on save.
   const [extractedMerchant, setExtractedMerchant] = useState('');
   const [total, setTotal] = useState('');
@@ -218,6 +220,7 @@ export default function ConfirmReceiptScreen() {
                   onChangeText={setMerchant}
                   placeholder="Въведи търговец"
                   error={errors.merchant}
+                  cardCount={cardCount}
                 />
                 <HairlineDivider className="mt-xs" />
               </View>

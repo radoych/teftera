@@ -18,6 +18,7 @@ import { NotFoundView } from '@/components/NotFoundView';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { useAuthStore } from '@/features/auth/store';
+import { useCardCount } from '@/features/loyalty/sync';
 import { runAfterSave } from '@/features/transactions/afterSave';
 import { createTransaction, updateTransaction } from '@/features/transactions/api';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
@@ -86,6 +87,7 @@ export default function ManualEntryScreen() {
 
   const [amount, setAmount] = useState(seed?.amount ? formatDigitsAsAmount(seed.amount) : '');
   const [merchant, setMerchant] = useState(seed?.merchant ?? '');
+  const cardCount = useCardCount();
   const [note, setNote] = useState(seed?.note ?? '');
   const [date, setDate] = useState(seed?.date ?? toISODate());
   const [categoryId, setCategoryId] = useState<string | null>(seed?.categoryId ?? null);
@@ -239,6 +241,7 @@ export default function ManualEntryScreen() {
               onChangeText={setMerchant}
               placeholder="напр. Starbucks"
               error={errors.merchant}
+              cardCount={cardCount}
             />
           </FieldRow>
 

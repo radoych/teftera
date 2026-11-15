@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { SheetActions } from '@/components/SheetActions';
+import { refreshLoyaltyCards, useCardCount } from '@/features/loyalty/sync';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 import { deleteVendor, mergeVendors, moveAlias } from '../api';
-import { aliasCountLabel } from '../copy';
+import { aliasCountLabel, cardCountLabel } from '../copy';
 import {
   conflictOptions,
   isDestructiveOption,
@@ -64,14 +65,23 @@ function optionCopy(option: ConflictOption, c: AliasConflict, editing: Vendor) {
     case 'deleteBoth':
       return {
         label: 'Изтрий и двата',
-        description: 'Двата търговеца и всичките им имена се изтриват.',
+        description:
+          'Двата търговеца и всичките им имена се изтриват. Картите и списъците остават без търговец.',
         recommended: false,
       };
   }
 }
 
-/** One side of the side-by-side summary. Cards / list counts arrive with phases 2–3. */
-function VendorSummary({ vendor, index }: { vendor: Vendor; index: VendorIndex }) {
+/** One side of the side-by-side summary. The list flag arrives with phase 3. */
+function VendorSummary({
+  vendor,
+  index,
+  cards,
+}: {
+  vendor: Vendor;
+  index: VendorIndex;
+  cards: number;
+}) {
   const aliases = index.aliasesByVendor.get(vendor.id)?.length ?? 0;
   return (
     <View className="flex-1 gap-xs py-sm">
@@ -81,7 +91,10 @@ function VendorSummary({ vendor, index }: { vendor: Vendor; index: VendorIndex }
       <Text className="font-inter text-label-md text-on-surface-variant opacity-70">
         {aliasCountLabel(aliases)}
       </Text>
-      {/* Cards + shopping-list summary lines: added by the loyalty / shopping waves. */}
+      <Text className="font-inter text-label-md text-on-surface-variant opacity-70">
+        {cardCountLabel(cards)}
+      </Text>
+      {/* Shopping-list summary line: added by the shopping wave. */}
     </View>
   );
 }
@@ -96,6 +109,7 @@ export function VendorConflictSheet({
   onClose,
 }: VendorConflictSheetProps) {
   const index = useVendorIndex();
+  const cardCount = useCardCount();
   const [selected, setSelected] = useState<ConflictOption>('merge');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,6 +132,8 @@ export function VendorConflictSheet({
         { conflict, editing: editingVendor, retry },
         { mergeVendors, moveAlias, deleteVendor, refresh, getIndex: getVendorIndex },
       );
+      // Merge moved the owner's cards; deletes left orphans (spec §1 #7) — reload them.
+      await refreshLoyaltyCards(editingVendor.household_id).catch(() => {});
       haptics.success();
       onResolved(result);
     } catch (err) {
@@ -143,9 +159,17 @@ export function VendorConflictSheet({
           </Text>
 
           <View className="flex-row gap-md" style={styles.summaryRow}>
-            <VendorSummary vendor={conflict.owner} index={index} />
+            <VendorSummary
+              vendor={conflict.owner}
+              index={index}
+              cards={cardCount(conflict.owner.id)}
+            />
             <View style={styles.vRule} />
-            <VendorSummary vendor={editingVendor} index={index} />
+            <VendorSummary
+              vendor={editingVendor}
+              index={index}
+              cards={cardCount(editingVendor.id)}
+            />
           </View>
 
           <View>

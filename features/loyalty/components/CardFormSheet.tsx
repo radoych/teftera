@@ -1,5 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { Barcode } from '@/components/Barcode';
@@ -10,23 +10,23 @@ import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { SheetActions, type SheetAction } from '@/components/SheetActions';
 import { useAuthStore } from '@/features/auth/store';
+import { createVendor } from '@/features/vendors/api';
+import { VendorAutocomplete } from '@/features/vendors/components/VendorAutocomplete';
+import { ensureVendorForMerchant } from '@/features/vendors/ensure';
+import { getVendorIndex } from '@/features/vendors/store';
+import { refreshVendors } from '@/features/vendors/sync';
 import { COLOR_CHOICES } from '@/lib/palette';
 import { colors } from '@/lib/theme';
 import { createCard, deleteCard, updateCard } from '../api';
 import { formatGroup, initialFormatChoice, resolveDraftCode, type FormatGroup } from '../format';
 import { isNicknameTakenError } from '../rows';
-import { refreshLoyaltyCards } from '../sync';
+import { refreshLoyaltyCards, useCardCount } from '../sync';
 import type { LoyaltyCard } from '../types';
+import { initialVendorText, resolveCardVendorId } from '../vendorField';
 import { BarcodeScannerModal, isScannerSupported } from './BarcodeScannerModal';
 
 const NICKNAME_TAKEN = 'Вече има карта с този прякор за този търговец.';
 const DEFAULT_COLOR = COLOR_CHOICES[2] ?? colors.primaryContainer;
-
-/** What the vendor-field slot receives. */
-export interface VendorFieldContext {
-  vendorId: string | null;
-  onChange: (vendorId: string | null) => void;
-}
 
 export interface CardFormSheetProps {
   visible: boolean;
@@ -39,22 +39,11 @@ export interface CardFormSheetProps {
   onSaved?: (cardId: string) => void;
   /** After a successful delete (store already refreshed). */
   onDeleted?: (cardId: string) => void;
-  /**
-   * VENDOR SLOT — renders the vendor field at the top of the form. The vendors
-   * wave passes `VendorAutocomplete variant="field"` here. Omitted → no vendor
-   * field: new cards are orphans ("Без търговец") and edits keep their vendor.
-   */
-  renderVendorField?: (ctx: VendorFieldContext) => ReactNode;
-  /**
-   * Runs at save time to turn the slot's state into a vendor id — e.g.
-   * `ensureVendorForMerchant` for a newly typed vendor name. Rejecting aborts
-   * the save. Omitted → the slot's `vendorId` is saved as-is.
-   */
-  resolveVendorId?: (current: string | null) => Promise<string | null>;
 }
 
 /**
- * Add / edit a loyalty card in a bottom sheet: vendor slot, nickname, code
+ * Add / edit a loyalty card in a bottom sheet: vendor (autocomplete; a new
+ * name creates the vendor, blank = "Без търговец"), nickname, code
  * (+ camera scan), format, colour, note, a live barcode preview, and
  * [Запази][Отказ] (+ [Изтрий] when editing).
  */
@@ -79,8 +68,6 @@ function CardForm({
   onClose,
   onSaved,
   onDeleted,
-  renderVendorField,
-  resolveVendorId,
 }: CardFormSheetProps) {
   const { height } = useWindowDimensions();
   const householdId = useAuthStore((s) => s.householdId);
@@ -88,7 +75,11 @@ function CardForm({
   const displayName = useAuthStore((s) => s.displayName);
   const editing = card ?? null;
 
-  const [vendorId, setVendorId] = useState<string | null>(editing?.vendor_id ?? initialVendorId);
+  const cardCount = useCardCount();
+  const startVendorId = editing ? editing.vendor_id : initialVendorId;
+  // Snapshot at open: an untouched field keeps `startVendorId` even if its name is not loaded.
+  const [startVendorText] = useState(() => initialVendorText(startVendorId, getVendorIndex()));
+  const [vendorText, setVendorText] = useState(startVendorText);
   const [nickname, setNickname] = useState(editing?.nickname ?? displayName ?? '');
   const [code, setCode] = useState(editing?.code ?? '');
   /** null = not picked by the user → auto-detected from the code. */
@@ -112,7 +103,21 @@ function CardForm({
     setSaving(true);
     setNicknameError(null);
     try {
-      const finalVendorId = resolveVendorId ? await resolveVendorId(vendorId) : vendorId;
+      // A newly typed vendor name creates the vendor (spec §7.6); blank = orphan card.
+      const finalVendorId = await resolveCardVendorId(
+        {
+          householdId,
+          text: vendorText,
+          initialText: startVendorText,
+          initialVendorId: startVendorId,
+          index: getVendorIndex(),
+        },
+        {
+          ensure: (args) =>
+            ensureVendorForMerchant(args, { createVendor, refreshVendors, getIndex: getVendorIndex }),
+          refreshVendors,
+        },
+      );
       const fields = {
         vendorId: finalVendorId,
         nickname: nickname.trim(),
@@ -174,12 +179,19 @@ function CardForm({
           {editing ? 'Редакция на карта' : 'Нова карта'}
         </Text>
 
-        {renderVendorField ? (
-          <View>
-            <SectionLabel className="mb-xs">Търговец</SectionLabel>
-            {renderVendorField({ vendorId, onChange: setVendorId })}
+        <View>
+          <SectionLabel className="mb-xs">Търговец</SectionLabel>
+          {/* Bottom rule matches FlatInput (white at 10%). */}
+          <View className="border-b border-white/10 py-sm">
+            <VendorAutocomplete
+              variant="field"
+              value={vendorText}
+              onChangeText={setVendorText}
+              placeholder="Без търговец"
+              cardCount={cardCount}
+            />
           </View>
-        ) : null}
+        </View>
 
         <View>
           <SectionLabel className="mb-xs">Прякор</SectionLabel>

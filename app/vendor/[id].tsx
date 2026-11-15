@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { BottomSheet } from '@/components/BottomSheet';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { FlatInput } from '@/components/FlatInput';
@@ -12,6 +13,10 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SheetActions } from '@/components/SheetActions';
 import { useAuthStore } from '@/features/auth/store';
+import { CardFormSheet } from '@/features/loyalty/components/CardFormSheet';
+import { CardTile } from '@/features/loyalty/components/CardTile';
+import { refreshLoyaltyCards, useCardsForVendor } from '@/features/loyalty/sync';
+import type { LoyaltyCard } from '@/features/loyalty/types';
 import { addAlias, deleteVendor, removeAlias, renameVendor } from '@/features/vendors/api';
 import { AliasRow } from '@/features/vendors/components/AliasRow';
 import { VendorConflictSheet } from '@/features/vendors/components/VendorConflictSheet';
@@ -21,13 +26,18 @@ import { cleanVendorName, merchantKey } from '@/features/vendors/key';
 import { getVendorIndex, useVendorIndex, useVendorsStore } from '@/features/vendors/store';
 import { refreshVendors } from '@/features/vendors/sync';
 import type { AliasConflict, Vendor, VendorAlias, VendorIndex } from '@/features/vendors/types';
+import { rowEntering, rowExiting, rowLayout } from '@/lib/animation';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 
 /** The write that hit a conflict, so the sheet can re-run it after resolving. */
 type PendingWrite = { kind: 'alias'; text: string } | { kind: 'rename'; text: string };
 
-/** Vendor detail: rename · recognized names · (cards / list: later waves) · delete. */
+/** Screen side padding (Screen) and the card grid gap (gap-md). */
+const GUTTER = 16;
+const GAP = 16;
+
+/** Vendor detail: rename · recognized names · loyalty cards · (list: later wave) · delete. */
 export default function VendorDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const householdId = useAuthStore((s) => s.householdId);
@@ -35,6 +45,11 @@ export default function VendorDetailScreen() {
   const index = useVendorIndex();
   const vendor = id ? index.byId.get(id) : undefined;
   const aliases = (id && index.aliasesByVendor.get(id)) || [];
+  const cards = useCardsForVendor(id ?? null);
+  const { width } = useWindowDimensions();
+  const tileWidth = Math.floor((width - GUTTER * 2 - GAP) / 2);
+  /** undefined = card sheet closed, null = new card for this vendor, card = edit. */
+  const [editingCard, setEditingCard] = useState<LoyaltyCard | null | undefined>(undefined);
 
   const [newAlias, setNewAlias] = useState('');
   const [aliasHint, setAliasHint] = useState<string | null>(null);
@@ -153,6 +168,8 @@ export default function VendorDetailScreen() {
       setConfirmDelete(false);
       router.back();
       await refresh().catch(() => {});
+      // Its cards are now orphans (on delete set null) — show them under "Без търговец".
+      await refreshLoyaltyCards(householdId).catch(() => {});
     } catch {
       setDeleting(false);
       haptics.error();
@@ -238,9 +255,36 @@ export default function VendorDetailScreen() {
         <Text className="mt-xs font-inter text-label-md text-on-surface-variant">{aliasHint}</Text>
       ) : null}
 
+      {/* Loyalty cards */}
+      <SectionLabel className="mb-sm mt-lg">Клиентски карти</SectionLabel>
+      {cards.length > 0 ? (
+        <View className="flex-row flex-wrap gap-md">
+          {cards.map((card) => (
+            <Animated.View
+              key={card.id}
+              entering={rowEntering}
+              exiting={rowExiting}
+              layout={rowLayout}>
+              <CardTile
+                card={card}
+                vendorName={vendor.name}
+                width={tileWidth}
+                onPress={() => router.push({ pathname: '/card/[id]', params: { id: card.id } })}
+                onLongPress={() => setEditingCard(card)}
+              />
+            </Animated.View>
+          ))}
+        </View>
+      ) : null}
+      <Pressable
+        onPress={() => setEditingCard(null)}
+        accessibilityRole="button"
+        className="flex-row items-center gap-3 py-5 active:opacity-70">
+        <MaterialIcons name="add-card" size={20} color={colors.primaryContainer} />
+        <Text className="font-inter text-body-md text-primary-container">Добави карта</Text>
+      </Pressable>
+
       {/*
-        Loyalty cards ("Клиентски карти": CardTiles + "Добави карта") — the
-        loyalty-cards wave renders that section here.
         Shopping list ("Списък за пазаруване" link) — the shopping-lists wave
         renders it here.
       */}
@@ -294,6 +338,13 @@ export default function VendorDetailScreen() {
         destructive
         onConfirm={onDelete}
         onCancel={() => setConfirmDelete(false)}
+      />
+
+      <CardFormSheet
+        visible={editingCard !== undefined}
+        card={editingCard ?? null}
+        initialVendorId={vendor.id}
+        onClose={() => setEditingCard(undefined)}
       />
 
       <VendorConflictSheet

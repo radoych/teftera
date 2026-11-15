@@ -62,3 +62,12 @@ export function cardsForVendor(
 ): LoyaltyCard[] {
   return cards.filter((c) => c.vendor_id === vendorId).sort(byNickname);
 }
+
+/** Card count per vendor id (orphans are not counted). */
+export function countCardsByVendor(cards: readonly LoyaltyCard[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const c of cards) {
+    if (c.vendor_id) counts.set(c.vendor_id, (counts.get(c.vendor_id) ?? 0) + 1);
+  }
+  return counts;
+}
