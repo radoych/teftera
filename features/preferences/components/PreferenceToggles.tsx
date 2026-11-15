@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, Switch, Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { SectionLabel } from '@/components/SectionLabel';
+import { colors } from '@/lib/theme';
 
 interface PreferenceTogglesProps {
   budgetAlerts: boolean;
@@ -27,7 +28,7 @@ export function PreferenceToggles({
         <Text className="font-inter text-body-lg text-on-surface">
           Управление на бюджети
         </Text>
-        <MaterialIcons name="chevron-right" size={22} color="#c4c6d0" />
+        <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
       </Pressable>
       <HairlineDivider />
       <View className="flex-row items-center justify-between py-3">
@@ -37,8 +38,8 @@ export function PreferenceToggles({
         <Switch
           value={budgetAlerts}
           onValueChange={onBudgetAlertsChange}
-          trackColor={{ false: '#44474f', true: '#adc7ff' }}
-          thumbColor={budgetAlerts ? '#112f5e' : '#e3e2e6'}
+          trackColor={{ false: colors.outlineVariant, true: colors.primaryContainer }}
+          thumbColor={budgetAlerts ? colors.onPrimary : colors.onSurface}
         />
       </View>
       <HairlineDivider />
@@ -49,8 +50,8 @@ export function PreferenceToggles({
         <Switch
           value={anomalyAlerts}
           onValueChange={onAnomalyAlertsChange}
-          trackColor={{ false: '#44474f', true: '#adc7ff' }}
-          thumbColor={anomalyAlerts ? '#112f5e' : '#e3e2e6'}
+          trackColor={{ false: colors.outlineVariant, true: colors.primaryContainer }}
+          thumbColor={anomalyAlerts ? colors.onPrimary : colors.onSurface}
         />
       </View>
     </View>

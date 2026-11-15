@@ -11,6 +11,7 @@ import { useAuthStore } from '@/features/auth/store';
 import { createHousehold, joinHouseholdByCode } from '@/features/household/api';
 import { formatInviteCode, normalizeInviteCode } from '@/features/household/inviteCode';
 import { useHouseholdStore } from '@/features/household/store';
+import { colors } from '@/lib/theme';
 
 type Tab = 'create' | 'join';
 
@@ -109,7 +110,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
                 <MaterialIcons
                   name={copied ? 'check' : 'content-copy'}
                   size={22}
-                  color={copied ? '#c3f400' : '#adc7ff'}
+                  color={copied ? colors.secondaryFixed : colors.primaryContainer}
                 />
               </Pressable>
             </View>
@@ -146,7 +147,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
                     value={name}
                     onChangeText={setName}
                     placeholder="напр. Дом Джечеви"
-                    placeholderTextColor="rgba(196,198,208,0.3)"
+                    placeholderTextColor={colors.placeholder}
                     className="border-b border-white/10 py-4 font-jakarta-medium text-headline-md text-on-surface"
                   />
                 </View>
@@ -166,7 +167,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
                     value={code}
                     onChangeText={(t) => setCode(t.toUpperCase())}
                     placeholder="9F4K-7X2B"
-                    placeholderTextColor="rgba(196,198,208,0.3)"
+                    placeholderTextColor={colors.placeholder}
                     autoCapitalize="characters"
                     autoCorrect={false}
                     maxLength={9}
@@ -202,7 +203,7 @@ export function HouseholdSetupView({ defaultTab = 'create' }: { defaultTab?: Tab
 
             <Pressable onPress={onSkip} disabled={loading} className="mb-xl mt-xxl items-center">
               {loading ? (
-                <ActivityIndicator color="#c4c6d0" />
+                <ActivityIndicator color={colors.onSurfaceVariant} />
               ) : (
                 <Text className="font-inter text-label-md text-on-surface-variant opacity-60">
                   Пропусни засега — ще поканя по-късно

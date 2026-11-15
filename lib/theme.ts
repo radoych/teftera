@@ -44,6 +44,8 @@ export const colors = {
   errorContainer: '#93000a',
   /** Greppable alias for `secondaryFixed` — the lime anomaly accent. */
   anomaly: '#c3f400',
+  /** Input placeholder text — on-surface-variant (#c4c6d0) at 30% opacity. */
+  placeholder: 'rgba(196,198,208,0.3)',
 } as const;
 
 export type ColorToken = keyof typeof colors;
@@ -78,4 +80,5 @@ export const tailwindColors = {
   error: colors.error,
   'error-container': colors.errorContainer,
   anomaly: colors.anomaly,
+  placeholder: colors.placeholder,
 } as const;

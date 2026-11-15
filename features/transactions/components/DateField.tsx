@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { WheelDatePicker } from '@/features/transactions/components/WheelDatePicker';
 import { relativeDay } from '@/lib/dates';
+import { colors } from '@/lib/theme';
 
 interface DateFieldProps {
   value: string; // YYYY-MM-DD
@@ -25,7 +26,7 @@ export function DateField({ value, onChange, label = 'Дата' }: DateFieldProp
             </Text>
             <Text className="font-inter text-body-lg text-on-surface">{relativeDay(value)}</Text>
           </View>
-          <MaterialIcons name="event" size={22} color="#c4c6d0" />
+          <MaterialIcons name="event" size={22} color={colors.onSurfaceVariant} />
         </View>
       </Pressable>
       <HairlineDivider />

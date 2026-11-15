@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { HairlineDivider } from '@/components/HairlineDivider';
 import { SectionLabel } from '@/components/SectionLabel';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { colors } from '@/lib/theme';
 
 interface AnomalyCard {
   id: string;
@@ -32,7 +33,7 @@ export function AnomalyCards({ cards, onReview }: AnomalyCardsProps) {
             <View className="flex-1 flex-row items-center gap-md">
               <View className="relative">
                 <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-high">
-                  <MaterialIcons name="warning" size={20} color="#c3f400" />
+                  <MaterialIcons name="warning" size={20} color={colors.anomaly} />
                 </View>
                 <View className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-secondary-fixed" />
               </View>

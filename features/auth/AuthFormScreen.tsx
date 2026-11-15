@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { AuthShell } from '@/components/AuthShell';
 import { FlatInput } from '@/components/FlatInput';
 import { signInWithPassword, signUpWithPassword } from '@/features/auth/api';
+import { colors } from '@/lib/theme';
 
 type Mode = 'login' | 'register';
 
@@ -115,14 +116,14 @@ export function AuthFormScreen({ initialMode }: { initialMode: Mode }) {
         <View className="flex-row items-center justify-between rounded-full bg-surface-container-high p-2">
           <Pressable onPress={onRegisterPress} disabled={loading} className={pillClassName(mode === 'register')}>
             {mode === 'register' && loading ? (
-              <ActivityIndicator color="#112f5e" />
+              <ActivityIndicator color={colors.onPrimary} />
             ) : (
               <Text className={labelClassName(mode === 'register')}>Регистрация</Text>
             )}
           </Pressable>
           <Pressable onPress={onLoginPress} disabled={loading} className={pillClassName(mode === 'login')}>
             {mode === 'login' && loading ? (
-              <ActivityIndicator color="#112f5e" />
+              <ActivityIndicator color={colors.onPrimary} />
             ) : (
               <Text className={labelClassName(mode === 'login')}>Вход</Text>
             )}
