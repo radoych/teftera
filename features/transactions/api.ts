@@ -2,12 +2,15 @@
 import { supabase } from '@/services/supabase';
 import { windowStartISO } from '@/lib/dates';
 import type { CategoryLite } from './groupByDay';
+import { toCategoryLite, toTransaction } from './rows';
 import type { Transaction } from './types';
 
-/** Explicit column list — never select('*') (review #5). */
+/**
+ * Explicit column list — never select('*') (review #5). A single string literal (not
+ * concatenated) so postgrest-js can parse it and type the selected row.
+ */
 const TRANSACTION_COLUMNS =
-  'id, household_id, user_id, amount_eur, original_amount, original_currency, ' +
-  'merchant, category_id, date, note, source, receipt_id, is_flagged, occurred_at, created_at, kind';
+  'id, household_id, user_id, amount_eur, original_amount, original_currency, merchant, category_id, date, note, source, receipt_id, is_flagged, occurred_at, created_at, kind' as const;
 
 /** Transactions are fetched for the last N months only (review #5). */
 export const TRANSACTION_WINDOW_MONTHS = 12;
@@ -32,7 +35,7 @@ export async function listCategories(householdId: string): Promise<CategoryLite[
     .eq('household_id', householdId)
     .order('name', { ascending: true });
   if (error) throw error;
-  return (data ?? []) as CategoryLite[];
+  return (data ?? []).map(toCategoryLite);
 }
 
 /** Create a household category. */
@@ -79,9 +82,7 @@ export async function listTransactions(householdId: string): Promise<Transaction
     .order('date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw error;
-  // TRANSACTION_COLUMNS is a runtime-built string, so postgrest-js can't parse it into a
-  // literal column type and widens the result to GenericStringError; cast through unknown.
-  return (data ?? []) as unknown as Transaction[];
+  return (data ?? []).map(toTransaction);
 }
 
 /** A normalized imported row, carrying its BGN provenance when converted. */
@@ -142,7 +143,7 @@ export async function createTransaction(input: NewTransaction): Promise<{ id: st
     .select('id')
     .single();
   if (error) throw error;
-  return { id: (data as { id: string }).id };
+  return { id: data.id };
 }
 
 export interface TransactionPatch {

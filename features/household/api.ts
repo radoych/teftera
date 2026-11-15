@@ -67,7 +67,7 @@ export async function joinHouseholdByCode(
   if (error) throw error;
   const householdId = Array.isArray(data) ? data[0] : data;
   if (!householdId) throw new Error('join_household_by_code RPC returned no data');
-  return { householdId: householdId as string };
+  return { householdId };
 }
 
 /** Update the current user's display name (membership row + auth metadata mirror). */

@@ -1,15 +1,12 @@
 import { formatTime, relativeDay } from '@/lib/dates';
 import type { MaterialIconName } from '@/lib/categories';
+import type { Tables } from '@/supabase/types';
+import type { TxKind } from './kind';
 import type { Transaction, TransactionDayGroup, TransactionView } from './types';
 
-export interface CategoryLite {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  is_default?: boolean;
-  kind: 'expense' | 'income';
-}
+/** The category fields the UI needs, derived from the generated `categories` Row. */
+export type CategoryLite = Pick<Tables<'categories'>, 'id' | 'name' | 'icon' | 'color'> &
+  Partial<Pick<Tables<'categories'>, 'is_default'>> & { kind: TxKind };
 
 const FALLBACK_ICON: MaterialIconName = 'category';
 const FALLBACK_COLOR = '#8e909a';
