@@ -4,6 +4,7 @@ import { formatCurrency } from '@/lib/formatCurrency';
 import { windowStartISO } from '@/lib/dates';
 import { evaluate, historyForCategory } from './detect';
 import { flagTransaction, insertAnomaly } from './api';
+import { anomalyReasonText } from './reasons';
 
 export interface RunDetectionInput {
   transactionId: string;
@@ -46,12 +47,12 @@ export async function runDetection(
       windowStartISO(6),
     );
     const result = evaluate(input.amountCents, history);
-    if (!result.isAnomaly || result.reason === null) return;
+    if (!result.isAnomaly || result.direction === null) return;
     await deps.flagTransaction(input.transactionId);
     await deps.insertAnomaly({
       householdId: input.householdId,
       transactionId: input.transactionId,
-      reason: result.reason,
+      reason: anomalyReasonText(result.direction, result.z),
       score: result.score,
     });
     if (input.alertsEnabled) {

@@ -23,7 +23,7 @@ describe('scoreTransaction', () => {
     const res = scoreTransaction(50000, stable);
     expect(res.isAnomaly).toBe(true);
     expect(res.score).toBeGreaterThan(2.5);
-    expect(res.reason).toContain('Над');
+    expect(res.direction).toBe('over');
   });
 
   it('does not flag a normal amount', () => {

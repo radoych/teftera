@@ -119,5 +119,5 @@ export async function getBankConnection(
     .maybeSingle();
   if (error && __DEV__) console.warn('[bank-sync] connection lookup failed', error);
   if (error || !data) return null;
-  return { bankName: data.bank_name as string, validUntil: data.valid_until as string };
+  return { bankName: data.bank_name, validUntil: data.valid_until };
 }

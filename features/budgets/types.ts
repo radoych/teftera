@@ -1,10 +1,13 @@
-export interface BudgetRow {
-  id: string;
-  household_id: string;
-  category_id: string | null;
-  amount_eur: number; // euro cents
-  month: string; // YYYY-MM-01
-}
+import type { Tables } from '@/supabase/types';
+
+/**
+ * The budget columns the app selects (see `fetchBudgets`), derived from the
+ * generated `budgets` Row. `amount_eur` is euro cents; `month` is YYYY-MM-01.
+ */
+export type BudgetRow = Pick<
+  Tables<'budgets'>,
+  'id' | 'household_id' | 'category_id' | 'amount_eur' | 'month'
+>;
 
 export type ResolvedBudgets = Map<string, number>; // categoryId -> amountCents
 
