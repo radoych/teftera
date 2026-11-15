@@ -25,16 +25,12 @@ import {
   itemsToNote,
   type ReceiptFormItem,
 } from '@/features/receipts/extraction';
-import { runDetection } from '@/features/anomalies/runDetection';
-import { runBudgetCheck } from '@/features/budgets/runBudgetCheck';
-import { useBudgetsStore } from '@/features/budgets/store';
-import { usePreferencesStore } from '@/features/preferences/store';
 import { saveReceiptTransaction } from '@/features/receipts/save';
 import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
 import { DateField } from '@/features/transactions/components/DateField';
+import { runAfterSave } from '@/features/transactions/afterSave';
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
-import { refreshTransactions } from '@/features/transactions/sync';
 import { resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
@@ -146,29 +142,15 @@ export default function ConfirmReceiptScreen() {
       Alert.alert('Грешка', 'Неуспешно записване. Опитай отново.');
       return;
     }
-    try {
-      await refreshTransactions(householdId);
-      await runDetection({
-        transactionId: newId,
-        householdId,
-        amountCents: parsed.data.amountCents,
-        categoryId: resolvedCategoryId,
-        transactions: useTransactionsStore.getState().transactions,
-        merchant: parsed.data.merchant,
-        alertsEnabled:
-          usePreferencesStore.getState().preferences.anomalyAlertsEnabled ?? true,
-      });
-      await runBudgetCheck({
-        householdId,
-        savedCategoryId: resolvedCategoryId,
-        alertsEnabled: usePreferencesStore.getState().preferences.budgetAlertsEnabled ?? true,
-        transactions: useTransactionsStore.getState().transactions,
-        categories: useTransactionsStore.getState().categories,
-        budgets: useBudgetsStore.getState().rows,
-      });
-    } catch {
-      // Non-fatal: the save already succeeded; the list reconciles on next focus.
-    }
+    // Non-fatal: the save already succeeded; the list reconciles on next focus.
+    await runAfterSave({
+      householdId,
+      transactionId: newId,
+      kind: 'expense',
+      amountCents: parsed.data.amountCents,
+      categoryId: resolvedCategoryId,
+      merchant: parsed.data.merchant,
+    });
     router.replace('/(app)');
   };
 
