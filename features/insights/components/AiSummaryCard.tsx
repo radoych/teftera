@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import { SectionLabel } from '@/components/SectionLabel';
 import { Skeleton } from '@/components/Skeleton';
 import type { SummaryStatus } from '@/features/insights/summaryStore';
+import { colors } from '@/lib/theme';
 
 interface AiSummaryCardProps {
   status: SummaryStatus;
@@ -16,7 +17,7 @@ export function AiSummaryCard({ status, text }: AiSummaryCardProps) {
       <View className="w-1 rounded-full bg-surface-tint opacity-30" />
       <View className="flex-1 gap-sm">
         <View className="flex-row items-center gap-sm">
-          <MaterialIcons name="auto-awesome" size={14} color="#c4c6d0" />
+          <MaterialIcons name="auto-awesome" size={14} color={colors.onSurfaceVariant} />
           <SectionLabel>AI обобщение</SectionLabel>
         </View>
         {status === 'loading' ? (

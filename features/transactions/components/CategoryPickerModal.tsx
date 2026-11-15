@@ -3,6 +3,7 @@ import { ScrollView, Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import type { CategoryLite } from '@/features/transactions/groupByDay';
 import type { MaterialIconName } from '@/lib/categories';
+import { colors } from '@/lib/theme';
 
 interface CategoryPickerModalProps {
   visible: boolean;
@@ -37,7 +38,9 @@ export function CategoryPickerModal({
                 <MaterialIcons name={c.icon as MaterialIconName} size={20} color={c.color} />
               </View>
               <Text className="flex-1 font-inter text-body-lg text-on-surface">{c.name}</Text>
-              {active ? <MaterialIcons name="check" size={22} color="#adc7ff" /> : null}
+              {active ? (
+                <MaterialIcons name="check" size={22} color={colors.primaryContainer} />
+              ) : null}
             </Pressable>
           );
         })}

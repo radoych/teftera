@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { ComponentProps } from 'react';
+import { colors } from '@/lib/theme';
 
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
@@ -20,14 +21,14 @@ interface PillButtonProps {
 
 const VARIANTS: Record<PillVariant, { container: string; content: string }> = {
   // Primary CTA — light blue fill, dark ink.
-  filled: { container: 'bg-primary-container', content: '#112f5e' },
+  filled: { container: 'bg-primary-container', content: colors.onPrimary },
   // Outlined ghost pill over the dark surface.
   ghost: {
     container: 'bg-transparent border border-white/10',
-    content: '#e3e2e6',
+    content: colors.onSurface,
   },
   // Subtle filled surface.
-  tonal: { container: 'bg-surface-container-high', content: '#e3e2e6' },
+  tonal: { container: 'bg-surface-container-high', content: colors.onSurface },
 };
 
 /**

@@ -3,6 +3,7 @@ import { RefreshControl, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackgroundGlow } from './BackgroundGlow';
+import { colors } from '@/lib/theme';
 
 interface ScreenProps {
   children: ReactNode;
@@ -76,9 +77,9 @@ export function Screen({
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={onRefresh}
-                  tintColor="#adc7ff"
-                  colors={['#adc7ff']}
-                  progressBackgroundColor="#1e2023"
+                  tintColor={colors.primaryContainer}
+                  colors={[colors.primaryContainer]}
+                  progressBackgroundColor={colors.surfaceContainer}
                 />
               ) : undefined
             }>

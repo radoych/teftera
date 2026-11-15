@@ -4,6 +4,7 @@ import { HairlineDivider } from '@/components/HairlineDivider';
 import { SectionLabel } from '@/components/SectionLabel';
 import { formatCurrency } from '@/lib/formatCurrency';
 import type { MerchantSpend } from '@/features/insights/aggregate';
+import { colors } from '@/lib/theme';
 
 interface TopMerchantsListProps {
   merchants: MerchantSpend[];
@@ -27,7 +28,7 @@ export function TopMerchantsList({ merchants }: TopMerchantsListProps) {
               <View className="flex-row items-center justify-between py-md">
                 <View className="flex-row items-center gap-md">
                   <View className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-high">
-                    <MaterialIcons name="store" size={20} color="#c4c6d0" />
+                    <MaterialIcons name="store" size={20} color={colors.onSurfaceVariant} />
                   </View>
                   <Text className="font-inter text-body-md text-on-surface">
                     {m.merchant}

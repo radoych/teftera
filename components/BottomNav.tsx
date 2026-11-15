@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ComponentProps } from 'react';
+import { colors } from '@/lib/theme';
 
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
@@ -85,14 +86,14 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
                 <View
                   style={{ transform: [{ scale: 1.1 }] }}
                   className="flex-row items-center gap-2 rounded-full bg-primary-container px-5 py-3">
-                  <MaterialIcons name={tab.icon} size={22} color="#112f5e" />
+                  <MaterialIcons name={tab.icon} size={22} color={colors.onPrimary} />
                   <Text className="font-inter-semibold text-label-md text-on-primary">
                     {tab.label}
                   </Text>
                 </View>
               ) : (
                 <View className="p-3">
-                  <MaterialIcons name={tab.icon} size={22} color="#c4c6d0" />
+                  <MaterialIcons name={tab.icon} size={22} color={colors.onSurfaceVariant} />
                 </View>
               )}
             </Pressable>

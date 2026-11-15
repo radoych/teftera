@@ -36,6 +36,7 @@ import { exportMonthlyReport, EmptyMonthError } from '@/features/reports/export'
 import { monthPickerOptions } from '@/features/reports/reportData';
 import type { MonthOption } from '@/features/reports/types';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { colors } from '@/lib/theme';
 
 export default function InsightsScreen() {
   const transactions = useTransactionsStore((s) => s.transactions);
@@ -146,9 +147,9 @@ export default function InsightsScreen() {
             style={{ opacity: exporting ? 0.5 : 1 }}
           >
             {exporting ? (
-              <ActivityIndicator size="small" color="#adc7ff" />
+              <ActivityIndicator size="small" color={colors.primaryContainer} />
             ) : (
-              <MaterialIcons name="ios-share" size={20} color="#adc7ff" />
+              <MaterialIcons name="ios-share" size={20} color={colors.primaryContainer} />
             )}
           </Pressable>
         ) : null}

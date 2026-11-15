@@ -4,6 +4,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { Screen } from '@/components/Screen';
 import type { BankConnectionInfo } from '@/features/transactions/import/useImportFlow';
+import { colors } from '@/lib/theme';
 
 interface ImportIdleViewProps {
   header: ReactNode;
@@ -50,7 +51,7 @@ export function ImportIdleView({
       {header}
       {busy ? (
         <View className="items-center py-xxl">
-          <ActivityIndicator color="#adc7ff" />
+          <ActivityIndicator color={colors.primaryContainer} />
           <Text className="mt-md font-inter text-body-md text-on-surface-variant opacity-70">
             {syncing ? 'Синхронизиране с банката…' : 'Обработка на файла…'}
           </Text>

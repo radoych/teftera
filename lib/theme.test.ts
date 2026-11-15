@@ -6,8 +6,16 @@ const tailwindConfig = require('../tailwind.config.js') as {
 };
 
 describe('theme tokens', () => {
-  it('are all 6-digit hex colours', () => {
-    Object.values(colors).forEach((c) => expect(c).toMatch(/^#[0-9a-f]{6}$/));
+  it('are 6-digit hex colours, except the translucent placeholder', () => {
+    const { placeholder: _placeholder, ...opaque } = colors;
+    Object.values(opaque).forEach((c) => expect(c).toMatch(/^#[0-9a-f]{6}$/));
+  });
+
+  it('placeholder is on-surface-variant at 30% opacity', () => {
+    const [r, g, b] = [1, 3, 5].map((i) =>
+      parseInt(colors.onSurfaceVariant.slice(i, i + 2), 16),
+    );
+    expect(colors.placeholder).toBe(`rgba(${r},${g},${b},0.3)`);
   });
 
   it('anomaly is an alias of secondary-fixed', () => {

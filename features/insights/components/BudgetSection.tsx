@@ -8,6 +8,7 @@ import type { BudgetProgress } from '@/features/budgets/types';
 import type { CategoryLite } from '@/features/transactions/types';
 import { categoryPresentation } from '@/lib/categories';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { colors } from '@/lib/theme';
 
 interface BudgetSectionProps {
   rows: BudgetProgress[];
@@ -48,7 +49,7 @@ export function BudgetSection({ rows, categoryById }: BudgetSectionProps) {
                 <ProgressBar fraction={p.pct / 100} color={budgetStateColor(p.state)} />
                 <Text
                   className="font-inter text-label-md"
-                  style={{ color: remaining < 0 ? '#ffb4ab' : '#c4c6d0' }}
+                  style={{ color: remaining < 0 ? colors.error : colors.onSurfaceVariant }}
                 >
                   {remaining < 0
                     ? `Над бюджета с ${formatCurrency(-remaining)}`

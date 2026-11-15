@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { SectionLabel } from '@/components/SectionLabel';
 import type { MonthOption } from '@/features/reports/types';
+import { colors } from '@/lib/theme';
 
 interface MonthPickerSheetProps {
   visible: boolean;
@@ -29,7 +30,7 @@ export function MonthPickerSheet({
             className="flex-row items-center justify-between py-md"
           >
             <Text className="font-inter text-body-lg text-on-surface">{opt.label}</Text>
-            <MaterialIcons name="picture-as-pdf" size={20} color="#8e909a" />
+            <MaterialIcons name="picture-as-pdf" size={20} color={colors.outline} />
           </Pressable>
         ))}
       </View>
