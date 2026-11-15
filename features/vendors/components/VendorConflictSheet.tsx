@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { SheetActions } from '@/components/SheetActions';
 import { refreshLoyaltyCards, useCardCount } from '@/features/loyalty/sync';
+import { useListsByVendor } from '@/features/shopping/sync';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 import { deleteVendor, mergeVendors, moveAlias } from '../api';
@@ -72,7 +73,7 @@ function optionCopy(option: ConflictOption, c: AliasConflict, editing: Vendor) {
   }
 }
 
-/** One side of the side-by-side summary. The list flag arrives with phase 3. */
+/** One side of the side-by-side summary: name, recognized names, cards, list. */
 function VendorSummary({
   vendor,
   index,
@@ -83,6 +84,7 @@ function VendorSummary({
   cards: number;
 }) {
   const aliases = index.aliasesByVendor.get(vendor.id)?.length ?? 0;
+  const hasList = useListsByVendor().has(vendor.id);
   return (
     <View className="flex-1 gap-xs py-sm">
       <Text className="font-inter-semibold text-body-md text-on-surface" numberOfLines={2}>
@@ -94,7 +96,9 @@ function VendorSummary({
       <Text className="font-inter text-label-md text-on-surface-variant opacity-70">
         {cardCountLabel(cards)}
       </Text>
-      {/* Shopping-list summary line: added by the shopping wave. */}
+      <Text className="font-inter text-label-md text-on-surface-variant opacity-70">
+        {hasList ? 'списък ✓' : 'списък –'}
+      </Text>
     </View>
   );
 }

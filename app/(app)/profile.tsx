@@ -145,7 +145,12 @@ export default function ProfileScreen() {
           <Text className="font-inter text-body-lg text-on-surface">Клиентски карти</Text>
           <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
         </Pressable>
-        {/* "Списъци за пазаруване" row: added by the shopping wave. */}
+        <Pressable
+          onPress={() => router.push('/lists')}
+          className="flex-row items-center justify-between py-5 active:bg-white/5">
+          <Text className="font-inter text-body-lg text-on-surface">Списъци за пазаруване</Text>
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
+        </Pressable>
         <Pressable
           onPress={() => router.push('/categories')}
           className="flex-row items-center justify-between py-5 active:bg-white/5">

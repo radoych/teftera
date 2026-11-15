@@ -3,9 +3,10 @@ import type { DashboardSection, DashboardSectionKey } from './types';
 export const DEFAULT_DASHBOARD_SECTIONS: DashboardSection[] = [
   { key: 'categories', visible: true },
   { key: 'recent', visible: true },
+  { key: 'lists', visible: true },
 ];
 
-const KNOWN_KEYS: DashboardSectionKey[] = ['categories', 'recent'];
+const KNOWN_KEYS: DashboardSectionKey[] = ['categories', 'recent', 'lists'];
 
 /**
  * Normalize stored sections: keep stored order, append any known section that is

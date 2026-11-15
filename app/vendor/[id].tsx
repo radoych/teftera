@@ -17,6 +17,9 @@ import { CardFormSheet } from '@/features/loyalty/components/CardFormSheet';
 import { CardTile } from '@/features/loyalty/components/CardTile';
 import { refreshLoyaltyCards, useCardsForVendor } from '@/features/loyalty/sync';
 import type { LoyaltyCard } from '@/features/loyalty/types';
+import { NewListSheet } from '@/features/shopping/components/NewListSheet';
+import { listMetaLabel } from '@/features/shopping/copy';
+import { useListCounts, useListsByVendor } from '@/features/shopping/sync';
 import { addAlias, deleteVendor, removeAlias, renameVendor } from '@/features/vendors/api';
 import { AliasRow } from '@/features/vendors/components/AliasRow';
 import { VendorConflictSheet } from '@/features/vendors/components/VendorConflictSheet';
@@ -37,7 +40,7 @@ type PendingWrite = { kind: 'alias'; text: string } | { kind: 'rename'; text: st
 const GUTTER = 16;
 const GAP = 16;
 
-/** Vendor detail: rename · recognized names · loyalty cards · (list: later wave) · delete. */
+/** Vendor detail: rename · recognized names · loyalty cards · shopping list · delete. */
 export default function VendorDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const householdId = useAuthStore((s) => s.householdId);
@@ -50,6 +53,10 @@ export default function VendorDetailScreen() {
   const tileWidth = Math.floor((width - GUTTER * 2 - GAP) / 2);
   /** undefined = card sheet closed, null = new card for this vendor, card = edit. */
   const [editingCard, setEditingCard] = useState<LoyaltyCard | null | undefined>(undefined);
+  const listsByVendor = useListsByVendor();
+  const shoppingList = id ? listsByVendor.get(id) : undefined;
+  const listCounts = useListCounts();
+  const [newListOpen, setNewListOpen] = useState(false);
 
   const [newAlias, setNewAlias] = useState('');
   const [aliasHint, setAliasHint] = useState<string | null>(null);
@@ -284,10 +291,41 @@ export default function VendorDetailScreen() {
         <Text className="font-inter text-body-md text-primary-container">Добави карта</Text>
       </Pressable>
 
-      {/*
-        Shopping list ("Списък за пазаруване" link) — the shopping-lists wave
-        renders it here.
-      */}
+      <SectionLabel className="mb-xs mt-xl">Списък за пазаруване</SectionLabel>
+      <Pressable
+        onPress={() =>
+          shoppingList
+            ? router.push({ pathname: '/list/[id]', params: { id: shoppingList.id } })
+            : setNewListOpen(true)
+        }
+        accessibilityRole="button"
+        className="flex-row items-center justify-between py-md active:bg-white/5">
+        <View className="flex-row items-center gap-3">
+          <MaterialIcons
+            name={shoppingList ? 'checklist' : 'playlist-add'}
+            size={20}
+            color={shoppingList ? colors.onSurfaceVariant : colors.primaryContainer}
+          />
+          <Text
+            className={`font-inter text-body-lg ${
+              shoppingList ? 'text-on-surface' : 'text-primary-container'
+            }`}>
+            {shoppingList
+              ? listMetaLabel(
+                  listCounts.get(shoppingList.id) ?? { total: 0, open: 0, done: 0 },
+                )
+              : 'Създай списък'}
+          </Text>
+        </View>
+        {shoppingList ? (
+          <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
+        ) : null}
+      </Pressable>
+      <NewListSheet
+        visible={newListOpen}
+        onClose={() => setNewListOpen(false)}
+        initialVendorName={vendor.name}
+      />
 
       {/* Rename */}
       <BottomSheet visible={renameDraft !== null} onClose={() => setRenameDraft(null)}>

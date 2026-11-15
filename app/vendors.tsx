@@ -11,6 +11,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SheetActions } from '@/components/SheetActions';
 import { useAuthStore } from '@/features/auth/store';
 import { useCardCount } from '@/features/loyalty/sync';
+import { useListsByVendor } from '@/features/shopping/sync';
 import { createVendor } from '@/features/vendors/api';
 import { conflictFromError, isUniqueViolation } from '@/features/vendors/conflict';
 import { vendorMetaLine } from '@/features/vendors/copy';
@@ -56,6 +57,7 @@ export default function VendorsScreen() {
   const loaded = useVendorsStore((s) => s.loaded);
   const index = useVendorIndex();
   const cardCount = useCardCount();
+  const listsByVendor = useListsByVendor();
 
   const [query, setQuery] = useState('');
   const [draft, setDraft] = useState<string | null>(null);
@@ -141,9 +143,8 @@ export default function VendorsScreen() {
           vendor={v}
           meta={vendorMetaLine({
             aliases: index.aliasesByVendor.get(v.id)?.length ?? 0,
-            // Card count / list flag: wired by the loyalty and shopping-list waves.
             cards: cardCount(v.id),
-            hasList: false,
+            hasList: listsByVendor.has(v.id),
           })}
         />
       ))}

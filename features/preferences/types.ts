@@ -1,4 +1,4 @@
-export type DashboardSectionKey = 'categories' | 'recent';
+export type DashboardSectionKey = 'categories' | 'recent' | 'lists';
 
 // Type aliases (not interfaces) so they are assignable to the generated `Json` type of
 // the `user_preferences.settings` jsonb column — interfaces have no index signature.
