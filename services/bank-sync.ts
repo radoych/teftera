@@ -12,6 +12,7 @@ import { bgnToEurCents } from '@/lib/formatCurrency';
 import {
   normalizeMerchant,
   occurredAtISO,
+  type MerchantLookup,
   type NormalizedTransaction,
 } from '@/services/dsk-import';
 import { invokeEdge } from '@/services/edge';
@@ -34,7 +35,10 @@ export interface EbTransaction {
  * the import cannot represent (pending, unparseable amount, unsupported
  * currency, no date) — callers count and drop them.
  */
-export function normalizeEbTransaction(tx: EbTransaction): NormalizedTransaction | null {
+export function normalizeEbTransaction(
+  tx: EbTransaction,
+  lookup?: MerchantLookup,
+): NormalizedTransaction | null {
   if (tx.status && tx.status !== 'BOOK') return null;
 
   const value = Number(tx.transaction_amount?.amount);
@@ -52,7 +56,7 @@ export function normalizeEbTransaction(tx: EbTransaction): NormalizedTransaction
   const counterparty = isIncome ? tx.debtor?.name : tx.creditor?.name;
   const rawMerchant =
     counterparty?.trim() || (tx.remittance_information ?? []).join(' ').trim();
-  const merchant = normalizeMerchant(rawMerchant);
+  const merchant = normalizeMerchant(rawMerchant, lookup);
 
   const base = {
     kind: (isIncome ? 'income' : 'expense') as 'income' | 'expense',

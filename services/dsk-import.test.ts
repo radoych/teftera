@@ -124,6 +124,47 @@ describe('normalizeMerchant', () => {
   });
 });
 
+describe('normalizeMerchant with a household lookup', () => {
+  const known: Record<string, string> = {
+    'bgr shumen lidl balgariya eood bul simeo': 'Лидл Шумен',
+    'tranchev ood': 'Транчев',
+  };
+  const lookup = (key: string) => known[key];
+
+  it('a recognized name wins over a brand rule', () => {
+    expect(normalizeMerchant('BGR SHUMEN LIDL BALGARIYA EOOD BUL SIMEO', lookup)).toBe('Лидл Шумен');
+  });
+
+  it('matches case- and whitespace-insensitively', () => {
+    expect(normalizeMerchant('  bgr shumen  LIDL balgariya eood bul simeo ', lookup)).toBe(
+      'Лидл Шумен',
+    );
+  });
+
+  it('gets a second chance on the stripped acceptor', () => {
+    expect(normalizeMerchant('BGR SHUMEN TRANCHEV OOD', lookup)).toBe('Транчев');
+  });
+
+  it('falls through to the static rules on a miss', () => {
+    expect(normalizeMerchant('BGR SOFIYA DM BULGARIA EOOD', lookup)).toBe('dm');
+    expect(normalizeMerchant('BGR SHUMEN ZOO GRUP STEFANOV BUL SIMEON', lookup)).toBe(
+      'ZOO GRUP STEFANOV',
+    );
+  });
+
+  it('no lookup → identical to before', () => {
+    const raws = [
+      'BGR SHUMEN LIDL BALGARIYA EOOD BUL SIMEO',
+      'BGR SHUMEN TRANCHEV OOD',
+      '  ТОПЛОФИКАЦИЯ СОФИЯ   ЕАД ',
+    ];
+    for (const raw of raws) {
+      expect(normalizeMerchant(raw, undefined)).toBe(normalizeMerchant(raw));
+    }
+    expect(normalizeMerchant('BGR SHUMEN TRANCHEV OOD')).toBe('TRANCHEV OOD');
+  });
+});
+
 describe('occurredAtISO', () => {
   it('combines date + time into a local-wallclock ISO timestamp', () => {
     const d = new Date(occurredAtISO('2026-02-04', '21:48'));
@@ -212,5 +253,24 @@ describe('normalizeDskRow', () => {
       time: '', currency: 'EUR' as const,
     };
     expect(normalizeDskRow(row)).toBeNull();
+  });
+});
+
+describe('normalizeDskRow with a household lookup', () => {
+  it('writes the recognized vendor name and guesses the category from it', () => {
+    const out = normalizeDskRow(
+      {
+        date: '04.02.2026',
+        merchantRaw: 'BGR SHUMEN TRANCHEV OOD',
+        description: 'POS',
+        debit: '10,00',
+        credit: '',
+        time: '10:00',
+        currency: 'EUR',
+      },
+      (key) => (key === 'tranchev ood' ? 'Lidl' : undefined),
+    )!;
+    expect(out.merchant).toBe('Lidl');
+    expect(out.categoryGuess).toBe('Groceries');
   });
 });

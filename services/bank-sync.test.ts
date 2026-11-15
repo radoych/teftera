@@ -21,7 +21,7 @@ import sandboxFixture from './__fixtures__/eb-sandbox-transactions.json';
 
 describe('normalizeEbTransaction against recorded sandbox data', () => {
   it('normalizes every recorded row with the expected kinds', () => {
-    const rows = (sandboxFixture as EbTransaction[]).map(normalizeEbTransaction);
+    const rows = (sandboxFixture as EbTransaction[]).map((t) => normalizeEbTransaction(t));
     expect(rows).not.toContain(null);
     const kinds = rows.map((r) => r?.kind).sort();
     expect(kinds).toEqual(['expense', 'income', 'income']);
@@ -56,6 +56,11 @@ describe('normalizeEbTransaction', () => {
       date: '2026-07-01',
       occurredAt: expect.stringMatching(/T/),
     });
+  });
+
+  it('consults the household lookup (recognized names) before the brand rules', () => {
+    const lookup = (key: string) => (key === 'lidl sofia' ? 'Лидл Младост' : undefined);
+    expect(normalizeEbTransaction(base, lookup)?.merchant).toBe('Лидл Младост');
   });
 
   it('maps CRDT rows to income (preview skips them, like CSV)', () => {
