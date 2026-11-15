@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { createHouseholdSync } from '@/features/sync/householdSync';
 import { useHouseholdSync } from '@/features/sync/useHouseholdSync';
 import { listCards } from './api';
-import { cardsForVendor } from './group';
+import { cardsForVendor, countCardsByVendor } from './group';
 import { useLoyaltyStore } from './store';
 import type { LoyaltyCard } from './types';
 
@@ -29,4 +29,13 @@ export function useLoyaltySync(): void {
 export function useCardsForVendor(vendorId: string | null): LoyaltyCard[] {
   const cards = useLoyaltyStore((s) => s.cards);
   return useMemo(() => cardsForVendor(cards, vendorId), [cards, vendorId]);
+}
+
+/** Vendor id → number of its cards (for meta lines / autocomplete). Stable per store update. */
+export function useCardCount(): (vendorId: string) => number {
+  const cards = useLoyaltyStore((s) => s.cards);
+  return useMemo(() => {
+    const counts = countCardsByVendor(cards);
+    return (vendorId: string) => counts.get(vendorId) ?? 0;
+  }, [cards]);
 }
