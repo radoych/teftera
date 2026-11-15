@@ -1,17 +1,6 @@
 // features/shopping/api.ts — the ONLY module that reads/writes `shopping_lists` / `shopping_list_items`.
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/services/supabase';
-import type { ShoppingDatabase } from './dbTypes';
 import type { ShoppingList, ShoppingListItem } from './types';
-
-/**
- * TEMPORARY cast — the one place shopping code steps outside the generated
- * types. `supabase/types.ts` does not know the shopping tables until it is
- * regenerated after the migration is applied; until then this view of the same
- * client is typed by the hand-written `ShoppingDatabase` (./dbTypes.ts).
- * Replace `db` with `supabase` (and delete dbTypes.ts) once regenerated.
- */
-const db = supabase as unknown as SupabaseClient<ShoppingDatabase>;
 
 /** Explicit column lists — never select('*'). Literals so postgrest-js can type them. */
 const LIST_COLUMNS =
@@ -21,7 +10,7 @@ const ITEM_COLUMNS =
 
 /** The household's lists, most recently touched first. */
 export async function listLists(householdId: string): Promise<ShoppingList[]> {
-  const { data, error } = await db
+  const { data, error } = await supabase
     .from('shopping_lists')
     .select(LIST_COLUMNS)
     .eq('household_id', householdId)
@@ -32,7 +21,7 @@ export async function listLists(householdId: string): Promise<ShoppingList[]> {
 
 /** Every item of the household (tiny), in list then position order. */
 export async function listItems(householdId: string): Promise<ShoppingListItem[]> {
-  const { data, error } = await db
+  const { data, error } = await supabase
     .from('shopping_list_items')
     .select(ITEM_COLUMNS)
     .eq('household_id', householdId)
@@ -55,7 +44,7 @@ export interface NewList {
  * one-list-per-vendor index) — the caller opens the existing list instead.
  */
 export async function createList(input: NewList): Promise<{ id: string }> {
-  const { data, error } = await db
+  const { data, error } = await supabase
     .from('shopping_lists')
     .insert({
       household_id: input.householdId,
@@ -71,7 +60,7 @@ export async function createList(input: NewList): Promise<{ id: string }> {
 }
 
 export async function updateListCard(id: string, loyaltyCardId: string | null): Promise<void> {
-  const { error } = await db
+  const { error } = await supabase
     .from('shopping_lists')
     .update({ loyalty_card_id: loyaltyCardId })
     .eq('id', id);
@@ -80,7 +69,7 @@ export async function updateListCard(id: string, loyaltyCardId: string | null): 
 
 /** Delete a list; its items cascade. */
 export async function deleteList(id: string): Promise<void> {
-  const { error } = await db.from('shopping_lists').delete().eq('id', id);
+  const { error } = await supabase.from('shopping_lists').delete().eq('id', id);
   if (error) throw error;
 }
 
@@ -96,7 +85,7 @@ export interface NewItem {
 }
 
 export async function addItem(input: NewItem): Promise<{ id: string }> {
-  const { error } = await db.from('shopping_list_items').insert({
+  const { error } = await supabase.from('shopping_list_items').insert({
     id: input.id,
     household_id: input.householdId,
     list_id: input.listId,
@@ -116,7 +105,7 @@ export async function setItemChecked(
   userId: string | null,
   checkedAt: string = new Date().toISOString(),
 ): Promise<void> {
-  const { error } = await db
+  const { error } = await supabase
     .from('shopping_list_items')
     .update(
       checked
@@ -131,7 +120,7 @@ export async function updateItem(
   id: string,
   patch: { name: string; quantity: string | null },
 ): Promise<void> {
-  const { error } = await db
+  const { error } = await supabase
     .from('shopping_list_items')
     .update({ name: patch.name, quantity: patch.quantity })
     .eq('id', id);
@@ -139,13 +128,13 @@ export async function updateItem(
 }
 
 export async function deleteItem(id: string): Promise<void> {
-  const { error } = await db.from('shopping_list_items').delete().eq('id', id);
+  const { error } = await supabase.from('shopping_list_items').delete().eq('id', id);
   if (error) throw error;
 }
 
 /** Remove every taken item of one list. */
 export async function clearChecked(listId: string): Promise<void> {
-  const { error } = await db
+  const { error } = await supabase
     .from('shopping_list_items')
     .delete()
     .eq('list_id', listId)

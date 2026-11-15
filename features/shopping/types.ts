@@ -1,11 +1,11 @@
 // features/shopping/types.ts — the app's shopping-list contract (spec 2026-09-09 §8).
-import type { ShoppingListItemRow, ShoppingListRow } from './dbTypes';
+import type { Tables } from '@/supabase/types';
 
 /** One shopping list. `vendor_id` null = its vendor was deleted ("Без търговец"). */
-export type ShoppingList = ShoppingListRow;
+export type ShoppingList = Tables<'shopping_lists'>;
 
 /** One item on a list. `checked_at` non-null = taken ("Взети"). */
-export type ShoppingListItem = ShoppingListItemRow;
+export type ShoppingListItem = Tables<'shopping_list_items'>;
 
 export interface ListCounts {
   total: number;

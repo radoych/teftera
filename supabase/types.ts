@@ -338,6 +338,116 @@ export type Database = {
           },
         ]
       }
+      // shopping_lists / shopping_list_items hand-added from migration 20261115130200_shopping_lists.sql pending regeneration.
+      shopping_list_items: {
+        Row: {
+          checked_at: string | null
+          checked_by: string | null
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          list_id: string
+          name: string
+          position: number
+          quantity: string | null
+        }
+        Insert: {
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          list_id: string
+          name: string
+          position?: number
+          quantity?: string | null
+        }
+        Update: {
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          list_id?: string
+          name?: string
+          position?: number
+          quantity?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_list_items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "shopping_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopping_lists: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          loyalty_card_id: string | null
+          name: string
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          loyalty_card_id?: string | null
+          name: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          loyalty_card_id?: string | null
+          name?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_lists_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_lists_loyalty_card_id_fkey"
+            columns: ["loyalty_card_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_lists_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount_eur: number
