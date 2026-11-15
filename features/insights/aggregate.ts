@@ -1,4 +1,4 @@
-import { monthAbbr } from '@/lib/dates';
+import { isInMonth, monthAbbr, startOfMonth } from '@/lib/dates';
 import type { Transaction } from '@/features/transactions/types';
 
 /** Total of amount_eur (cents) across the given transactions. */
@@ -19,16 +19,16 @@ export function monthlyTrend(
   monthsBack = 6,
   now: Date = new Date(),
 ): TrendMonth[] {
-  const prefixes: string[] = [];
+  const months: Date[] = [];
   const buckets: TrendMonth[] = [];
   for (let i = monthsBack - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    prefixes.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-`);
+    const d = startOfMonth(now, -i);
+    months.push(d);
     buckets.push({ label: monthAbbr(d.getMonth()), totalCents: 0, fraction: 0, isCurrent: i === 0 });
   }
 
   for (const tx of txs) {
-    const idx = prefixes.findIndex((p) => tx.date.startsWith(p));
+    const idx = months.findIndex((m) => isInMonth(tx.date, m));
     if (idx !== -1) buckets[idx]!.totalCents += tx.amount_eur;
   }
 

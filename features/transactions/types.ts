@@ -1,5 +1,15 @@
 import type { MaterialIconName } from '@/lib/categories';
 
+/** Mirrors the `categories` table columns the app reads. */
+export interface CategoryLite {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  is_default?: boolean;
+  kind: 'expense' | 'income';
+}
+
 /** Mirrors the `transactions` table. Amounts are integer EUR cents. */
 export interface Transaction {
   id: string;

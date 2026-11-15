@@ -13,7 +13,7 @@ import { deleteTransaction } from '@/features/transactions/api';
 import { memberName } from '@/features/transactions/edit';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
-import type { MaterialIconName } from '@/lib/categories';
+import { categoryPresentation } from '@/lib/categories';
 import { relativeDay } from '@/lib/dates';
 import { formatCurrency } from '@/lib/formatCurrency';
 
@@ -64,10 +64,13 @@ export default function TransactionDetailScreen() {
     );
   }
 
-  const cat = tx.category_id ? categories.find((c) => c.id === tx.category_id) : undefined;
-  const catName = cat?.name ?? 'Other';
-  const catIcon = (cat?.icon as MaterialIconName) ?? 'category';
-  const catColor = cat?.color ?? '#8e909a';
+  const {
+    name: catName,
+    icon: catIcon,
+    color: catColor,
+  } = categoryPresentation(
+    tx.category_id ? categories.find((c) => c.id === tx.category_id) : undefined,
+  );
   const addedBy = memberName(tx.user_id, members);
 
   const onConfirmDelete = async () => {

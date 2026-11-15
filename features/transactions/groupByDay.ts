@@ -1,19 +1,12 @@
+import { categoryPresentation } from '@/lib/categories';
 import { formatTime, relativeDay } from '@/lib/dates';
-import type { MaterialIconName } from '@/lib/categories';
-import type { Transaction, TransactionDayGroup, TransactionView } from './types';
+import type { CategoryLite, Transaction, TransactionDayGroup, TransactionView } from './types';
 
-export interface CategoryLite {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  is_default?: boolean;
-  kind: 'expense' | 'income';
-}
-
-const FALLBACK_ICON: MaterialIconName = 'category';
-const FALLBACK_COLOR = '#8e909a';
-const FALLBACK_NAME = 'Other';
+/**
+ * @deprecated Import `CategoryLite` from `@/features/transactions/types`.
+ * Re-exported here for one release so existing importers keep compiling.
+ */
+export type { CategoryLite } from './types';
 
 /** Map one DB transaction to its presentational view, joining category data. */
 export function toTransactionView(
@@ -22,16 +15,17 @@ export function toTransactionView(
   now: Date = new Date(),
   reasons: Map<string, string> = new Map(),
 ): TransactionView {
-  const cat = tx.category_id ? byId.get(tx.category_id) : undefined;
-  const name = cat?.name ?? FALLBACK_NAME;
+  const { name, icon, color } = categoryPresentation(
+    tx.category_id ? byId.get(tx.category_id) : undefined,
+  );
   const time = formatTime(new Date(tx.occurred_at ?? tx.created_at));
   return {
     id: tx.id,
     merchant: tx.merchant,
     meta: `${name} • ${time}`,
     amountCents: tx.amount_eur,
-    icon: (cat?.icon as MaterialIconName) ?? FALLBACK_ICON,
-    iconColor: cat?.color ?? FALLBACK_COLOR,
+    icon,
+    iconColor: color,
     isFlagged: tx.is_flagged,
     flagReason: tx.is_flagged ? reasons.get(tx.id) : undefined,
     isIncome: tx.kind === 'income',
@@ -66,10 +60,4 @@ export function groupTransactionsByDay(
     group.items.push(toTransactionView(tx, byId, now, reasons));
   }
   return groups;
-}
-
-/** Sum of amount_eur (cents) for transactions in the current calendar month. */
-export function monthTotalCents(txs: Transaction[], now: Date = new Date()): number {
-  const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`;
-  return txs.reduce((sum, tx) => (tx.date.startsWith(prefix) ? sum + tx.amount_eur : sum), 0);
 }

@@ -1,35 +1,48 @@
 /**
- * Default category catalog + lightweight merchant→category rules.
+ * Category presentation + lightweight merchant→category rules.
+ *
+ * The default category catalogue (names, icons, colours, kinds) is seeded per
+ * household by `public.seed_default_categories()` (latest definition in
+ * supabase/migrations/20260718232658_income_kind.sql) — that is its only
+ * definition. At runtime read categories from the transactions store.
  *
  * Icons are @expo/vector-icons MaterialIcons glyph names.
  * Colors are drawn from the design palette (never the anomaly accent #c3f400).
  */
 import type { ComponentProps } from 'react';
 import type { MaterialIcons } from '@expo/vector-icons';
+import type { CategoryLite } from '@/features/transactions/types';
 
 export type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
 
-export interface DefaultCategory {
+/** How a category renders: label, glyph and accent colour. */
+export interface CategoryPresentation {
   name: string;
   icon: MaterialIconName;
   color: string;
-  kind: 'expense' | 'income';
 }
 
-export const DEFAULT_CATEGORIES: readonly DefaultCategory[] = [
-  { name: 'Food & Dining', icon: 'restaurant', color: '#ffdfa7', kind: 'expense' },
-  { name: 'Beverages', icon: 'local-cafe', color: '#d8e3ff', kind: 'expense' },
-  { name: 'Groceries', icon: 'shopping-basket', color: '#adc7ff', kind: 'expense' },
-  { name: 'Transport', icon: 'directions-car', color: '#a8c8ff', kind: 'expense' },
-  { name: 'Housing', icon: 'home', color: '#c4c6d0', kind: 'expense' },
-  { name: 'Utilities', icon: 'bolt', color: '#ffdfa7', kind: 'expense' },
-  { name: 'Health', icon: 'medical-services', color: '#ffb4ab', kind: 'expense' },
-  { name: 'Entertainment', icon: 'movie', color: '#d8e3ff', kind: 'expense' },
-  { name: 'Shopping', icon: 'shopping-bag', color: '#adc7ff', kind: 'expense' },
-  { name: 'Other', icon: 'category', color: '#8e909a', kind: 'expense' },
-  { name: 'Заплата', icon: 'payments', color: '#d8e3ff', kind: 'income' },
-  { name: 'Друг приход', icon: 'account-balance-wallet', color: '#c4c6d0', kind: 'income' },
-] as const;
+/** The single "unknown / deleted / null category" presentation. */
+export const FALLBACK_CATEGORY: Readonly<CategoryPresentation> = {
+  name: 'Other',
+  icon: 'category',
+  color: '#8e909a',
+};
+
+/**
+ * Presentation for a (possibly missing) category. Every screen, list, chart and
+ * the PDF report goes through this, so an unknown category looks the same
+ * everywhere.
+ */
+export function categoryPresentation(
+  cat?: Pick<CategoryLite, 'name' | 'icon' | 'color'> | null,
+): CategoryPresentation {
+  return {
+    name: cat?.name ?? FALLBACK_CATEGORY.name,
+    icon: (cat?.icon as MaterialIconName | undefined) ?? FALLBACK_CATEGORY.icon,
+    color: cat?.color ?? FALLBACK_CATEGORY.color,
+  };
+}
 
 /**
  * Unified merchant knowledge: [pattern, brand display name | null, category].

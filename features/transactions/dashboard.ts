@@ -1,29 +1,14 @@
 // features/transactions/dashboard.ts — pure aggregation helpers for the dashboard.
-import { toISODate } from '@/lib/dates';
-import type { MaterialIconName } from '@/lib/categories';
-import type { CategoryLite } from './groupByDay';
-import type { Transaction } from './types';
+import { isInMonth, toISODate } from '@/lib/dates';
+import { categoryPresentation, type MaterialIconName } from '@/lib/categories';
+import type { CategoryLite, Transaction } from './types';
 
 const FALLBACK_ID = 'uncategorized';
-const FALLBACK_ICON: MaterialIconName = 'category';
-const FALLBACK_COLOR = '#8e909a';
-const FALLBACK_NAME = 'Other';
 
 /** Sum of amount_eur (cents) for transactions dated today. */
 export function dayTotalCents(txs: Transaction[], now: Date = new Date()): number {
   const today = toISODate(now);
   return txs.reduce((sum, tx) => (tx.date === today ? sum + tx.amount_eur : sum), 0);
-}
-
-function monthPrefix(year: number, monthIndex: number): string {
-  return `${year}-${String(monthIndex + 1).padStart(2, '0')}-`;
-}
-
-/** Sum of amount_eur (cents) for the previous calendar month. */
-export function prevMonthTotalCents(txs: Transaction[], now: Date = new Date()): number {
-  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const prefix = monthPrefix(prev.getFullYear(), prev.getMonth());
-  return txs.reduce((sum, tx) => (tx.date.startsWith(prefix) ? sum + tx.amount_eur : sum), 0);
 }
 
 /** Signed, rounded percentage change from previous→current. Null when there is no baseline. */
@@ -76,12 +61,9 @@ export function categoryBreakdown(
   }
 
   const rows: CategorySpend[] = [...totals.entries()].map(([id, totalCents]) => {
-    const cat = byId.get(id);
     return {
       id,
-      name: cat?.name ?? FALLBACK_NAME,
-      icon: (cat?.icon as MaterialIconName) ?? FALLBACK_ICON,
-      color: cat?.color ?? FALLBACK_COLOR,
+      ...categoryPresentation(byId.get(id)),
       totalCents,
       fraction: 0,
     };
@@ -99,9 +81,8 @@ export function spendingByCategory(
   categories: CategoryLite[],
   now: Date = new Date(),
 ): CategorySpend[] {
-  const prefix = monthPrefix(now.getFullYear(), now.getMonth());
   return categoryBreakdown(
-    txs.filter((tx) => tx.date.startsWith(prefix)),
+    txs.filter((tx) => isInMonth(tx.date, now)),
     categories,
   );
 }
