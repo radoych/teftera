@@ -3,7 +3,6 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
-import { HairlineDivider } from '@/components/HairlineDivider';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { signOut } from '@/features/auth/api';
@@ -22,15 +21,6 @@ import { useTransactionsStore } from '@/features/transactions/store';
 import { usePreferencesStore } from '@/features/preferences/store';
 import { upsertMyPreferences } from '@/features/preferences/api';
 import type { UserPreferences } from '@/features/preferences/types';
-
-function Pill({ label }: { label: string }) {
-  return (
-    <Pressable className="flex-row items-center gap-2 rounded-full bg-surface-container px-4 py-1 active:bg-white/5">
-      <Text className="font-inter text-label-md text-primary-container">{label}</Text>
-      <MaterialIcons name="expand-more" size={20} color="#adc7ff" />
-    </Pressable>
-  );
-}
 
 export default function ProfileScreen() {
   const session = useAuthStore((s) => s.session);
@@ -129,20 +119,6 @@ export default function ProfileScreen() {
         onChange={onLayoutChange}
         onClose={() => setLayoutSheetOpen(false)}
       />
-
-      {/* Preferences */}
-      <View className="mt-lg">
-        <SectionLabel className="mb-md">Предпочитания</SectionLabel>
-        <View className="flex-row items-center justify-between py-md">
-          <Text className="font-inter text-body-lg text-on-surface">Валута</Text>
-          <Pill label="EUR" />
-        </View>
-        <HairlineDivider />
-        <View className="flex-row items-center justify-between py-md">
-          <Text className="font-inter text-body-lg text-on-surface">Език</Text>
-          <Pill label="BG" />
-        </View>
-      </View>
 
       <BankConnectionSection lastSyncLabel={lastSyncLabel} />
 
