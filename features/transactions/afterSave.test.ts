@@ -42,6 +42,11 @@ function makeDeps(overrides: Partial<AfterSaveDeps> = {}) {
 }
 
 describe('runAfterSave', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => jest.restoreAllMocks());
+
   it('refreshes, then reads the store snapshot, then runs detection and the budget check', async () => {
     const { deps, calls } = makeDeps();
     await runAfterSave(newExpense, deps);
