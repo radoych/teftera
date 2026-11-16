@@ -7,6 +7,7 @@ import { Comparison } from '@/components/Comparison';
 import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { ProgressBar } from '@/components/ProgressBar';
+import { RMark } from '@/components/RMark';
 import { Screen } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
@@ -259,15 +260,9 @@ export default function DashboardScreen() {
       {/* Top app bar */}
       <View className="mb-lg mt-md flex-row items-center justify-between">
         <Text className="font-jakarta-bold text-headline-xl text-primary">Teftera</Text>
-        <Pressable
-          onPress={() => router.push('/loyalty-cards')}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Клиентски карти"
-          className="h-10 w-10 items-center justify-center bg-surface-container active:opacity-80"
-          style={{ borderRadius: 9999 }}>
-          <MaterialIcons name="card-membership" size={22} color={colors.onSurfaceVariant} />
-        </Pressable>
+        <View accessibilityLabel="R">
+          <RMark />
+        </View>
       </View>
 
       {/* Hero spending */}
