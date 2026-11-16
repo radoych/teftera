@@ -129,3 +129,13 @@ export function monthAbbr(monthIndex: number): string {
 export function windowStartISO(months: number, now: Date = new Date()): string {
   return toISODate(new Date(now.getFullYear(), now.getMonth() - (months - 1), 1));
 }
+
+const MONTH_NAMES_BG = [
+  'януари', 'февруари', 'март', 'април', 'май', 'юни',
+  'юли', 'август', 'септември', 'октомври', 'ноември', 'декември',
+] as const;
+
+/** Lowercase BG month name for a 0-based month index (wraps via modulo 12): "ноември". */
+export function monthName(monthIndex: number): string {
+  return MONTH_NAMES_BG[((monthIndex % 12) + 12) % 12]!;
+}

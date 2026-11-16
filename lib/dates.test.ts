@@ -6,6 +6,7 @@ import {
   monthAbbr,
   monthBounds,
   monthKey,
+  monthName,
   relativeDay,
   startOfMonth,
   sumInMonth,
@@ -155,5 +156,18 @@ describe('month toolkit', () => {
 
   it('sumInMonth is zero for no rows', () => {
     expect(sumInMonth([], NOW)).toBe(0);
+  });
+});
+
+describe('monthName', () => {
+  it('returns the lowercase BG month name', () => {
+    expect(monthName(0)).toBe('януари');
+    expect(monthName(10)).toBe('ноември');
+    expect(monthName(11)).toBe('декември');
+  });
+
+  it('wraps out-of-range indexes', () => {
+    expect(monthName(12)).toBe('януари');
+    expect(monthName(-1)).toBe('декември');
   });
 });
