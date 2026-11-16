@@ -7,7 +7,6 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { FlatInput } from '@/components/FlatInput';
 import { SectionLabel } from '@/components/SectionLabel';
-import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { SheetActions, type SheetAction } from '@/components/SheetActions';
 import { useAuthStore } from '@/features/auth/store';
 import { createVendor } from '@/features/vendors/api';
@@ -23,6 +22,7 @@ import { isNicknameTakenError } from '../rows';
 import { refreshLoyaltyCards, useCardCount } from '../sync';
 import type { LoyaltyCard } from '../types';
 import { initialVendorText, resolveCardVendorId } from '../vendorField';
+import { FormatPicker } from './FormatPicker';
 import { BarcodeScannerModal, isScannerSupported } from './BarcodeScannerModal';
 
 const NICKNAME_TAKEN = 'Вече има карта с този прякор за този търговец.';
@@ -55,12 +55,6 @@ export function CardFormSheet(props: CardFormSheetProps) {
     </BottomSheet>
   );
 }
-
-const FORMAT_OPTIONS: { value: FormatGroup; label: string }[] = [
-  { value: 'ean', label: 'EAN' },
-  { value: 'code128', label: 'Code128' },
-  { value: 'qr', label: 'QR' },
-];
 
 function CardForm({
   card,
@@ -239,13 +233,7 @@ function CardForm({
 
         <View>
           <SectionLabel className="mb-sm">Формат</SectionLabel>
-          <View className="items-start">
-            <SegmentedToggle<FormatGroup>
-              value={group}
-              onChange={setFormatChoice}
-              options={FORMAT_OPTIONS}
-            />
-          </View>
+          <FormatPicker value={group} onChange={setFormatChoice} />
         </View>
 
         <View>
