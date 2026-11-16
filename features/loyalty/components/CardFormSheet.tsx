@@ -163,7 +163,7 @@ function CardForm({
   }
 
   return (
-    <View style={{ maxHeight: height * 0.85 }}>
+    <View style={{ maxHeight: height * 0.85, flexShrink: 1 }}>
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps="handled"
         bottomOffset={24}

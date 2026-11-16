@@ -13,7 +13,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface BottomSheetProps {
   visible: boolean;
@@ -41,6 +42,18 @@ function SheetPanel({
   children: ReactNode;
 }) {
   const dragY = useSharedValue(0);
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // `height` is 0 closed and -keyboardHeight open (animated); `progress` 0 -> 1.
+  const { height: kbHeight, progress: kbProgress } = useReanimatedKeyboardAnimation();
+  // The Modal window never resizes for the IME (edge-to-edge), so lift the panel
+  // by the keyboard height ourselves. The panel's own bottom safe-area padding is
+  // dead space once the keyboard covers the nav bar, so subtract it back out.
+  // maxHeight caps the panel to the space above the keyboard.
+  const liftStyle = useAnimatedStyle(() => ({
+    bottom: -kbHeight.value - insets.bottom * kbProgress.value,
+    maxHeight: windowHeight - insets.top - Math.max(0, -kbHeight.value),
+  }));
 
   const pan = Gesture.Pan()
     .onUpdate((e) => {
@@ -54,7 +67,9 @@ function SheetPanel({
       }
     });
 
-  const dragStyle = useAnimatedStyle(() => ({ transform: [{ translateY: dragY.value }] }));
+  const dragStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: dragY.value }],
+  }));
 
   // Two nested views on purpose: the OUTER owns the enter/exit slide (layout
   // animations), the INNER owns the drag transform. Putting both a layout
@@ -63,22 +78,28 @@ function SheetPanel({
   // until the shared value is next written (which is why a stray swipe "fixed"
   // the bottom gap). Separating the nodes keeps each transform clean.
   return (
-    <Animated.View
-      entering={SlideInDown.duration(250)}
-      exiting={SlideOutDown.duration(200).withCallback((finished) => {
-        'worklet';
-        if (finished) runOnJS(onClosed)();
-      })}
-      style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
-      <Animated.View style={dragStyle} className="rounded-t-3xl bg-surface-container">
-        <SafeAreaView edges={['bottom']}>
-          <GestureDetector gesture={pan}>
-            <View className="items-center py-3">
-              <View className="h-1 w-10 rounded-full bg-outline" />
-            </View>
-          </GestureDetector>
-          {children}
-        </SafeAreaView>
+    <Animated.View style={[{ position: 'absolute', left: 0, right: 0 }, liftStyle]}>
+      <Animated.View
+        entering={SlideInDown.duration(250)}
+        exiting={SlideOutDown.duration(200).withCallback((finished) => {
+          'worklet';
+          if (finished) runOnJS(onClosed)();
+        })}
+        style={{ flexShrink: 1 }}
+      >
+        <Animated.View
+          style={[dragStyle, { flexShrink: 1 }]}
+          className="rounded-t-3xl bg-surface-container"
+        >
+          <SafeAreaView edges={['bottom']} style={{ flexShrink: 1 }}>
+            <GestureDetector gesture={pan}>
+              <View className="items-center py-3">
+                <View className="h-1 w-10 rounded-full bg-outline" />
+              </View>
+            </GestureDetector>
+            {children}
+          </SafeAreaView>
+        </Animated.View>
       </Animated.View>
     </Animated.View>
   );
@@ -113,7 +134,8 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
       animationType="none"
       statusBarTranslucent
       navigationBarTranslucent
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+    >
       {/* A Modal renders into its own native view tree, outside the root
           GestureHandlerRootView in _layout.tsx. Without this nested root, no
           gesture inside the sheet (grabber drag, reorder handles) ever fires.
@@ -123,7 +145,11 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
           real screen bottom (the gap) until a touch forced a remeasure. */}
       <GestureHandlerRootView style={{ width, height }}>
         {/* Full-screen scrim — appears instantly, no slide. */}
-        <Pressable style={StyleSheet.absoluteFill} className="bg-black/50" onPress={onClose} />
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          className="bg-black/50"
+          onPress={onClose}
+        />
         {visible ? (
           <SheetPanel onClose={onClose} onClosed={() => setMounted(false)}>
             {children}
