@@ -31,7 +31,7 @@ interface ScreenProps {
 }
 
 /**
- * Bottom clearance for the floating nav pill (bottom insets.bottom+12, height 64)
+ * Bottom clearance for the floating nav pill (bottom insets.bottom+12, height 68)
  * plus the floating action pills above it when present.
  */
 export function useScreenBottomPad({
@@ -42,7 +42,7 @@ export function useScreenBottomPad({
   withTabBar: boolean;
 }): number {
   const insets = useSafeAreaInsets();
-  return floating ? insets.bottom + 140 : withTabBar ? insets.bottom + 96 : 24;
+  return floating ? insets.bottom + 144 : withTabBar ? insets.bottom + 100 : 24;
 }
 
 /**

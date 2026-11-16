@@ -1,13 +1,30 @@
 // app/list/[id].tsx — one shopping list: check-off, quick-add, card (spec §8.5–§8.7).
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Pressable,
+  Text,
+  useWindowDimensions,
+  View,
+  type ScrollViewProps,
+} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useReducedMotion,
+  type AnimatedRef,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { BottomSheet } from '@/components/BottomSheet';
+import {
+  contentMinHeight,
+  revealVisuals,
+  useCollapseScroll,
+} from '@/components/CollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { FlatInput } from '@/components/FlatInput';
 import { NotFoundView } from '@/components/NotFoundView';
@@ -18,6 +35,10 @@ import { useAuthStore } from '@/features/auth/store';
 import { useHouseholdStore } from '@/features/household/store';
 import { CardChip } from '@/features/loyalty/components/CardChip';
 import { CardFormSheet } from '@/features/loyalty/components/CardFormSheet';
+import {
+  CardRevealTile,
+  CARD_TILE_HEIGHT,
+} from '@/features/loyalty/components/CardRevealTile';
 import { CardPickerSheet } from '@/features/loyalty/components/CardPickerSheet';
 import { maskCode } from '@/features/loyalty/format';
 import { useLoyaltyStore } from '@/features/loyalty/store';
@@ -49,18 +70,57 @@ const SETTLE_MS = 450;
 /** Stagger between rows leaving on "Изчисти взетите". */
 const CLEAR_STAGGER_MS = 30;
 
+/** Space between the revealed card tile and the first item. */
+const TILE_GAP = 16;
+/** Reveal distance: tile + gap. Offset 0 = card shown, this = items at the top. */
+const REVEAL_DISTANCE = CARD_TILE_HEIGHT + TILE_GAP;
+
+type TrackedScrollViewProps = ScrollViewProps & {
+  trackRef?: AnimatedRef<Animated.ScrollView>;
+};
+
+/**
+ * Animated scroll view that also registers itself on a Reanimated ref.
+ * KeyboardAwareScrollView hides its own animated ref, but the UI-thread
+ * snap (`scrollTo`) needs one — it reaches this via `ScrollViewComponent`.
+ */
+const TrackedScrollView = forwardRef<Animated.ScrollView, TrackedScrollViewProps>(
+  function TrackedScrollView({ trackRef, ...props }, ref) {
+    const setRef = useCallback(
+      (instance: Animated.ScrollView | null) => {
+        trackRef?.(instance);
+        if (typeof ref === 'function') ref(instance);
+        else if (ref) ref.current = instance;
+      },
+      [trackRef, ref],
+    );
+    return <Animated.ScrollView ref={setRef} {...props} />;
+  },
+);
+
 type ScrollRef = { scrollToEnd: (opts?: { animated?: boolean }) => void } | null;
 
 /** A ghost chip in the card row ("Избери карта" / "Добави карта"). */
-function GhostChip({ icon, label, onPress }: { icon: 'add-card' | 'card-membership'; label: string; onPress: () => void }) {
+function GhostChip({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: 'add-card' | 'card-membership';
+  label: string;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       className="flex-row items-center gap-xs self-start border border-white/10 px-3 py-1.5 active:bg-white/5"
-      style={{ borderRadius: 9999 }}>
+      style={{ borderRadius: 9999 }}
+    >
       <MaterialIcons name={icon} size={14} color={colors.onSurfaceVariant} />
-      <Text className="font-inter-semibold text-label-md text-on-surface-variant">{label}</Text>
+      <Text className="font-inter-semibold text-label-md text-on-surface-variant">
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -89,6 +149,44 @@ export default function ShoppingListScreen() {
   const [deleting, setDeleting] = useState(false);
   const [barHeight, setBarHeight] = useState(64);
   const scroll = useRef<ScrollRef>(null);
+
+  // Second-pull card reveal: offset 0 = large card tile shown, REVEAL_DISTANCE =
+  // collapsed to the chip (the resting state). Same One UI rule as the large
+  // titles: a fling up stops at the chip, only a new drag from the top reveals.
+  const { width: windowWidth } = useWindowDimensions();
+  const reduceMotion = useReducedMotion();
+  const trackRef = useAnimatedRef<Animated.ScrollView>();
+  const hasCard = card !== undefined;
+  const distance = hasCard ? REVEAL_DISTANCE : 0;
+  const { scrollY, onScroll } = useCollapseScroll(
+    trackRef,
+    distance,
+    reduceMotion,
+    distance,
+  );
+  const [viewport, setViewport] = useState(0);
+  const startedCollapsed = useRef(false);
+  const tileStyle = useAnimatedStyle(() => {
+    const v = revealVisuals(scrollY.value, distance, reduceMotion);
+    return { opacity: v.tileOpacity, transform: [{ scale: v.tileScale }] };
+  });
+  const chipStyle = useAnimatedStyle(() => ({
+    opacity: revealVisuals(scrollY.value, distance).chipOpacity,
+  }));
+
+  // Open collapsed: once the content is tall enough to scroll to the chip
+  // position, jump there (no animation) — a one-off per screen visit.
+  const onContentSizeChange = (_w: number, h: number) => {
+    if (!hasCard) startedCollapsed.current = false; // re-arm for the next card
+    if (!hasCard || startedCollapsed.current || viewport <= 0) return;
+    if (h < contentMinHeight(viewport, distance) - 1) return;
+    startedCollapsed.current = true;
+    (
+      scroll.current as {
+        scrollTo?: (o: { y: number; animated: boolean }) => void;
+      } | null
+    )?.scrollTo?.({ y: distance, animated: false });
+  };
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -211,7 +309,7 @@ export default function ShoppingListScreen() {
   };
 
   const cardRow = card ? (
-    <View className="flex-row items-center gap-sm">
+    <Animated.View className="flex-row items-center gap-sm" style={chipStyle}>
       <CardChip
         nickname={card.nickname}
         onPress={() => router.push({ pathname: '/card/[id]', params: { id: card.id } })}
@@ -219,11 +317,19 @@ export default function ShoppingListScreen() {
       <Text className="font-inter-medium text-label-md text-on-surface-variant opacity-70">
         {maskCode(card.code)}
       </Text>
-    </View>
+    </Animated.View>
   ) : vendorCards.length > 0 ? (
-    <GhostChip icon="card-membership" label="Избери карта" onPress={() => setPickerOpen(true)} />
+    <GhostChip
+      icon="card-membership"
+      label="Избери карта"
+      onPress={() => setPickerOpen(true)}
+    />
   ) : vendorId ? (
-    <GhostChip icon="add-card" label="Добави карта" onPress={() => setCardFormOpen(true)} />
+    <GhostChip
+      icon="add-card"
+      label="Добави карта"
+      onPress={() => setCardFormOpen(true)}
+    />
   ) : null;
 
   const empty = items.length === 0;
@@ -241,8 +347,13 @@ export default function ShoppingListScreen() {
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Още"
-                className="-mr-2 p-2">
-                <MaterialIcons name="more-vert" size={24} color={colors.onSurfaceVariant} />
+                className="-mr-2 p-2"
+              >
+                <MaterialIcons
+                  name="more-vert"
+                  size={24}
+                  color={colors.onSurfaceVariant}
+                />
               </Pressable>
             }
           />
@@ -259,8 +370,33 @@ export default function ShoppingListScreen() {
           style={{ flex: 1 }}
           bottomOffset={barHeight + 16}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: barHeight + 16 }}
-          showsVerticalScrollIndicator={false}>
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: barHeight + 16,
+            minHeight: hasCard ? contentMinHeight(viewport, distance) : undefined,
+          }}
+          showsVerticalScrollIndicator={false}
+          onLayout={(e) => setViewport(e.nativeEvent.layout.height)}
+          onContentSizeChange={onContentSizeChange}
+          {...(hasCard
+            ? {
+                ScrollViewComponent: TrackedScrollView as never,
+                trackRef,
+                onScroll: onScroll as never,
+              }
+            : null)}
+        >
+          {card ? (
+            <Animated.View style={[{ height: REVEAL_DISTANCE }, tileStyle]}>
+              <CardRevealTile
+                card={card}
+                width={windowWidth - 32}
+                onPress={() =>
+                  router.push({ pathname: '/card/[id]', params: { id: card.id } })
+                }
+              />
+            </Animated.View>
+          ) : null}
           {empty ? (
             <EmptyState
               icon="shopping-cart"
@@ -283,7 +419,12 @@ export default function ShoppingListScreen() {
                 />
               ))}
               {done.length > 0 ? (
-                <Animated.View key="done-label" entering={FadeIn} layout={rowLayout} className="mb-xs mt-lg">
+                <Animated.View
+                  key="done-label"
+                  entering={FadeIn}
+                  layout={rowLayout}
+                  className="mb-xs mt-lg"
+                >
                   <SectionLabel>{`Взети (${done.length})`}</SectionLabel>
                 </Animated.View>
               ) : null}
@@ -343,7 +484,9 @@ export default function ShoppingListScreen() {
       {/* Long-press → edit name / quantity. */}
       <BottomSheet visible={editing !== null} onClose={() => setEditing(null)}>
         <View className="gap-lg px-6 pb-4 pt-2">
-          <Text className="font-jakarta-medium text-headline-md text-on-surface">Продукт</Text>
+          <Text className="font-jakarta-medium text-headline-md text-on-surface">
+            Продукт
+          </Text>
           <View className="gap-md">
             <FlatInput
               value={editName}

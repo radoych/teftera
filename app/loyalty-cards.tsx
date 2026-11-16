@@ -2,10 +2,9 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { CollapsingHeaderScreen } from '@/components/CollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
-import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionLabel } from '@/components/SectionLabel';
 import { CardFormSheet } from '@/features/loyalty/components/CardFormSheet';
 import { CardTile } from '@/features/loyalty/components/CardTile';
@@ -13,6 +12,7 @@ import { groupCardsByVendor } from '@/features/loyalty/group';
 import { useLoyaltyStore } from '@/features/loyalty/store';
 import type { LoyaltyCard } from '@/features/loyalty/types';
 import { useVendorNameLookup } from '@/features/loyalty/vendorNames';
+import { cardCountLabel } from '@/features/vendors/copy';
 import { rowEntering, rowLayout } from '@/lib/animation';
 
 /** Screen side padding (Screen) and the grid gap (gap-md). */
@@ -30,10 +30,16 @@ export default function LoyaltyCardsScreen() {
   /** undefined = sheet closed, null = new card, card = edit. */
   const [editing, setEditing] = useState<LoyaltyCard | null | undefined>(undefined);
 
-  const groups = useMemo(() => groupCardsByVendor(cards, vendorName), [cards, vendorName]);
+  const groups = useMemo(
+    () => groupCardsByVendor(cards, vendorName),
+    [cards, vendorName],
+  );
 
   return (
-    <Screen
+    <CollapsingHeaderScreen
+      title="Клиентски карти"
+      subtitle={cards.length > 0 ? cardCountLabel(cards.length) : null}
+      back
       floatingAboveTabBar={
         <FloatingActionBar
           actions={[
@@ -45,42 +51,53 @@ export default function LoyaltyCardsScreen() {
             },
           ]}
         />
-      }>
-      <ScreenHeader title="Клиентски карти" />
+      }
+    >
+      {({ scrollProps, largeTitle }) => (
+        <>
+          <Animated.ScrollView {...scrollProps}>
+            {largeTitle}
 
-      {loaded && cards.length === 0 ? (
-        <EmptyState
-          icon="card-membership"
-          title="Няма клиентски карти"
-          message="Добави карта и я показвай на касата с едно докосване."
-        />
-      ) : null}
+            {loaded && cards.length === 0 ? (
+              <EmptyState
+                icon="card-membership"
+                title="Няма клиентски карти"
+                message="Добави карта и я показвай на касата с едно докосване."
+              />
+            ) : null}
 
-      {groups.map((group) => (
-        <View key={group.key} className="mb-lg">
-          <SectionLabel className="mb-sm">{group.title}</SectionLabel>
-          <View className="flex-row flex-wrap gap-md">
-            {group.cards.map((card) => (
-              <Animated.View key={card.id} entering={rowEntering} layout={rowLayout}>
-                <CardTile
-                  card={card}
-                  vendorName={group.vendorId ? group.title : undefined}
-                  width={tileWidth}
-                  onPress={() => router.push(`/card/${card.id}`)}
-                  onLongPress={() => setEditing(card)}
-                />
-              </Animated.View>
+            {groups.map((group) => (
+              <View key={group.key} className="mb-lg">
+                <SectionLabel className="mb-sm">{group.title}</SectionLabel>
+                <View className="flex-row flex-wrap gap-md">
+                  {group.cards.map((card) => (
+                    <Animated.View
+                      key={card.id}
+                      entering={rowEntering}
+                      layout={rowLayout}
+                    >
+                      <CardTile
+                        card={card}
+                        vendorName={group.vendorId ? group.title : undefined}
+                        width={tileWidth}
+                        onPress={() => router.push(`/card/${card.id}`)}
+                        onLongPress={() => setEditing(card)}
+                      />
+                    </Animated.View>
+                  ))}
+                </View>
+              </View>
             ))}
-          </View>
-        </View>
-      ))}
+          </Animated.ScrollView>
 
-      <CardFormSheet
-        visible={editing !== undefined}
-        card={editing ?? null}
-        onClose={() => setEditing(undefined)}
-      />
-    </Screen>
+          <CardFormSheet
+            visible={editing !== undefined}
+            card={editing ?? null}
+            onClose={() => setEditing(undefined)}
+          />
+        </>
+      )}
+    </CollapsingHeaderScreen>
   );
 }
 

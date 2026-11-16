@@ -23,6 +23,7 @@ export default function AppTabsLayout() {
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.background } }}>
       <Tabs.Screen name="index" options={{ title: 'Начало' }} />
       <Tabs.Screen name="history" options={{ title: 'История' }} />
+      <Tabs.Screen name="lists" options={{ title: 'Списъци' }} />
       <Tabs.Screen name="insights" options={{ title: 'Анализи' }} />
       <Tabs.Screen name="profile" options={{ title: 'Профил' }} />
     </Tabs>
