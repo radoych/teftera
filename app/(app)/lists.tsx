@@ -1,29 +1,29 @@
-// app/lists.tsx — all shopping lists (spec §8.8).
+// app/(app)/lists.tsx — all shopping lists (spec §8.8).
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Text } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
 import { ListRow } from '@/features/shopping/components/ListRow';
 import { NewListSheet } from '@/features/shopping/components/NewListSheet';
 import { useListViews } from '@/features/shopping/hooks';
 import { useShoppingStore } from '@/features/shopping/store';
 
 export default function ShoppingListsScreen() {
-  // `?new=1` (dashboard "Създай списък за магазин") opens the sheet once.
+  // `?new=1` (dashboard "Създай списък за магазин") opens the sheet; the param is
+  // cleared right away because a tab screen stays mounted between visits.
   const params = useLocalSearchParams<{ new?: string }>();
   const loaded = useShoppingStore((s) => s.loaded);
   const views = useListViews();
   const [creating, setCreating] = useState(false);
-  const consumedNew = useRef(false);
+
+  const wantsNew = params.new === '1';
+  if (wantsNew && !creating) setCreating(true); // adjust state during render (guarded)
 
   useEffect(() => {
-    if (params.new === '1' && !consumedNew.current) {
-      consumedNew.current = true;
-      setCreating(true);
-    }
-  }, [params.new]);
+    if (wantsNew) router.setParams({ new: undefined });
+  }, [wantsNew]);
 
   return (
     <Screen
@@ -39,7 +39,9 @@ export default function ShoppingListsScreen() {
           ]}
         />
       }>
-      <ScreenHeader title="Списъци за пазаруване" />
+      <Text className="mb-xl mt-md font-jakarta-semibold text-headline-xl text-on-surface">
+        Списъци
+      </Text>
 
       {loaded && views.length === 0 ? (
         <EmptyState
