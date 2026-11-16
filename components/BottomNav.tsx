@@ -16,6 +16,7 @@ type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tab
 const TABS: Record<string, { label: string; icon: IconName }> = {
   index: { label: 'Начало', icon: 'home' },
   history: { label: 'История', icon: 'history' },
+  lists: { label: 'Списъци', icon: 'checklist' },
   insights: { label: 'Анализи', icon: 'insert-chart' },
   profile: { label: 'Профил', icon: 'person' },
 };
@@ -34,8 +35,8 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
     <View
       style={{
         position: 'absolute',
-        left: 0,
-        right: 0,
+        left: 8,
+        right: 8,
         bottom: insets.bottom + 12,
         pointerEvents: 'box-none',
       }}
@@ -46,13 +47,12 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
         // NativeWind className is NOT applied to third-party components like
         // BlurView, so the bar's layout + shape must be set via inline style.
         style={{
-          width: '90%',
-          maxWidth: 420,
-          height: 64,
+          alignSelf: 'stretch',
+          maxWidth: 460,
+          height: 68,
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-around',
-          paddingHorizontal: 16,
+          paddingHorizontal: 6,
           borderRadius: 9999,
           borderWidth: 1,
           borderColor: 'rgba(255,255,255,0.1)',
@@ -81,13 +81,17 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
               accessibilityRole="button"
               accessibilityState={focused ? { selected: true } : {}}
               onPress={onPress}
+              style={focused ? undefined : { flex: 1 }}
               className="items-center justify-center">
               {focused ? (
                 <View
                   style={{ transform: [{ scale: 1.1 }] }}
-                  className="flex-row items-center gap-2 rounded-full bg-primary-container px-5 py-3">
+                  className="flex-row items-center gap-1 rounded-full bg-primary-container px-3 py-3">
                   <MaterialIcons name={tab.icon} size={22} color={colors.onPrimary} />
-                  <Text className="font-inter-semibold text-label-md text-on-primary">
+                  <Text
+                    numberOfLines={1}
+                    style={{ fontSize: 10.5 }}
+                    className="font-inter-semibold text-label-md text-on-primary">
                     {tab.label}
                   </Text>
                 </View>
