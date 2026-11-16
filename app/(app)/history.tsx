@@ -5,16 +5,18 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  SectionList,
   Text,
   View,
   type SectionListRenderItem,
 } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
+import {
+  AnimatedSectionList,
+  CollapsingHeaderScreen,
+} from '@/components/CollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { FlatInput } from '@/components/FlatInput';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
-import { Screen, useScreenBottomPad } from '@/components/Screen';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { SheetActions } from '@/components/SheetActions';
@@ -27,6 +29,7 @@ import {
   type PersonScope,
 } from '@/features/transactions/filter';
 import { groupTransactionsByDay } from '@/features/transactions/groupByDay';
+import { historySubtitle } from '@/features/transactions/historySubtitle';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
 import { lastDskSyncAt, formatLastSync } from '@/features/transactions/lastSync';
@@ -45,7 +48,11 @@ interface DaySection {
 
 const keyExtractor = (item: TransactionView) => item.id;
 
-const renderItem: SectionListRenderItem<TransactionView, DaySection> = ({ item, index, section }) => (
+const renderItem: SectionListRenderItem<TransactionView, DaySection> = ({
+  item,
+  index,
+  section,
+}) => (
   <TransactionRow
     tx={item}
     onPress={() => router.push(`/transaction/${item.id}`)}
@@ -67,7 +74,6 @@ export default function HistoryScreen() {
   const loaded = useTransactionsStore((s) => s.loaded);
   const session = useAuthStore((s) => s.session);
   const householdId = useAuthStore((s) => s.householdId);
-  const bottomPad = useScreenBottomPad({ floating: true, withTabBar: true });
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -82,21 +88,28 @@ export default function HistoryScreen() {
 
   const activeQuery = searchOpen ? debouncedQuery : '';
 
-  // Filter + group in one memo, keyed on the debounced query: typing no longer
-  // re-runs the sort/group over the whole window on every keystroke.
-  const sections = useMemo<DaySection[]>(() => {
-    const filtered = filterTransactions(transactions, {
-      query: activeQuery,
-      categoryIds,
-      person,
-      myUserId,
-    });
-    return groupTransactionsByDay(filtered, categories, undefined, reasons).map((g) => ({
-      key: g.label,
-      label: g.label,
-      data: g.items,
-    }));
-  }, [transactions, activeQuery, categoryIds, person, myUserId, categories, reasons]);
+  // Filter + group keyed on the debounced query: typing no longer re-runs the
+  // sort/group over the whole window on every keystroke.
+  const filtered = useMemo(
+    () =>
+      filterTransactions(transactions, {
+        query: activeQuery,
+        categoryIds,
+        person,
+        myUserId,
+      }),
+    [transactions, activeQuery, categoryIds, person, myUserId],
+  );
+
+  const sections = useMemo<DaySection[]>(
+    () =>
+      groupTransactionsByDay(filtered, categories, undefined, reasons).map((g) => ({
+        key: g.label,
+        label: g.label,
+        data: g.items,
+      })),
+    [filtered, categories, reasons],
+  );
 
   const lastSyncLabel = useMemo(() => {
     const iso = lastDskSyncAt(transactions);
@@ -107,6 +120,7 @@ export default function HistoryScreen() {
   const filterCount = activeFilterCount({ categoryIds, person });
   const searching = activeQuery.trim() !== '';
   const narrowed = searching || filterCount > 0;
+  const subtitle = loaded ? historySubtitle(filtered, narrowed) : null;
 
   const toggleCategory = (id: string) =>
     setCategoryIds((prev) =>
@@ -132,12 +146,8 @@ export default function HistoryScreen() {
 
   const listHeader = (
     <>
-      <Text className="mb-xl mt-md font-jakarta-semibold text-headline-xl text-on-surface">
-        История
-      </Text>
-
       {lastSyncLabel !== null && (
-        <Text className="mb-lg -mt-lg font-inter text-body-md text-on-surface-variant opacity-70">
+        <Text className="mb-lg font-inter text-body-md text-on-surface-variant opacity-70">
           Последна синхронизация с DSK: {lastSyncLabel}
         </Text>
       )}
@@ -166,7 +176,11 @@ export default function HistoryScreen() {
         icon="search-off"
         title="Няма съвпадения"
         message="Промени търсенето или филтрите."
-        cta={filterCount > 0 ? { label: 'Изчисти филтрите', onPress: clearFilters } : undefined}
+        cta={
+          filterCount > 0
+            ? { label: 'Изчисти филтрите', onPress: clearFilters }
+            : undefined
+        }
       />
     ) : (
       <EmptyState
@@ -178,10 +192,10 @@ export default function HistoryScreen() {
     );
 
   return (
-    <Screen
+    <CollapsingHeaderScreen
+      title="История"
+      subtitle={subtitle}
       withTabBar
-      scroll={false}
-      padBottom={false}
       floatingAboveTabBar={
         <FloatingActionBar
           actions={[
@@ -204,87 +218,108 @@ export default function HistoryScreen() {
             },
           ]}
         />
-      }>
-      {/* Virtualised: only the rows near the viewport mount. Screen's scroll
-          wrapper is off (a list inside KeyboardAwareScrollView is nested scroll). */}
-      <SectionList
-        sections={loading && !loaded ? [] : sections}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        renderSectionHeader={renderSectionHeader}
-        stickySectionHeadersEnabled={false}
-        ListHeaderComponent={listHeader}
-        ListEmptyComponent={listEmpty}
-        contentContainerStyle={{ paddingBottom: bottomPad }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primaryContainer}
-            colors={[colors.primaryContainer]}
-            progressBackgroundColor={colors.surfaceContainer}
+      }
+    >
+      {({ scrollProps, largeTitle, refreshOffset }) => (
+        <>
+          {/* Virtualised: only the rows near the viewport mount. Pull-to-refresh
+              is the native top-of-list pull, so it works from the expanded title. */}
+          <AnimatedSectionList
+            {...scrollProps}
+            sections={loading && !loaded ? [] : sections}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            renderSectionHeader={renderSectionHeader}
+            stickySectionHeadersEnabled={false}
+            ListHeaderComponent={
+              <>
+                {largeTitle}
+                {listHeader}
+              </>
+            }
+            ListEmptyComponent={listEmpty}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                progressViewOffset={refreshOffset}
+                tintColor={colors.primaryContainer}
+                colors={[colors.primaryContainer]}
+                progressBackgroundColor={colors.surfaceContainer}
+              />
+            }
           />
-        }
-      />
 
-      <BottomSheet visible={filterSheetOpen} onClose={() => setFilterSheetOpen(false)}>
-        <View className="gap-lg px-6 pb-4 pt-2">
-          <Text className="font-jakarta-semibold text-headline-md text-on-surface">Филтри</Text>
+          <BottomSheet
+            visible={filterSheetOpen}
+            onClose={() => setFilterSheetOpen(false)}
+          >
+            <View className="gap-lg px-6 pb-4 pt-2">
+              <Text className="font-jakarta-semibold text-headline-md text-on-surface">
+                Филтри
+              </Text>
 
-          <View>
-            <SectionLabel className="mb-md">Категории</SectionLabel>
-            <View className="flex-row flex-wrap gap-sm">
-              {categories.map((c) => {
-                const active = categoryIds.includes(c.id);
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => toggleCategory(c.id)}
-                    className={`flex-row items-center gap-1.5 px-4 py-1.5 ${
-                      active ? 'bg-primary-container' : 'bg-surface-container'
-                    }`}
-                    style={{ borderRadius: 9999 }}>
-                    <MaterialIcons
-                      name={c.icon as never}
-                      size={14}
-                      color={active ? colors.onPrimary : colors.onSurfaceVariant}
-                    />
-                    <Text
-                      className={`font-inter text-label-md ${
-                        active ? 'text-on-primary' : 'text-on-surface-variant'
-                      }`}>
-                      {c.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
+              <View>
+                <SectionLabel className="mb-md">Категории</SectionLabel>
+                <View className="flex-row flex-wrap gap-sm">
+                  {categories.map((c) => {
+                    const active = categoryIds.includes(c.id);
+                    return (
+                      <Pressable
+                        key={c.id}
+                        onPress={() => toggleCategory(c.id)}
+                        className={`flex-row items-center gap-1.5 px-4 py-1.5 ${
+                          active ? 'bg-primary-container' : 'bg-surface-container'
+                        }`}
+                        style={{ borderRadius: 9999 }}
+                      >
+                        <MaterialIcons
+                          name={c.icon as never}
+                          size={14}
+                          color={active ? colors.onPrimary : colors.onSurfaceVariant}
+                        />
+                        <Text
+                          className={`font-inter text-label-md ${
+                            active ? 'text-on-primary' : 'text-on-surface-variant'
+                          }`}
+                        >
+                          {c.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
 
-          <View>
-            <SectionLabel className="mb-md">Направени от</SectionLabel>
-            <View className="self-start">
-              <SegmentedToggle
-                options={[
-                  { value: 'all', label: 'Домакинство' },
-                  { value: 'me', label: 'Само аз' },
+              <View>
+                <SectionLabel className="mb-md">Направени от</SectionLabel>
+                <View className="self-start">
+                  <SegmentedToggle
+                    options={[
+                      { value: 'all', label: 'Домакинство' },
+                      { value: 'me', label: 'Само аз' },
+                    ]}
+                    value={person}
+                    onChange={setPerson}
+                  />
+                </View>
+              </View>
+
+              <SheetActions
+                actions={[
+                  {
+                    label: 'Готово',
+                    onPress: () => setFilterSheetOpen(false),
+                    variant: 'filled',
+                  },
+                  { label: 'Изчисти', onPress: clearFilters, variant: 'ghost' },
                 ]}
-                value={person}
-                onChange={setPerson}
               />
             </View>
-          </View>
-
-          <SheetActions
-            actions={[
-              { label: 'Готово', onPress: () => setFilterSheetOpen(false), variant: 'filled' },
-              { label: 'Изчисти', onPress: clearFilters, variant: 'ghost' },
-            ]}
-          />
-        </View>
-      </BottomSheet>
-    </Screen>
+          </BottomSheet>
+        </>
+      )}
+    </CollapsingHeaderScreen>
   );
 }
 

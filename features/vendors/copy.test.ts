@@ -1,4 +1,10 @@
-import { aliasCountLabel, cardCountLabel, deleteVendorMessage, vendorMetaLine } from './copy';
+import {
+  aliasCountLabel,
+  cardCountLabel,
+  deleteVendorMessage,
+  vendorCountLabel,
+  vendorMetaLine,
+} from './copy';
 
 describe('vendor copy', () => {
   it('pluralizes recognized names and cards', () => {
@@ -6,6 +12,8 @@ describe('vendor copy', () => {
     expect(aliasCountLabel(3)).toBe('3 разпознати имена');
     expect(cardCountLabel(1)).toBe('1 карта');
     expect(cardCountLabel(2)).toBe('2 карти');
+    expect(vendorCountLabel(1)).toBe('1 търговец');
+    expect(vendorCountLabel(12)).toBe('12 търговеца');
   });
 
   it('builds the meta line, omitting zero parts', () => {
