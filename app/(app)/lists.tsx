@@ -1,14 +1,17 @@
 // app/(app)/lists.tsx — all shopping lists (spec §8.8).
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { CollapsingHeaderScreen } from '@/components/CollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
-import { Screen } from '@/components/Screen';
 import { ListRow } from '@/features/shopping/components/ListRow';
 import { NewListSheet } from '@/features/shopping/components/NewListSheet';
 import { useListViews } from '@/features/shopping/hooks';
 import { useShoppingStore } from '@/features/shopping/store';
+
+/** "1 списък" / "3 списъка". */
+const listCountLabel = (n: number): string => (n === 1 ? '1 списък' : `${n} списъка`);
 
 export default function ShoppingListsScreen() {
   // `?new=1` (dashboard "Създай списък за магазин") opens the sheet; the param is
@@ -26,7 +29,10 @@ export default function ShoppingListsScreen() {
   }, [wantsNew]);
 
   return (
-    <Screen
+    <CollapsingHeaderScreen
+      title="Списъци"
+      subtitle={views.length > 0 ? listCountLabel(views.length) : null}
+      withTabBar
       floatingAboveTabBar={
         <FloatingActionBar
           actions={[
@@ -38,30 +44,37 @@ export default function ShoppingListsScreen() {
             },
           ]}
         />
-      }>
-      <Text className="mb-xl mt-md font-jakarta-semibold text-headline-xl text-on-surface">
-        Списъци
-      </Text>
+      }
+    >
+      {({ scrollProps, largeTitle }) => (
+        <>
+          <Animated.ScrollView {...scrollProps}>
+            {largeTitle}
 
-      {loaded && views.length === 0 ? (
-        <EmptyState
-          icon="checklist"
-          title="Няма списъци"
-          message="Създай списък за магазин и го отмятай на място."
-        />
-      ) : null}
+            {loaded && views.length === 0 ? (
+              <EmptyState
+                icon="checklist"
+                title="Няма списъци"
+                message="Създай списък за магазин и го отмятай на място."
+              />
+            ) : null}
 
-      {views.map((view, i) => (
-        <ListRow
-          key={view.list.id}
-          view={view}
-          showDivider={i < views.length - 1}
-          onPress={() => router.push({ pathname: '/list/[id]', params: { id: view.list.id } })}
-        />
-      ))}
+            {views.map((view, i) => (
+              <ListRow
+                key={view.list.id}
+                view={view}
+                showDivider={i < views.length - 1}
+                onPress={() =>
+                  router.push({ pathname: '/list/[id]', params: { id: view.list.id } })
+                }
+              />
+            ))}
+          </Animated.ScrollView>
 
-      <NewListSheet visible={creating} onClose={() => setCreating(false)} />
-    </Screen>
+          <NewListSheet visible={creating} onClose={() => setCreating(false)} />
+        </>
+      )}
+    </CollapsingHeaderScreen>
   );
 }
 

@@ -14,6 +14,8 @@ import {
   headerVisuals,
   ramp,
   releaseVelocity,
+  revealVisuals,
+  TILE_MIN_SCALE,
   sampleVelocity,
   snapTarget,
 } from './collapse';
@@ -198,5 +200,44 @@ describe('headerVisuals', () => {
 
   it('does not scale under reduced motion', () => {
     expect(headerVisuals(D, D, true).largeTitleScale).toBe(1);
+  });
+});
+
+describe('revealVisuals', () => {
+  it('collapsed (y = distance) shows only the chip', () => {
+    expect(revealVisuals(D, D)).toEqual({
+      tileOpacity: 0,
+      tileScale: TILE_MIN_SCALE,
+      chipOpacity: 1,
+    });
+  });
+
+  it('fully revealed (y = 0) shows only the tile', () => {
+    expect(revealVisuals(0, D)).toEqual({ tileOpacity: 1, tileScale: 1, chipOpacity: 0 });
+  });
+
+  it('overscroll (y < 0) reads as fully revealed', () => {
+    expect(revealVisuals(-40, D).tileOpacity).toBe(1);
+  });
+
+  it('cross-fades in between', () => {
+    const v = revealVisuals(D / 2, D);
+    expect(v.tileOpacity).toBe(1);
+    expect(v.chipOpacity).toBeCloseTo(0.5);
+    const early = revealVisuals(D * 0.8, D);
+    expect(early.tileOpacity).toBeCloseTo(0.4);
+    expect(early.chipOpacity).toBe(1);
+  });
+
+  it('keeps the tile at scale 1 under reduced motion', () => {
+    expect(revealVisuals(D * 0.9, D, true).tileScale).toBe(1);
+  });
+
+  it('with no distance there is nothing to reveal', () => {
+    expect(revealVisuals(0, 0)).toEqual({
+      tileOpacity: 0,
+      tileScale: TILE_MIN_SCALE,
+      chipOpacity: 1,
+    });
   });
 });

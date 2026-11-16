@@ -175,3 +175,37 @@ export function headerVisuals(
     borderOpacity: Math.min(1, Math.max(0, (y - Math.max(0, distance)) / BORDER_FADE_PX)),
   };
 }
+
+/** Reveal windows for the list card (0 = tile fully shown … 1 = collapsed to the chip). */
+export const REVEAL_RANGES = {
+  /** The tile fades in over the first stretch of the pull. */
+  tile: [0, 0.5],
+  /** The compact chip row fades out as the tile takes over. */
+  chip: [0.2, 0.8],
+} as const satisfies Record<string, readonly [number, number]>;
+
+/** Tile scale when it has just started to appear (it settles to 1). */
+export const TILE_MIN_SCALE = 0.94;
+
+/** Visual state of the card reveal: same offset model, `distance` = tile height. */
+export interface RevealVisuals {
+  tileOpacity: number;
+  tileScale: number;
+  chipOpacity: number;
+}
+
+export function revealVisuals(
+  y: number,
+  distance: number,
+  reduceMotion = false,
+): RevealVisuals {
+  'worklet';
+  // 0 = collapsed (chip), 1 = revealed (tile). No distance = nothing to reveal.
+  const revealed = distance <= 0 ? 0 : 1 - collapseProgress(y, distance);
+  const tileOpacity = ramp(revealed, REVEAL_RANGES.tile);
+  return {
+    tileOpacity,
+    tileScale: reduceMotion ? 1 : TILE_MIN_SCALE + (1 - TILE_MIN_SCALE) * tileOpacity,
+    chipOpacity: 1 - ramp(revealed, REVEAL_RANGES.chip),
+  };
+}
