@@ -243,28 +243,21 @@ export default function VendorDetailScreen() {
           actions={[
             {
               label: 'Изтрий',
-              icon: 'delete',
+              icon: 'delete-outline',
               variant: 'destructive',
               onPress: () => setConfirmDelete(true),
+            },
+            {
+              label: 'Редакция',
+              icon: 'edit',
+              variant: 'filled',
+              onPress: () => setRenameDraft(vendor.name),
             },
           ]}
         />
       }
     >
-      <ScreenHeader
-        title={vendor.name}
-        right={
-          <Pressable
-            onPress={() => setRenameDraft(vendor.name)}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Преименувай"
-            className="p-2"
-          >
-            <MaterialIcons name="edit" size={20} color={colors.onSurfaceVariant} />
-          </Pressable>
-        }
-      />
+      <ScreenHeader title={vendor.name} />
 
       {/* Recognized names */}
       <SectionLabel className="mb-sm">Разпознати имена</SectionLabel>
