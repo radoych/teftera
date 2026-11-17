@@ -93,7 +93,7 @@ export interface OptimisticEngineDeps {
   publish: (view: ShoppingData) => void;
   /** Ask for a reload after a commit. Fire-and-forget. */
   refresh: () => void;
-  /** A write failed and its op was reverted (haptic / log). */
+  /** A write failed and its op was reverted (log). */
   onError: (err: unknown, op: PendingOp) => void;
 }
 

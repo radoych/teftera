@@ -3,7 +3,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
-import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 import { maskCode } from '../format';
 import type { LoyaltyCard } from '../types';
@@ -49,7 +48,6 @@ function Row({
  */
 export function CardPicker({ cards, selectedId, onSelect, title = 'Коя карта?' }: CardPickerProps) {
   const pick = (cardId: string | null) => {
-    haptics.select();
     onSelect(cardId);
   };
   return (

@@ -4,7 +4,6 @@ import { Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { SheetActions } from '@/components/SheetActions';
 import { useCardCount } from '@/features/loyalty/sync';
-import { haptics } from '@/lib/haptics';
 import { aliasAction, pickAliasTarget } from '../aliasAction';
 import { addAlias, createVendor } from '../api';
 import { conflictFromError, isUniqueViolation } from '../conflict';
@@ -80,7 +79,6 @@ function RecognizedNameForm({
 
   /** Hand a conflict over; the sheet closes so the conflict sheet can open. */
   const conflictOut = (conflict: AliasConflict, vendor: Vendor) => {
-    haptics.error();
     onClose();
     onConflict(conflict, vendor);
   };
@@ -118,11 +116,9 @@ function RecognizedNameForm({
         }
       }
       await refreshVendors(householdId).catch(() => {});
-      haptics.success();
       onClose();
     } catch (err) {
       if (__DEV__) console.warn('[vendors] recognized name failed', err);
-      haptics.error();
       setError(FAILED);
     } finally {
       setBusy(false);

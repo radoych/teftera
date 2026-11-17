@@ -1,30 +1,28 @@
-// features/shopping/components/ListProgress.tsx — "3 / 8" + a springing progress bar (spec §8.7).
+// features/shopping/components/ListProgress.tsx — "3 / 8" + an animated progress bar (spec §8.7).
 import { useEffect } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
   FadeIn,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { progressWidthPct } from '@/components/ProgressBar';
-import { SPRING_SNAPPY } from '@/lib/animation';
 import { colors } from '@/lib/theme';
 import { progressLabel } from '../copy';
 import type { ListCounts } from '../types';
 
 /**
- * 2 px track (`outline-variant`) whose `primary-container` fill springs to the
+ * 2 px track (`outline-variant`) whose `primary-container` fill animates to the
  * new width. Same clamping as the static `ProgressBar` (`progressWidthPct`);
  * kept separate so ProgressBar — and its tests — stay free of Reanimated.
  */
-function SpringBar({ fraction }: { fraction: number }) {
+function ProgressFill({ fraction }: { fraction: number }) {
   const pct = progressWidthPct(fraction);
   const width = useSharedValue(pct);
   useEffect(() => {
-    width.value = withSpring(pct, SPRING_SNAPPY);
+    width.value = withTiming(pct, { duration: 200 });
   }, [pct, width]);
-  // Clamp so the spring's overshoot never spills past the track.
   const fill = useAnimatedStyle(() => ({ width: `${Math.min(Math.max(width.value, 0), 100)}%` }));
 
   return (
@@ -41,7 +39,7 @@ function SpringBar({ fraction }: { fraction: number }) {
   );
 }
 
-/** Counter on the left, the springing bar, and "Всичко е взето" once nothing is left. */
+/** Counter on the left, the animated bar, and "Всичко е взето" once nothing is left. */
 export function ListProgress({ counts }: { counts: ListCounts }) {
   const allDone = counts.total > 0 && counts.open === 0;
   const fraction = counts.total > 0 ? counts.done / counts.total : 0;
@@ -53,7 +51,7 @@ export function ListProgress({ counts }: { counts: ListCounts }) {
           {progressLabel(counts)}
         </Text>
         <View className="flex-1">
-          <SpringBar fraction={fraction} />
+          <ProgressFill fraction={fraction} />
         </View>
       </View>
       {allDone ? (

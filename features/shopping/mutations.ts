@@ -1,7 +1,7 @@
 // features/shopping/mutations.ts — optimistic writes (spec §8.4) + list creation.
 //
 // Every mutator updates the store first, then writes; a failed write reverts
-// and fires `haptics.error()` (the engine's onError). Each resolves `true` on
+// (the engine's onError). Each resolves `true` on
 // success, `false` when reverted — callers never need try/catch. See
 // ./optimistic.ts for how these reconcile with realtime refetches.
 import { randomUUID } from 'expo-crypto';

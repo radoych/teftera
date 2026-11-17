@@ -16,7 +16,6 @@ import { ensureVendorForMerchant } from '@/features/vendors/ensure';
 import { cleanVendorName } from '@/features/vendors/key';
 import { getVendorIndex } from '@/features/vendors/store';
 import { refreshVendors } from '@/features/vendors/sync';
-import { haptics } from '@/lib/haptics';
 import { cardChoice } from '../create';
 import { openOrCreateVendorList } from '../mutations';
 import { useShoppingStore } from '../store';
@@ -61,7 +60,6 @@ function NewListForm({ onClose, initialVendorName = '' }: NewListSheetProps) {
 
   const create = async (vendorId: string, name: string, loyaltyCardId: string | null) => {
     const { id, created } = await openOrCreateVendorList({ vendorId, name, loyaltyCardId });
-    if (created) haptics.success();
     onClose();
     openList(id);
   };
@@ -96,7 +94,6 @@ function NewListForm({ onClose, initialVendorName = '' }: NewListSheetProps) {
       await create(vendor.vendorId, vendor.name, choice.cardId);
     } catch (err) {
       if (__DEV__) console.warn('[shopping] new list failed', err);
-      haptics.error();
       setError(FAILED);
     } finally {
       setBusy(false);
@@ -111,7 +108,6 @@ function NewListForm({ onClose, initialVendorName = '' }: NewListSheetProps) {
       await create(pick.vendorId, pick.name, cardId);
     } catch (err) {
       if (__DEV__) console.warn('[shopping] new list failed', err);
-      haptics.error();
       setError(FAILED);
     } finally {
       setBusy(false);
