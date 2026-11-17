@@ -50,7 +50,7 @@ exports, or a live PSD2 bank connection. Everything runs on free tiers.
 - **Offline-aware, crash-resilient** — connectivity banner with disabled network actions; route-level error boundaries keep navigation alive.
 - **Vendors & recognized names** — one normalized name per store ("Kaufland") plus every raw spelling that should resolve to it (bank strings, receipt text, Cyrillic). Merchant fields autocomplete from it, imports resolve through it, and a database unique index guarantees a raw name belongs to at most one vendor, with a merge/delete conflict flow when it would not.
 - **Loyalty cards** — scan a card with the camera or type the code; the app renders EAN-13 / EAN-8 / Code128 with its own tested encoders (QR via a library) on a full-brightness presenter for the till.
-- **Shared shopping lists** — one list per store with that store's card attached, quick-add, an animated + haptic check-off, and optimistic updates that stay correct while both phones edit at once.
+- **Shared shopping lists** — one list per store with that store's card attached, quick-add, an animated check-off, and optimistic updates that stay correct while both phones edit at once.
 
 ## Architecture
 

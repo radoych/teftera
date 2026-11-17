@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import { useAuthStore } from '@/features/auth/store';
 import { createHouseholdSync } from '@/features/sync/householdSync';
 import { useHouseholdSync } from '@/features/sync/useHouseholdSync';
-import { haptics } from '@/lib/haptics';
 import { listItems, listLists } from './api';
 import { itemsByList, listCounts } from './order';
 import { createOptimisticEngine, type ShoppingData } from './optimistic';
@@ -19,7 +18,6 @@ export const shoppingEngine = createOptimisticEngine({
   },
   onError: (err, op) => {
     if (__DEV__) console.warn(`[shopping] ${op.kind} failed — reverted`, err);
-    haptics.error();
   },
 });
 

@@ -16,7 +16,6 @@ import { useLoyaltyStore } from '@/features/loyalty/store';
 import { useCardsForVendor } from '@/features/loyalty/sync';
 import { useBrightnessBoost } from '@/features/loyalty/useBrightnessBoost';
 import { useVendorNameLookup } from '@/features/loyalty/vendorNames';
-import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 
 /** How long "Копирано" stays up (ms). */
@@ -64,7 +63,6 @@ export default function CardPresenterScreen() {
     } catch {
       return;
     }
-    haptics.tap();
     setCopied(true);
     if (copiedTimer.current) clearTimeout(copiedTimer.current);
     copiedTimer.current = setTimeout(() => setCopied(false), COPIED_MS);
@@ -141,7 +139,6 @@ export default function CardPresenterScreen() {
                   active={s.id === card.id}
                   onPress={() => {
                     if (s.id === card.id) return;
-                    haptics.select();
                     setCurrentId(s.id);
                   }}
                 />

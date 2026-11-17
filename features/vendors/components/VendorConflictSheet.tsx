@@ -6,7 +6,6 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { SheetActions } from '@/components/SheetActions';
 import { refreshLoyaltyCards, useCardCount } from '@/features/loyalty/sync';
 import { useListsByVendor } from '@/features/shopping/sync';
-import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 import { deleteVendor, mergeVendors, moveAlias } from '../api';
 import { aliasCountLabel, cardCountLabel } from '../copy';
@@ -138,11 +137,9 @@ export function VendorConflictSheet({
       );
       // Merge moved the owner's cards; deletes left orphans (spec §1 #7) — reload them.
       await refreshLoyaltyCards(editingVendor.household_id).catch(() => {});
-      haptics.success();
       onResolved(result);
     } catch (err) {
       if (__DEV__) console.warn('[vendors] conflict resolution failed', err);
-      haptics.error();
       setError('Неуспешно. Опитай отново.');
     } finally {
       setBusy(false);
@@ -184,7 +181,6 @@ export function VendorConflictSheet({
                 <Pressable
                   key={option}
                   onPress={() => {
-                    if (option !== selected) haptics.select();
                     setSelected(option);
                   }}
                   accessibilityRole="radio"

@@ -24,7 +24,6 @@ import {
 import { refreshVendors } from '@/features/vendors/sync';
 import type { Vendor } from '@/features/vendors/types';
 import { rowEntering, rowExiting, rowLayout } from '@/lib/animation';
-import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 
 function VendorRow({ vendor, meta }: { vendor: Vendor; meta: string }) {
@@ -91,7 +90,6 @@ export default function VendorsScreen() {
     try {
       const { id } = await createVendor({ householdId, name });
       await refreshVendors(householdId);
-      haptics.success();
       closeDraft();
       router.push({ pathname: '/vendor/[id]', params: { id } });
     } catch (err) {
@@ -105,7 +103,6 @@ export default function VendorsScreen() {
         conflict = conflictFromError(err, name, getVendorIndex());
       }
       if (conflict) {
-        haptics.error();
         setDraftHint(
           conflict.ownerAlias.is_primary
             ? `„${conflict.owner.name}" вече съществува.`

@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { haptics } from '@/lib/haptics';
 import { listExiting, rowEntering, rowLayout } from '@/lib/animation';
 import { colors } from '@/lib/theme';
 import { merchantKey } from '../key';
@@ -123,7 +122,6 @@ export function VendorAutocomplete({
   const pick = (vendor: Vendor) => {
     onChangeText(vendor.name);
     onSelect?.(vendor);
-    haptics.select();
   };
 
   return (

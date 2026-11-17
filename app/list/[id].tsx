@@ -62,7 +62,6 @@ import { useListItems, useShoppingList } from '@/features/shopping/sync';
 import type { QuickAddDraft, ShoppingListItem } from '@/features/shopping/types';
 import { useVendorIndex } from '@/features/vendors/store';
 import { rowLayout } from '@/lib/animation';
-import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 
 /** How long a just-checked row stays put before it slides into "Взети" (decision #12). */
@@ -235,19 +234,14 @@ export default function ShoppingListScreen() {
     // Tap again while settling → undo, no regroup.
     if (settling.has(item.id)) {
       endSettle(item.id);
-      haptics.select();
       void toggleItem(item.id, false, userId);
       return;
     }
     // Tap in "Взети" → back up into the open group, no settle delay.
     if (item.checked_at !== null) {
-      haptics.select();
       void toggleItem(item.id, false, userId);
       return;
     }
-    // One haptic per gesture: the last item taken gets `success` instead of `tap`.
-    if (counts.open === 1) haptics.success();
-    else haptics.tap();
     void toggleItem(item.id, true, userId).then((ok) => {
       if (!ok) endSettle(item.id);
     });
@@ -259,7 +253,6 @@ export default function ShoppingListScreen() {
   };
 
   const onAdd = (draft: QuickAddDraft) => {
-    haptics.tap();
     void addItemOptimistic(list.id, draft, userId);
     // Let the new row mount before scrolling to it.
     requestAnimationFrame(() => scroll.current?.scrollToEnd({ animated: true }));
@@ -271,7 +264,6 @@ export default function ShoppingListScreen() {
   };
 
   const openEdit = (item: ShoppingListItem) => {
-    haptics.select();
     setEditing(item);
     setEditName(item.name);
     setEditQty(item.quantity ?? '');
@@ -304,7 +296,6 @@ export default function ShoppingListScreen() {
 
   const onPickCard = (cardId: string | null) => {
     setPickerOpen(false);
-    haptics.select();
     void setListCardOptimistic(list.id, cardId);
   };
 
@@ -456,7 +447,6 @@ export default function ShoppingListScreen() {
         cards={vendorCards}
         currentCardId={list.loyalty_card_id}
         onPickCard={(cardId) => {
-          haptics.select();
           void setListCardOptimistic(list.id, cardId);
         }}
         onClearDone={onClearDone}
@@ -476,7 +466,6 @@ export default function ShoppingListScreen() {
         initialVendorId={vendorId}
         onClose={() => setCardFormOpen(false)}
         onSaved={(cardId) => {
-          haptics.success();
           void setListCardOptimistic(list.id, cardId);
         }}
       />

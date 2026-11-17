@@ -49,7 +49,6 @@ import type {
   VendorIndex,
 } from '@/features/vendors/types';
 import { rowEntering, rowExiting, rowLayout } from '@/lib/animation';
-import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 
 /** The write that hit a conflict, so the sheet can re-run it after resolving. */
@@ -119,7 +118,6 @@ export default function VendorDetailScreen() {
       setAliasHint('Вече е добавено');
       return true;
     }
-    haptics.error();
     setPending(write);
     setConflictVendor(vendor);
     setConflict(found);
@@ -140,13 +138,11 @@ export default function VendorDetailScreen() {
     try {
       await addAlias({ householdId, vendorId: vendor.id, alias: text, source: 'manual' });
       await refresh();
-      haptics.tap();
       setNewAlias('');
     } catch (err) {
       if (await handleWriteError(err, { kind: 'alias', text })) {
         setNewAlias('');
       } else {
-        haptics.error();
         Alert.alert('Грешка', 'Името не можа да бъде добавено. Опитай отново.');
       }
     } finally {
@@ -171,7 +167,6 @@ export default function VendorDetailScreen() {
       if (await handleWriteError(err, { kind: 'rename', text })) {
         setRenameDraft(null);
       } else {
-        haptics.error();
         Alert.alert('Грешка', 'Търговецът не можа да бъде преименуван. Опитай отново.');
       }
     } finally {
@@ -187,7 +182,6 @@ export default function VendorDetailScreen() {
       await removeAlias(target.id);
       await refresh();
     } catch {
-      haptics.error();
       Alert.alert('Грешка', 'Името не можа да бъде премахнато. Опитай отново.');
     }
   };
@@ -204,7 +198,6 @@ export default function VendorDetailScreen() {
       await refreshLoyaltyCards(householdId).catch(() => {});
     } catch {
       setDeleting(false);
-      haptics.error();
       Alert.alert('Грешка', 'Търговецът не можа да бъде изтрит. Опитай отново.');
     }
   };
@@ -218,7 +211,6 @@ export default function VendorDetailScreen() {
       refreshLoyaltyCards(householdId),
       refreshShopping(householdId),
     ]);
-    haptics.success();
     router.replace({ pathname: '/vendor/[id]', params: { id: target.id } });
   };
 

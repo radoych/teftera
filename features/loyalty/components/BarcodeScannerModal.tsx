@@ -3,7 +3,6 @@ import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'ex
 import { useEffect, useRef } from 'react';
 import { Linking, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 import { fromScannerResult, type DetectedCode } from '../format';
 
@@ -23,7 +22,7 @@ interface BarcodeScannerModalProps {
 
 /**
  * Full-screen camera scanner for card barcodes (EAN-13/8, UPC-A, Code128, QR).
- * The first scan fires a success haptic and is reported once (`scannedRef`);
+ * The first scan is reported once (`scannedRef`);
  * later frames are ignored until the modal is reopened.
  */
 export function BarcodeScannerModal({ visible, onClose, onScanned }: BarcodeScannerModalProps) {
@@ -42,7 +41,6 @@ export function BarcodeScannerModal({ visible, onClose, onScanned }: BarcodeScan
   const onBarcodeScanned = (result: BarcodeScanningResult) => {
     if (scannedRef.current) return;
     scannedRef.current = true;
-    haptics.success();
     onScanned(fromScannerResult(result.type, result.data));
   };
 

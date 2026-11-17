@@ -75,7 +75,7 @@ eas build --profile preview --platform all
 | Auth | Supabase Auth — email/password + Google OAuth |
 | Keyboard | react-native-keyboard-controller (KeyboardProvider in root layout) |
 | Barcodes | own EAN-13 / EAN-8 / Code128 encoders in `lib/barcode` + react-native-qrcode-svg, rendered with react-native-svg |
-| Feedback | expo-haptics (`lib/haptics.ts`), Reanimated presets (`lib/animation.ts`), expo-brightness (card presenter) |
+| Feedback | Reanimated presets (`lib/animation.ts`), expo-brightness (card presenter) |
 | CI/CD | Expo EAS · GitHub Actions (tsc + lint + jest on PRs and main) |
 
 **Future (not yet built):** thin FastAPI service on GCP Cloud Run for the anomaly model. (Gemini calls are already server-side — see Non-Negotiable Rules #5.) Isolate all AI and ML logic behind service modules now so the move is a one-file change later.
@@ -123,7 +123,6 @@ eas build --profile preview --platform all
   /dates.ts              date helpers, bg-BG locale, month toolkit
   /theme.ts              colour tokens — single source for tailwind.config.js; use `colors.*`, never raw hex
   /barcode/              pure barcode encoders (tested)
-  /haptics.ts            haptic feedback wrapper
   /animation.ts          Reanimated presets
 
 /supabase

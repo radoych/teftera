@@ -6,7 +6,6 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { SheetActions } from '@/components/SheetActions';
 import { useCardCount } from '@/features/loyalty/sync';
 import { useListsByVendor } from '@/features/shopping/sync';
-import { haptics } from '@/lib/haptics';
 import { pickAliasTarget } from '../aliasAction';
 import { mergeVendors } from '../api';
 import { mergeIntoLines } from '../copy';
@@ -75,7 +74,6 @@ function MergeIntoForm({ source, onClose, onMerged }: MergeIntoVendorSheetProps)
         onMerged(to);
       } catch (err) {
         if (__DEV__) console.warn('[vendors] merge into failed', err);
-        haptics.error();
         setError('Неуспешно обединяване. Опитай отново.');
         setBusy(false);
       }
@@ -154,7 +152,6 @@ function MergeIntoForm({ source, onClose, onMerged }: MergeIntoVendorSheetProps)
           {
             label: 'Продължи',
             onPress: () => {
-              haptics.select();
               setConfirming(true);
             },
             variant: 'filled',

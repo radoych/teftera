@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Svg, { G, Rect, Text as SvgText } from 'react-native-svg';
 import { barRuns } from '@/components/barcodeLayout';
-import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
 import type { FormatGroup } from '../format';
 import {
@@ -98,7 +97,6 @@ export function FormatPicker({ value, onChange }: FormatPickerProps) {
 
   const show = (g: FormatGroup) => {
     longPressed.current = true;
-    haptics.tap();
     setHint(g);
     clear();
     timer.current = setTimeout(() => setHint(null), TOOLTIP_MS);
@@ -146,7 +144,6 @@ export function FormatPicker({ value, onChange }: FormatPickerProps) {
                   longPressed.current = false;
                   return;
                 }
-                haptics.select();
                 onChange(g);
               }}
               onLongPress={() => show(g)}

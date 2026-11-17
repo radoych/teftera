@@ -4,16 +4,13 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, {
-  FadeOutLeft,
-  interpolate,
+  FadeOut,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
-  withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { rowEntering, rowExiting, rowLayout, SPRING_POP, TIMING_FAST } from '@/lib/animation';
+import { rowEntering, rowExiting, rowLayout, TIMING_FAST } from '@/lib/animation';
 import { colors } from '@/lib/theme';
 import type { ShoppingListItem } from '../types';
 
@@ -39,7 +36,6 @@ export interface ItemRowProps {
 
 function Checkbox({ checked }: { checked: boolean }) {
   const progress = useSharedValue(checked ? 1 : 0);
-  const pop = useSharedValue(1);
   const mounted = useRef(false);
 
   useEffect(() => {
@@ -49,15 +45,13 @@ function Checkbox({ checked }: { checked: boolean }) {
       return;
     }
     if (checked) {
-      pop.value = withSequence(withTiming(1.18, { duration: 90 }), withSpring(1, SPRING_POP));
-      progress.value = withSpring(1, SPRING_POP);
+      progress.value = withTiming(1, TIMING_FAST);
     } else {
       progress.value = withTiming(0, TIMING_FAST);
     }
-  }, [checked, pop, progress]);
+  }, [checked, progress]);
 
   const boxStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pop.value }],
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
@@ -71,7 +65,6 @@ function Checkbox({ checked }: { checked: boolean }) {
   }));
   const glyphStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
-    transform: [{ scale: interpolate(progress.value, [0, 0.5, 1], [0.4, 1.15, 1]) }],
   }));
 
   return (
@@ -138,7 +131,7 @@ function DeleteAction() {
 
 /**
  * One shopping item. Layout animation on the OUTER node (rows slide between the
- * open and "Взети" groups); the checkbox's pop transform lives on an inner node
+ * open and "Взети" groups); the checkbox's own styles live on an inner node
  * (never both on one node — see components/BottomSheet.tsx). Swipe left past
  * 96 px to delete; long-press to edit.
  */
@@ -155,7 +148,7 @@ export function ItemRow({
   // Builders mutate in place, so a delayed exit needs its own instance — never
   // call `.delay()` on the shared `rowExiting` preset.
   const exiting = useMemo(
-    () => (exitDelay > 0 ? FadeOutLeft.duration(140).delay(exitDelay) : rowExiting),
+    () => (exitDelay > 0 ? FadeOut.duration(140).delay(exitDelay) : rowExiting),
     [exitDelay],
   );
 
