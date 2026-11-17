@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { BottomSheet } from '@/components/BottomSheet';
-import { SheetActions } from '@/components/SheetActions';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { useCardCount } from '@/features/loyalty/sync';
 import { useListsByVendor } from '@/features/shopping/sync';
 import { pickAliasTarget } from '../aliasAction';
@@ -98,11 +98,11 @@ function MergeIntoForm({ source, onClose, onMerged }: MergeIntoVendorSheetProps)
         {error ? (
           <Text className="font-inter text-body-md text-error">{error}</Text>
         ) : null}
-        <SheetActions
+        <FloatingActionBar inline
           actions={[
-            { label: 'Обедини', onPress: onConfirm, variant: 'filled', loading: busy },
+            { label: 'Обедини', icon: 'call-merge', onPress: onConfirm, variant: 'filled', loading: busy },
             {
-              label: 'Назад',
+              label: 'Назад', icon: 'arrow-back',
               onPress: () => {
                 setConfirming(false);
                 setError(null);
@@ -147,17 +147,17 @@ function MergeIntoForm({ source, onClose, onMerged }: MergeIntoVendorSheetProps)
           <Text className="font-inter text-label-md text-on-surface-variant">{hint}</Text>
         ) : null}
       </View>
-      <SheetActions
+      <FloatingActionBar inline
         actions={[
           {
-            label: 'Продължи',
+            label: 'Продължи', icon: 'arrow-forward',
             onPress: () => {
               setConfirming(true);
             },
             variant: 'filled',
             disabled: target.kind !== 'existing',
           },
-          { label: 'Отказ', onPress: onClose, variant: 'ghost' },
+          { label: 'Отказ', icon: 'close', onPress: onClose, variant: 'ghost' },
         ]}
       />
     </Animated.View>

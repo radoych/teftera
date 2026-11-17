@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
 import { FlatInput } from '@/components/FlatInput';
-import { SheetActions } from '@/components/SheetActions';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { initials } from '@/lib/initials';
 
 interface ProfileHeaderProps {
@@ -84,16 +84,16 @@ export function ProfileHeader({ displayName, email, onSaveName }: ProfileHeaderP
             placeholder="Име"
             autoCapitalize="words"
           />
-          <SheetActions
+          <FloatingActionBar inline
             actions={[
               {
-                label: 'Запази',
+                label: 'Запази', icon: 'check',
                 onPress: handleSaveName,
                 variant: 'filled',
                 loading: savingName,
                 disabled: nameDraft.trim() === '',
               },
-              { label: 'Отказ', onPress: () => setEditOpen(false), variant: 'ghost' },
+              { label: 'Отказ', icon: 'close', onPress: () => setEditOpen(false), variant: 'ghost' },
             ]}
           />
         </View>

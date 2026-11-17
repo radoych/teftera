@@ -32,18 +32,23 @@ interface FloatingActionBarProps {
   liftWithKeyboard?: boolean;
   /** Smaller pills, no enlargement — for screens whose long labels overflow. */
   compact?: boolean;
+  /** Render in normal layout flow (e.g. inside a BottomSheet) instead of floating. */
+  inline?: boolean;
 }
 
 /**
  * A centered cluster of content-hugging pill actions (single → centered, two+ →
- * side by side, equal hug). The single source of truth for the app's floating
- * pill look. It rests at one height (insets.bottom + 88) on every screen so the
- * actions line up; with `liftWithKeyboard` it rises above an open keyboard.
+ * side by side, equal hug). The single source of truth for the app's pill look.
+ * Floating (default): rests at one height (insets.bottom + 88) on every screen
+ * so the actions line up; with `liftWithKeyboard` it rises above an open
+ * keyboard. With `inline` it renders in normal flow (no absolute positioning,
+ * no keyboard lift) for use inside bottom sheets.
  */
 export function FloatingActionBar({
   actions,
   liftWithKeyboard = false,
   compact = false,
+  inline = false,
 }: FloatingActionBarProps) {
   const insets = useSafeAreaInsets();
   const keyboard = useKeyboardHeight();
@@ -79,15 +84,23 @@ export function FloatingActionBar({
     );
   });
 
+  const cluster = (
+    <View
+      style={{ transform: [{ scale: compact ? 1 : 1.1 }] }}
+      className={`flex-row justify-center ${compact ? 'gap-sm' : 'gap-md'}`}>
+      {buttons}
+    </View>
+  );
+
+  if (inline) {
+    return <View className="items-center py-sm">{cluster}</View>;
+  }
+
   return (
     <View
       style={{ position: 'absolute', left: 0, right: 0, bottom, pointerEvents: 'box-none' }}
       className="items-center px-md">
-      <View
-        style={{ transform: [{ scale: compact ? 1 : 1.1 }] }}
-        className={`flex-row justify-center ${compact ? 'gap-sm' : 'gap-md'}`}>
-        {buttons}
-      </View>
+      {cluster}
     </View>
   );
 }

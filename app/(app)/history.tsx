@@ -19,7 +19,6 @@ import { FlatInput } from '@/components/FlatInput';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
-import { SheetActions } from '@/components/SheetActions';
 import { TransactionRow } from '@/features/transactions/components/TransactionRow';
 import { reasonByTxId } from '@/features/anomalies/reasons';
 import { useAuthStore } from '@/features/auth/store';
@@ -305,14 +304,14 @@ export default function HistoryScreen() {
                 </View>
               </View>
 
-              <SheetActions
+              <FloatingActionBar inline
                 actions={[
                   {
-                    label: 'Готово',
+                    label: 'Готово', icon: 'check',
                     onPress: () => setFilterSheetOpen(false),
                     variant: 'filled',
                   },
-                  { label: 'Изчисти', onPress: clearFilters, variant: 'ghost' },
+                  { label: 'Изчисти', icon: 'clear', onPress: clearFilters, variant: 'ghost' },
                 ]}
               />
             </View>

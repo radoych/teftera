@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
-import { SheetActions } from '@/components/SheetActions';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { useCardCount } from '@/features/loyalty/sync';
 import { aliasAction, pickAliasTarget } from '../aliasAction';
 import { addAlias, createVendor } from '../api';
@@ -161,16 +161,16 @@ function RecognizedNameForm({
           <Text className="font-inter text-body-md text-error">{error}</Text>
         ) : null}
       </View>
-      <SheetActions
+      <FloatingActionBar inline
         actions={[
           {
-            label: 'Запази',
+            label: 'Запази', icon: 'check',
             onPress: onConfirm,
             variant: 'filled',
             loading: busy,
             disabled: target.kind === 'none' || already !== null,
           },
-          { label: 'Отказ', onPress: onClose, variant: 'ghost', disabled: busy },
+          { label: 'Отказ', icon: 'close', onPress: onClose, variant: 'ghost', disabled: busy },
         ]}
       />
     </View>

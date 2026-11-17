@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { BottomSheet } from '@/components/BottomSheet';
-import { SheetActions } from '@/components/SheetActions';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { CardPicker } from '@/features/loyalty/components/CardPickerSheet';
 import type { LoyaltyCard } from '@/features/loyalty/types';
 import { colors } from '@/lib/theme';
@@ -82,10 +82,10 @@ function Confirm({
       {message ? (
         <Text className="font-inter text-body-md text-on-surface-variant">{message}</Text>
       ) : null}
-      <SheetActions
+      <FloatingActionBar inline
         actions={[
-          { label: confirmLabel, onPress: onConfirm, variant: 'destructive' },
-          { label: 'Отказ', onPress: onCancel, variant: 'ghost' },
+          { label: confirmLabel, icon: 'delete-outline', onPress: onConfirm, variant: 'destructive' },
+          { label: 'Отказ', icon: 'close', onPress: onCancel, variant: 'ghost' },
         ]}
       />
     </View>

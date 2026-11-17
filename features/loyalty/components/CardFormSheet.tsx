@@ -7,7 +7,7 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { FlatInput } from '@/components/FlatInput';
 import { SectionLabel } from '@/components/SectionLabel';
-import { SheetActions, type SheetAction } from '@/components/SheetActions';
+import { FloatingActionBar, type FloatingAction } from '@/components/FloatingActionBar';
 import { useAuthStore } from '@/features/auth/store';
 import { createVendor } from '@/features/vendors/api';
 import { VendorAutocomplete } from '@/features/vendors/components/VendorAutocomplete';
@@ -154,12 +154,12 @@ function CardForm({
     }
   };
 
-  const actions: SheetAction[] = [
-    { label: 'Запази', onPress: onSave, variant: 'filled', loading: saving, disabled: !canSave },
-    { label: 'Отказ', onPress: onClose, variant: 'ghost' },
+  const actions: FloatingAction[] = [
+    { label: 'Запази', icon: 'check', onPress: onSave, variant: 'filled', loading: saving, disabled: !canSave },
+    { label: 'Отказ', icon: 'close', onPress: onClose, variant: 'ghost' },
   ];
   if (editing) {
-    actions.push({ label: 'Изтрий', onPress: () => setConfirmDelete(true), variant: 'destructive' });
+    actions.push({ label: 'Изтрий', icon: 'delete-outline', onPress: () => setConfirmDelete(true), variant: 'destructive' });
   }
 
   return (
@@ -274,7 +274,7 @@ function CardForm({
 
         {resolved.code !== '' ? <Barcode value={resolved.code} format={resolved.format} /> : null}
 
-        <SheetActions actions={actions} />
+        <FloatingActionBar inline compact actions={actions} />
       </KeyboardAwareScrollView>
 
       {/* Nested inside the sheet's Modal so iOS presents them from it. */}

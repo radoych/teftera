@@ -30,7 +30,7 @@ import { FlatInput } from '@/components/FlatInput';
 import { NotFoundView } from '@/components/NotFoundView';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionLabel } from '@/components/SectionLabel';
-import { SheetActions } from '@/components/SheetActions';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { useAuthStore } from '@/features/auth/store';
 import { useHouseholdStore } from '@/features/household/store';
 import { CardChip } from '@/features/loyalty/components/CardChip';
@@ -491,15 +491,15 @@ export default function ShoppingListScreen() {
               onSubmitEditing={onSaveEdit}
             />
           </View>
-          <SheetActions
+          <FloatingActionBar inline
             actions={[
               {
-                label: 'Запази',
+                label: 'Запази', icon: 'check',
                 onPress: onSaveEdit,
                 variant: 'filled',
                 disabled: editName.trim() === '',
               },
-              { label: 'Отказ', onPress: () => setEditing(null), variant: 'ghost' },
+              { label: 'Отказ', icon: 'close', onPress: () => setEditing(null), variant: 'ghost' },
             ]}
           />
         </View>

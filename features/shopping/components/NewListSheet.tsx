@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { BottomSheet } from '@/components/BottomSheet';
-import { SheetActions } from '@/components/SheetActions';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { useAuthStore } from '@/features/auth/store';
 import { CardPicker } from '@/features/loyalty/components/CardPickerSheet';
 import { cardsForVendor } from '@/features/loyalty/group';
@@ -139,16 +139,16 @@ function NewListForm({ onClose, initialVendorName = '' }: NewListSheetProps) {
         />
         {error ? <Text className="font-inter text-body-md text-error">{error}</Text> : null}
       </View>
-      <SheetActions
+      <FloatingActionBar inline
         actions={[
           {
-            label: 'Продължи',
+            label: 'Продължи', icon: 'arrow-forward',
             onPress: onContinue,
             variant: 'filled',
             loading: busy,
             disabled: cleanVendorName(text) === '',
           },
-          { label: 'Отказ', onPress: onClose, variant: 'ghost', disabled: busy },
+          { label: 'Отказ', icon: 'close', onPress: onClose, variant: 'ghost', disabled: busy },
         ]}
       />
     </Animated.View>

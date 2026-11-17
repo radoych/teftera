@@ -7,7 +7,7 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { CollapsingHeaderScreen } from '@/components/CollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { FlatInput } from '@/components/FlatInput';
-import { SheetActions } from '@/components/SheetActions';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { useAuthStore } from '@/features/auth/store';
 import { useCardCount } from '@/features/loyalty/sync';
 import { useListsByVendor } from '@/features/shopping/sync';
@@ -210,16 +210,16 @@ export default function VendorsScreen() {
                     </Pressable>
                   ) : null}
                 </View>
-                <SheetActions
+                <FloatingActionBar inline
                   actions={[
                     {
-                      label: 'Запази',
+                      label: 'Запази', icon: 'check',
                       onPress: onCreate,
                       variant: 'filled',
                       loading: saving,
                       disabled: cleanVendorName(draft) === '',
                     },
-                    { label: 'Отказ', onPress: closeDraft, variant: 'ghost' },
+                    { label: 'Отказ', icon: 'close', onPress: closeDraft, variant: 'ghost' },
                   ]}
                 />
               </View>

@@ -9,7 +9,7 @@ import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionLabel } from '@/components/SectionLabel';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
-import { SheetActions } from '@/components/SheetActions';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { useAuthStore } from '@/features/auth/store';
 import {
   createCategory,
@@ -219,16 +219,16 @@ export default function CategoriesScreen() {
                 })}
               </View>
             </View>
-            <SheetActions
+            <FloatingActionBar inline
               actions={[
                 {
-                  label: 'Запази',
+                  label: 'Запази', icon: 'check',
                   onPress: onSave,
                   variant: 'filled',
                   loading: saving,
                   disabled: draft.name.trim() === '',
                 },
-                { label: 'Отказ', onPress: () => setDraft(null), variant: 'ghost' },
+                { label: 'Отказ', icon: 'close', onPress: () => setDraft(null), variant: 'ghost' },
               ]}
             />
           </View>

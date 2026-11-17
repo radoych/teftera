@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 import { BottomSheet } from './BottomSheet';
-import { SheetActions } from './SheetActions';
+import { FloatingActionBar } from './FloatingActionBar';
 
 interface ConfirmSheetProps {
   visible: boolean;
@@ -32,10 +32,10 @@ export function ConfirmSheet({
           <Text className="font-inter text-body-md text-on-surface-variant">{message}</Text>
         ) : null}
         {/* Confirm on the left, cancel on the right — side by side. */}
-        <SheetActions
+        <FloatingActionBar inline
           actions={[
-            { label: confirmLabel, onPress: onConfirm, variant: destructive ? 'destructive' : 'filled' },
-            { label: cancelLabel, onPress: onCancel, variant: 'ghost' },
+            { label: confirmLabel, icon: destructive ? 'delete-outline' : 'check', onPress: onConfirm, variant: destructive ? 'destructive' : 'filled' },
+            { label: cancelLabel, icon: 'close', onPress: onCancel, variant: 'ghost' },
           ]}
         />
       </View>

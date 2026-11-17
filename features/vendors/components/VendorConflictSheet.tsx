@@ -3,7 +3,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/BottomSheet';
-import { SheetActions } from '@/components/SheetActions';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { refreshLoyaltyCards, useCardCount } from '@/features/loyalty/sync';
 import { useListsByVendor } from '@/features/shopping/sync';
 import { colors } from '@/lib/theme';
@@ -212,15 +212,15 @@ export function VendorConflictSheet({
 
           {error ? <Text className="font-inter text-body-md text-error">{error}</Text> : null}
 
-          <SheetActions
+          <FloatingActionBar inline
             actions={[
               {
-                label: 'Потвърди',
+                label: 'Потвърди', icon: 'check',
                 onPress: onConfirm,
                 variant: isDestructiveOption(selected) ? 'destructive' : 'filled',
                 loading: busy,
               },
-              { label: 'Отказ', onPress: onClose, variant: 'ghost', disabled: busy },
+              { label: 'Отказ', icon: 'close', onPress: onClose, variant: 'ghost', disabled: busy },
             ]}
           />
         </View>

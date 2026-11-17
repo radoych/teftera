@@ -11,7 +11,6 @@ import { NotFoundView } from '@/components/NotFoundView';
 import { Screen } from '@/components/Screen';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionLabel } from '@/components/SectionLabel';
-import { SheetActions } from '@/components/SheetActions';
 import { useAuthStore } from '@/features/auth/store';
 import { CardFormSheet } from '@/features/loyalty/components/CardFormSheet';
 import { CardTile } from '@/features/loyalty/components/CardTile';
@@ -394,16 +393,16 @@ export default function VendorDetailScreen() {
               autoFocus
               onSubmitEditing={onRename}
             />
-            <SheetActions
+            <FloatingActionBar inline
               actions={[
                 {
-                  label: 'Запази',
+                  label: 'Запази', icon: 'check',
                   onPress: onRename,
                   variant: 'filled',
                   loading: renaming,
                   disabled: cleanVendorName(renameDraft) === '',
                 },
-                { label: 'Отказ', onPress: () => setRenameDraft(null), variant: 'ghost' },
+                { label: 'Отказ', icon: 'close', onPress: () => setRenameDraft(null), variant: 'ghost' },
               ]}
             />
           </View>
