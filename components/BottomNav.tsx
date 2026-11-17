@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ComponentProps } from 'react';
 import { colors } from '@/lib/theme';
@@ -20,6 +20,29 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
   insights: { label: 'Анализи', icon: 'insert-chart' },
   profile: { label: 'Профил', icon: 'person' },
 };
+
+const ACTIVE_GROW = 2.6;
+
+const styles = StyleSheet.create({
+  cell: { flexBasis: 0, minWidth: 0, alignItems: 'center', justifyContent: 'center' },
+  pill: {
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    height: 48,
+    borderRadius: 9999,
+    marginHorizontal: 1,
+  },
+  pillActive: { backgroundColor: colors.primaryContainer },
+  label: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 10.5,
+    letterSpacing: 0.3,
+    color: colors.onPrimary,
+  },
+});
 
 /**
  * Floating frosted pill navigation. Used as the custom tabBar for the (app)
@@ -79,27 +102,30 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
             <Pressable
               key={route.key}
               accessibilityRole="button"
-              accessibilityState={focused ? { selected: true } : {}}
+              accessibilityLabel={tab.label}
+              accessibilityState={{ selected: focused }}
               onPress={onPress}
-              style={focused ? undefined : { flex: 1 }}
-              className="items-center justify-center">
-              {focused ? (
-                <View
-                  style={{ transform: [{ scale: 1.1 }] }}
-                  className="flex-row items-center gap-1 rounded-full bg-primary-container px-3 py-3">
-                  <MaterialIcons name={tab.icon} size={22} color={colors.onPrimary} />
-                  <Text
-                    numberOfLines={1}
-                    style={{ fontSize: 10.5 }}
-                    className="font-inter-semibold text-label-md text-on-primary">
+              // Stable proportional layout: the active tab just grows (flexGrow) so
+              // its label has room; no natural-width measuring, no conditional style
+              // shapes. All styling is inline (no conditional className).
+              style={[styles.cell, { flexGrow: focused ? ACTIVE_GROW : 1 }]}>
+              <View
+                style={[
+                  styles.pill,
+                  focused && styles.pillActive,
+                  { transform: [{ scale: focused ? 1.1 : 1 }] },
+                ]}>
+                <MaterialIcons
+                  name={tab.icon}
+                  size={22}
+                  color={focused ? colors.onPrimary : colors.onSurfaceVariant}
+                />
+                {focused ? (
+                  <Text numberOfLines={1} style={styles.label}>
                     {tab.label}
                   </Text>
-                </View>
-              ) : (
-                <View className="p-3">
-                  <MaterialIcons name={tab.icon} size={22} color={colors.onSurfaceVariant} />
-                </View>
-              )}
+                ) : null}
+              </View>
             </Pressable>
           );
         })}
