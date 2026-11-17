@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundGlow } from '@/components/BackgroundGlow';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
@@ -15,9 +15,16 @@ import { deleteTransaction } from '@/features/transactions/api';
 import { memberName } from '@/features/transactions/edit';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
+import { aliasAction } from '@/features/vendors/aliasAction';
+import { addAlias } from '@/features/vendors/api';
+import { RecognizedNameSheet } from '@/features/vendors/components/RecognizedNameSheet';
+import { VendorConflictSheet } from '@/features/vendors/components/VendorConflictSheet';
+import { refreshVendors } from '@/features/vendors/sync';
+import type { AliasConflict, Vendor, VendorIndex } from '@/features/vendors/types';
 import { categoryPresentation } from '@/lib/categories';
 import { relativeDay } from '@/lib/dates';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { colors } from '@/lib/theme';
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -26,7 +33,10 @@ function DetailRow({ label, value }: { label: string; value: string }) {
         <Text className="font-inter-medium text-label-md uppercase text-on-surface-variant opacity-60">
           {label}
         </Text>
-        <Text className="flex-1 text-right font-inter text-body-lg text-on-surface" numberOfLines={1}>
+        <Text
+          className="flex-1 text-right font-inter text-body-lg text-on-surface"
+          numberOfLines={1}
+        >
           {value}
         </Text>
       </View>
@@ -43,6 +53,16 @@ export default function TransactionDetailScreen() {
   const members = useHouseholdStore((s) => s.members);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
+  const [aliasOpen, setAliasOpen] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
+  /**
+   * The name was taken by another vendor: resolve it, filing it under `vendor`.
+   * Kept after close so the conflict sheet can slide out with its content.
+   */
+  const [conflict, setConflict] = useState<{
+    conflict: AliasConflict;
+    vendor: Vendor;
+  } | null>(null);
 
   if (!tx) {
     return <NotFoundView message="Транзакцията не е намерена." />;
@@ -69,6 +89,22 @@ export default function TransactionDetailScreen() {
     }
   };
 
+  /** After the conflict sheet freed / merged the key: file the merchant under the vendor. */
+  const retryAlias = async (fresh: VendorIndex) => {
+    if (!conflict || !householdId) return;
+    const action = aliasAction(tx.merchant, conflict.vendor, fresh);
+    if (action.kind === 'add') {
+      await addAlias({
+        householdId,
+        vendorId: conflict.vendor.id,
+        alias: action.alias,
+        source: 'manual',
+      });
+    } else if (action.kind === 'conflict') {
+      throw new Error('name still taken');
+    }
+  };
+
   return (
     <View className="flex-1 bg-background">
       <BackgroundGlow />
@@ -83,13 +119,38 @@ export default function TransactionDetailScreen() {
               style={{ fontSize: 56, lineHeight: 64 }}
               numberOfLines={1}
               adjustsFontSizeToFit
-              minimumFontScale={0.5}>
+              minimumFontScale={0.5}
+            >
               {tx.kind === 'income' ? '+' : ''}
               {formatCurrency(tx.amount_eur)}
             </Text>
-            <Text className="mt-sm font-jakarta-semibold text-headline-md text-on-surface">
-              {tx.merchant}
-            </Text>
+            {/* The tag button hangs off the name's right edge so the name stays centered. */}
+            <View className="mt-sm items-center self-stretch px-xl">
+              <View>
+                <Text
+                  className="text-center font-jakarta-semibold text-headline-md text-on-surface"
+                  numberOfLines={2}
+                >
+                  {tx.merchant}
+                </Text>
+                {householdId && tx.merchant.trim() ? (
+                  <Pressable
+                    onPress={() => setAliasOpen(true)}
+                    hitSlop={14}
+                    accessibilityRole="button"
+                    accessibilityLabel="Разпознато име"
+                    style={styles.aliasButton}
+                  >
+                    <MaterialIcons
+                      name="label-outline"
+                      size={16}
+                      color={colors.onSurfaceVariant}
+                      style={styles.aliasIcon}
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
             <View className="mt-md flex-row items-center gap-2 rounded-full bg-surface-container px-4 py-2">
               <MaterialIcons name={catIcon} size={18} color={catColor} />
               <Text className="font-inter text-body-md text-on-surface">{catName}</Text>
@@ -118,6 +179,31 @@ export default function TransactionDetailScreen() {
           },
         ]}
       />
+      {householdId ? (
+        <>
+          <RecognizedNameSheet
+            visible={aliasOpen}
+            householdId={householdId}
+            merchant={tx.merchant}
+            onClose={() => setAliasOpen(false)}
+            onConflict={(c, vendor) => {
+              setConflict({ conflict: c, vendor });
+              setConflictOpen(true);
+            }}
+          />
+          {conflict ? (
+            <VendorConflictSheet
+              visible={conflictOpen}
+              conflict={conflict.conflict}
+              editingVendor={conflict.vendor}
+              retry={retryAlias}
+              refresh={() => refreshVendors(householdId)}
+              onResolved={() => setConflictOpen(false)}
+              onClose={() => setConflictOpen(false)}
+            />
+          ) : null}
+        </>
+      ) : null}
       <ConfirmSheet
         visible={confirmOpen}
         title="Изтриване"
@@ -141,3 +227,16 @@ export default function TransactionDetailScreen() {
 
 // Route-level crash fallback — keeps the rest of the nav tree alive.
 export { ScreenErrorFallback as ErrorBoundary } from '@/components/ScreenErrorFallback';
+
+const styles = StyleSheet.create({
+  // Absolutely placed just past the name's right edge, vertically centered.
+  aliasButton: {
+    position: 'absolute',
+    left: '100%',
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    paddingLeft: 6,
+  },
+  aliasIcon: { opacity: 0.35 },
+});
