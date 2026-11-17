@@ -21,25 +21,33 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
   profile: { label: 'Профил', icon: 'person' },
 };
 
-const ACTIVE_GROW = 2.6;
+// Active cell share. Sized so the widest label ("АНАЛИЗИ") fits its pill, scale
+// included, with clear space to the bar's rounded edge on a 360dp phone.
+const ACTIVE_GROW = 3;
 
 const styles = StyleSheet.create({
   cell: { flexBasis: 0, minWidth: 0, alignItems: 'center', justifyContent: 'center' },
+  // Content-hugging pill, 40dp tall (44 after the 1.1 scale) inside the 68dp bar.
   pill: {
-    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    height: 48,
+    gap: 6,
+    height: 40,
+    paddingHorizontal: 12,
+    flexShrink: 1,
+    minWidth: 0,
     borderRadius: 9999,
-    marginHorizontal: 1,
   },
   pillActive: { backgroundColor: colors.primaryContainer },
+  // Same type as the floating Ръчно / Сканирай pills (label-md, semibold, caps).
   label: {
+    flexShrink: 1,
     fontFamily: 'Inter_600SemiBold',
-    fontSize: 10.5,
-    letterSpacing: 0.3,
+    fontSize: 12,
+    lineHeight: 14,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
     color: colors.onPrimary,
   },
 });
@@ -75,7 +83,7 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
           height: 68,
           flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: 6,
+          paddingHorizontal: 8,
           borderRadius: 9999,
           borderWidth: 1,
           borderColor: 'rgba(255,255,255,0.1)',
@@ -117,7 +125,7 @@ export function BottomNav({ state, navigation }: BottomTabBarProps) {
                 ]}>
                 <MaterialIcons
                   name={tab.icon}
-                  size={22}
+                  size={20}
                   color={focused ? colors.onPrimary : colors.onSurfaceVariant}
                 />
                 {focused ? (

@@ -76,6 +76,7 @@ export default function TransactionDetailScreen() {
     tx.category_id ? categories.find((c) => c.id === tx.category_id) : undefined,
   );
   const addedBy = memberName(tx.user_id, members);
+  const showAlias = !!householdId && tx.merchant.trim() !== '';
 
   const onConfirmDelete = async () => {
     try {
@@ -124,32 +125,32 @@ export default function TransactionDetailScreen() {
               {tx.kind === 'income' ? '+' : ''}
               {formatCurrency(tx.amount_eur)}
             </Text>
-            {/* The tag button hangs off the name's right edge so the name stays centered. */}
-            <View className="mt-sm items-center self-stretch px-xl">
-              <View>
-                <Text
-                  className="text-center font-jakarta-semibold text-headline-md text-on-surface"
-                  numberOfLines={2}
+            {/* Tag button right of the name; an equal empty slot on the left keeps
+                the name centered. Both sit inside the row so taps register on Android. */}
+            <View className="mt-sm flex-row items-center justify-center self-stretch px-lg">
+              {showAlias ? <View style={styles.aliasSlot} /> : null}
+              <Text
+                className="shrink text-center font-jakarta-semibold text-headline-md text-on-surface"
+                numberOfLines={2}
+              >
+                {tx.merchant}
+              </Text>
+              {showAlias ? (
+                <Pressable
+                  onPress={() => setAliasOpen(true)}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel="Разпознато име"
+                  style={styles.aliasSlot}
                 >
-                  {tx.merchant}
-                </Text>
-                {householdId && tx.merchant.trim() ? (
-                  <Pressable
-                    onPress={() => setAliasOpen(true)}
-                    hitSlop={14}
-                    accessibilityRole="button"
-                    accessibilityLabel="Разпознато име"
-                    style={styles.aliasButton}
-                  >
-                    <MaterialIcons
-                      name="label-outline"
-                      size={16}
-                      color={colors.onSurfaceVariant}
-                      style={styles.aliasIcon}
-                    />
-                  </Pressable>
-                ) : null}
-              </View>
+                  <MaterialIcons
+                    name="label-outline"
+                    size={18}
+                    color={colors.onSurfaceVariant}
+                    style={styles.aliasIcon}
+                  />
+                </Pressable>
+              ) : null}
             </View>
             <View className="mt-md flex-row items-center gap-2 rounded-full bg-surface-container px-4 py-2">
               <MaterialIcons name={catIcon} size={18} color={catColor} />
@@ -229,14 +230,6 @@ export default function TransactionDetailScreen() {
 export { ScreenErrorFallback as ErrorBoundary } from '@/components/ScreenErrorFallback';
 
 const styles = StyleSheet.create({
-  // Absolutely placed just past the name's right edge, vertically centered.
-  aliasButton: {
-    position: 'absolute',
-    left: '100%',
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    paddingLeft: 6,
-  },
-  aliasIcon: { opacity: 0.35 },
+  aliasSlot: { width: 30, alignItems: 'center', justifyContent: 'center' },
+  aliasIcon: { opacity: 0.5 },
 });
