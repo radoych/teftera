@@ -19,16 +19,35 @@ import { refreshLoyaltyCards, useCardsForVendor } from '@/features/loyalty/sync'
 import type { LoyaltyCard } from '@/features/loyalty/types';
 import { NewListSheet } from '@/features/shopping/components/NewListSheet';
 import { listMetaLabel } from '@/features/shopping/copy';
-import { useListCounts, useListsByVendor } from '@/features/shopping/sync';
-import { addAlias, deleteVendor, removeAlias, renameVendor } from '@/features/vendors/api';
+import {
+  refreshShopping,
+  useListCounts,
+  useListsByVendor,
+} from '@/features/shopping/sync';
+import {
+  addAlias,
+  deleteVendor,
+  removeAlias,
+  renameVendor,
+} from '@/features/vendors/api';
 import { AliasRow } from '@/features/vendors/components/AliasRow';
+import { MergeIntoVendorSheet } from '@/features/vendors/components/MergeIntoVendorSheet';
 import { VendorConflictSheet } from '@/features/vendors/components/VendorConflictSheet';
 import { conflictFromError, isUniqueViolation } from '@/features/vendors/conflict';
 import { deleteVendorMessage } from '@/features/vendors/copy';
 import { cleanVendorName, merchantKey } from '@/features/vendors/key';
-import { getVendorIndex, useVendorIndex, useVendorsStore } from '@/features/vendors/store';
+import {
+  getVendorIndex,
+  useVendorIndex,
+  useVendorsStore,
+} from '@/features/vendors/store';
 import { refreshVendors } from '@/features/vendors/sync';
-import type { AliasConflict, Vendor, VendorAlias, VendorIndex } from '@/features/vendors/types';
+import type {
+  AliasConflict,
+  Vendor,
+  VendorAlias,
+  VendorIndex,
+} from '@/features/vendors/types';
 import { rowEntering, rowExiting, rowLayout } from '@/lib/animation';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/lib/theme';
@@ -52,7 +71,9 @@ export default function VendorDetailScreen() {
   const { width } = useWindowDimensions();
   const tileWidth = Math.floor((width - GUTTER * 2 - GAP) / 2);
   /** undefined = card sheet closed, null = new card for this vendor, card = edit. */
-  const [editingCard, setEditingCard] = useState<LoyaltyCard | null | undefined>(undefined);
+  const [editingCard, setEditingCard] = useState<LoyaltyCard | null | undefined>(
+    undefined,
+  );
   const listsByVendor = useListsByVendor();
   const shoppingList = id ? listsByVendor.get(id) : undefined;
   const listCounts = useListCounts();
@@ -68,6 +89,7 @@ export default function VendorDetailScreen() {
   const [aliasToRemove, setAliasToRemove] = useState<VendorAlias | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
 
   const [conflict, setConflict] = useState<AliasConflict | null>(null);
   const [pending, setPending] = useState<PendingWrite | null>(null);
@@ -82,7 +104,10 @@ export default function VendorDetailScreen() {
   const refresh = () => refreshVendors(householdId);
 
   /** Map a failed write to the conflict sheet (or an inline hint when it's our own name). */
-  const handleWriteError = async (err: unknown, write: PendingWrite): Promise<boolean> => {
+  const handleWriteError = async (
+    err: unknown,
+    write: PendingWrite,
+  ): Promise<boolean> => {
     if (!isUniqueViolation(err)) return false;
     let found = conflictFromError(err, write.text, getVendorIndex());
     if (!found) {
@@ -184,6 +209,19 @@ export default function VendorDetailScreen() {
     }
   };
 
+  /** Merged into `target`: this vendor is gone — reload what moved, then show the target. */
+  const onMerged = async (target: Vendor) => {
+    setDeleting(true);
+    setMergeOpen(false);
+    await Promise.allSettled([
+      refresh(),
+      refreshLoyaltyCards(householdId),
+      refreshShopping(householdId),
+    ]);
+    haptics.success();
+    router.replace({ pathname: '/vendor/[id]', params: { id: target.id } });
+  };
+
   /** Re-run the conflicting write once the sheet has freed / moved the key. */
   const retry = async (fresh: VendorIndex) => {
     if (!pending) return;
@@ -193,7 +231,12 @@ export default function VendorDetailScreen() {
     }
     // After a merge the key may already belong to this vendor.
     if (fresh.byKey.get(merchantKey(pending.text))?.vendor.id === vendor.id) return;
-    await addAlias({ householdId, vendorId: vendor.id, alias: pending.text, source: 'manual' });
+    await addAlias({
+      householdId,
+      vendorId: vendor.id,
+      alias: pending.text,
+      source: 'manual',
+    });
   };
 
   const closeConflict = () => {
@@ -202,18 +245,20 @@ export default function VendorDetailScreen() {
   };
 
   return (
-    <Screen floatingAboveTabBar={
-      <FloatingActionBar
-        actions={[
-          {
-            label: 'Изтрий',
-            icon: 'delete',
-            variant: 'destructive',
-            onPress: () => setConfirmDelete(true),
-          },
-        ]}
-      />
-    }>
+    <Screen
+      floatingAboveTabBar={
+        <FloatingActionBar
+          actions={[
+            {
+              label: 'Изтрий',
+              icon: 'delete',
+              variant: 'destructive',
+              onPress: () => setConfirmDelete(true),
+            },
+          ]}
+        />
+      }
+    >
       <ScreenHeader
         title={vendor.name}
         right={
@@ -222,7 +267,8 @@ export default function VendorDetailScreen() {
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Преименувай"
-            className="p-2">
+            className="p-2"
+          >
             <MaterialIcons name="edit" size={20} color={colors.onSurfaceVariant} />
           </Pressable>
         }
@@ -254,12 +300,15 @@ export default function VendorDetailScreen() {
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Добави име"
-          className={`p-2 ${adding || cleanVendorName(newAlias) === '' ? 'opacity-40' : ''}`}>
+          className={`p-2 ${adding || cleanVendorName(newAlias) === '' ? 'opacity-40' : ''}`}
+        >
           <MaterialIcons name="add" size={22} color={colors.primaryContainer} />
         </Pressable>
       </View>
       {aliasHint ? (
-        <Text className="mt-xs font-inter text-label-md text-on-surface-variant">{aliasHint}</Text>
+        <Text className="mt-xs font-inter text-label-md text-on-surface-variant">
+          {aliasHint}
+        </Text>
       ) : null}
 
       {/* Loyalty cards */}
@@ -271,12 +320,15 @@ export default function VendorDetailScreen() {
               key={card.id}
               entering={rowEntering}
               exiting={rowExiting}
-              layout={rowLayout}>
+              layout={rowLayout}
+            >
               <CardTile
                 card={card}
                 vendorName={vendor.name}
                 width={tileWidth}
-                onPress={() => router.push({ pathname: '/card/[id]', params: { id: card.id } })}
+                onPress={() =>
+                  router.push({ pathname: '/card/[id]', params: { id: card.id } })
+                }
                 onLongPress={() => setEditingCard(card)}
               />
             </Animated.View>
@@ -286,9 +338,12 @@ export default function VendorDetailScreen() {
       <Pressable
         onPress={() => setEditingCard(null)}
         accessibilityRole="button"
-        className="flex-row items-center gap-3 py-5 active:opacity-70">
+        className="flex-row items-center gap-3 py-5 active:opacity-70"
+      >
         <MaterialIcons name="add-card" size={20} color={colors.primaryContainer} />
-        <Text className="font-inter text-body-md text-primary-container">Добави карта</Text>
+        <Text className="font-inter text-body-md text-primary-container">
+          Добави карта
+        </Text>
       </Pressable>
 
       <SectionLabel className="mb-xs mt-xl">Списък за пазаруване</SectionLabel>
@@ -299,7 +354,8 @@ export default function VendorDetailScreen() {
             : setNewListOpen(true)
         }
         accessibilityRole="button"
-        className="flex-row items-center justify-between py-md active:bg-white/5">
+        className="flex-row items-center justify-between py-md active:bg-white/5"
+      >
         <View className="flex-row items-center gap-3">
           <MaterialIcons
             name={shoppingList ? 'checklist' : 'playlist-add'}
@@ -309,7 +365,8 @@ export default function VendorDetailScreen() {
           <Text
             className={`font-inter text-body-lg ${
               shoppingList ? 'text-on-surface' : 'text-primary-container'
-            }`}>
+            }`}
+          >
             {shoppingList
               ? listMetaLabel(
                   listCounts.get(shoppingList.id) ?? { total: 0, open: 0, done: 0 },
@@ -320,6 +377,16 @@ export default function VendorDetailScreen() {
         {shoppingList ? (
           <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
         ) : null}
+      </Pressable>
+      <Pressable
+        onPress={() => setMergeOpen(true)}
+        accessibilityRole="button"
+        className="flex-row items-center gap-3 py-md active:bg-white/5"
+      >
+        <MaterialIcons name="call-merge" size={20} color={colors.primaryContainer} />
+        <Text className="font-inter text-body-lg text-primary-container">
+          Добави като разпознато име
+        </Text>
       </Pressable>
       <NewListSheet
         visible={newListOpen}
@@ -376,6 +443,13 @@ export default function VendorDetailScreen() {
         destructive
         onConfirm={onDelete}
         onCancel={() => setConfirmDelete(false)}
+      />
+
+      <MergeIntoVendorSheet
+        visible={mergeOpen}
+        source={vendor}
+        onClose={() => setMergeOpen(false)}
+        onMerged={onMerged}
       />
 
       <CardFormSheet
