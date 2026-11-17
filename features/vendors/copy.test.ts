@@ -2,6 +2,7 @@ import {
   aliasCountLabel,
   cardCountLabel,
   deleteVendorMessage,
+  mergeIntoLines,
   vendorCountLabel,
   vendorMetaLine,
 } from './copy';
@@ -28,5 +29,47 @@ describe('vendor copy', () => {
     expect(deleteVendorMessage(4)).toBe(
       'Разпознатите имена (4) се изтриват. Картите и списъкът остават без търговец.',
     );
+  });
+});
+
+describe('mergeIntoLines', () => {
+  const base = {
+    source: 'Kaufland Stara',
+    target: 'Kaufland',
+    aliases: 0,
+    cards: 0,
+    sourceHasList: false,
+    targetHasList: false,
+  };
+
+  it('describes a bare merge', () => {
+    expect(mergeIntoLines(base)).toEqual([
+      '„Kaufland Stara“ изчезва като отделен търговец.',
+      'Името „Kaufland Stara“ става разпознато име на „Kaufland“.',
+      'Транзакциите остават непроменени.',
+    ]);
+  });
+
+  it('counts names and cards with agreement', () => {
+    const lines = mergeIntoLines({ ...base, aliases: 2, cards: 1 });
+    expect(lines[1]).toBe(
+      'Името „Kaufland Stara“ и 2 разпознати имена стават разпознати имена на „Kaufland“.',
+    );
+    expect(lines[2]).toBe('1 карта минава към „Kaufland“.');
+    expect(mergeIntoLines({ ...base, cards: 3 })[2]).toBe(
+      '3 карти минават към „Kaufland“.',
+    );
+  });
+
+  it('moves the list, or appends its items when both have one', () => {
+    expect(mergeIntoLines({ ...base, sourceHasList: true })).toContain(
+      'Списъкът за пазаруване минава към „Kaufland“.',
+    );
+    expect(
+      mergeIntoLines({ ...base, sourceHasList: true, targetHasList: true }),
+    ).toContain(
+      'Продуктите от списъка на „Kaufland Stara“ се добавят към списъка на „Kaufland“.',
+    );
+    expect(mergeIntoLines({ ...base, targetHasList: true })).toHaveLength(3);
   });
 });
