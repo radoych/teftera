@@ -18,6 +18,10 @@ import { refreshLoyaltyCards, useCardsForVendor } from '@/features/loyalty/sync'
 import type { LoyaltyCard } from '@/features/loyalty/types';
 import { NewListSheet } from '@/features/shopping/components/NewListSheet';
 import { listMetaLabel } from '@/features/shopping/copy';
+import { CategoryPickerModal } from '@/features/transactions/components/CategoryPickerModal';
+import { expenseCategories } from '@/features/transactions/kind';
+import { useTransactionsStore } from '@/features/transactions/store';
+import { refreshTransactions } from '@/features/transactions/sync';
 import {
   refreshShopping,
   useListCounts,
@@ -26,14 +30,16 @@ import {
 import {
   addAlias,
   deleteVendor,
+  recategorizeVendor,
   removeAlias,
   renameVendor,
+  setVendorDefaultCategory,
 } from '@/features/vendors/api';
 import { AliasRow } from '@/features/vendors/components/AliasRow';
 import { MergeIntoVendorSheet } from '@/features/vendors/components/MergeIntoVendorSheet';
 import { VendorConflictSheet } from '@/features/vendors/components/VendorConflictSheet';
 import { conflictFromError, isUniqueViolation } from '@/features/vendors/conflict';
-import { deleteVendorMessage } from '@/features/vendors/copy';
+import { deleteVendorMessage, recategorizeMessage } from '@/features/vendors/copy';
 import { cleanVendorName, merchantKey } from '@/features/vendors/key';
 import {
   getVendorIndex,
@@ -48,6 +54,7 @@ import type {
   VendorIndex,
 } from '@/features/vendors/types';
 import { rowEntering, rowExiting, rowLayout } from '@/lib/animation';
+import type { MaterialIconName } from '@/lib/categories';
 import { colors } from '@/lib/theme';
 
 /** The write that hit a conflict, so the sheet can re-run it after resolving. */
@@ -57,7 +64,7 @@ type PendingWrite = { kind: 'alias'; text: string } | { kind: 'rename'; text: st
 const GUTTER = 16;
 const GAP = 16;
 
-/** Vendor detail: rename · recognized names · loyalty cards · shopping list · delete. */
+/** Vendor detail: rename · recognized names · default category · loyalty cards · shopping list · delete. */
 export default function VendorDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const householdId = useAuthStore((s) => s.householdId);
@@ -89,6 +96,12 @@ export default function VendorDetailScreen() {
   const [deleting, setDeleting] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
 
+  const categories = useTransactionsStore((s) => s.categories);
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
+  /** Existing transactions with another category, after a default change; null = no prompt. */
+  const [recategorizeCount, setRecategorizeCount] = useState<number | null>(null);
+  const [recategorizing, setRecategorizing] = useState(false);
+
   const [conflict, setConflict] = useState<AliasConflict | null>(null);
   const [pending, setPending] = useState<PendingWrite | null>(null);
   // The vendor at the moment the conflict opened (stays valid while the sheet animates out).
@@ -100,6 +113,9 @@ export default function VendorDetailScreen() {
   }
 
   const refresh = () => refreshVendors(householdId);
+  const defaultCategory = vendor.default_category_id
+    ? categories.find((c) => c.id === vendor.default_category_id)
+    : undefined;
 
   /** Map a failed write to the conflict sheet (or an inline hint when it's our own name). */
   const handleWriteError = async (
@@ -201,6 +217,44 @@ export default function VendorDetailScreen() {
     }
   };
 
+  /**
+   * Save a new default category (null = clear). A non-null default then asks
+   * whether to move the vendor's existing transactions too — only when some
+   * would change. Clearing never touches existing transactions.
+   */
+  const onPickDefaultCategory = async (categoryId: string | null) => {
+    setCategoryPickerOpen(false);
+    if (categoryId === vendor.default_category_id) return;
+    try {
+      await setVendorDefaultCategory(vendor.id, categoryId);
+      await refresh();
+    } catch {
+      Alert.alert('Грешка', 'Категорията не можа да бъде запазена. Опитай отново.');
+      return;
+    }
+    if (categoryId === null) return;
+    try {
+      const n = await recategorizeVendor(vendor.id, true);
+      if (n > 0) setRecategorizeCount(n);
+    } catch {
+      // The default is saved; only the offer to update old rows is skipped.
+    }
+  };
+
+  const onApplyToExisting = async () => {
+    if (recategorizing) return;
+    setRecategorizing(true);
+    try {
+      await recategorizeVendor(vendor.id, false);
+      await refreshTransactions(householdId).catch(() => {});
+      setRecategorizeCount(null);
+    } catch {
+      Alert.alert('Грешка', 'Транзакциите не можаха да бъдат обновени. Опитай отново.');
+    } finally {
+      setRecategorizing(false);
+    }
+  };
+
   /** Merged into `target`: this vendor is gone — reload what moved, then show the target. */
   const onMerged = async (target: Vendor) => {
     setDeleting(true);
@@ -294,6 +348,31 @@ export default function VendorDetailScreen() {
           {aliasHint}
         </Text>
       ) : null}
+
+      {/* Default category for new transactions */}
+      <SectionLabel className="mb-xs mt-lg">Категория по подразбиране</SectionLabel>
+      <Pressable
+        onPress={() => setCategoryPickerOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Категория по подразбиране"
+        className="flex-row items-center justify-between py-md active:bg-white/5"
+      >
+        <View className="flex-row items-center gap-3">
+          <MaterialIcons
+            name={(defaultCategory?.icon as MaterialIconName | undefined) ?? 'category'}
+            size={20}
+            color={defaultCategory?.color ?? colors.outline}
+          />
+          <Text
+            className={`font-inter text-body-lg ${
+              defaultCategory ? 'text-on-surface' : 'text-on-surface-variant opacity-60'
+            }`}
+          >
+            {defaultCategory?.name ?? 'Няма'}
+          </Text>
+        </View>
+        <MaterialIcons name="chevron-right" size={22} color={colors.onSurfaceVariant} />
+      </Pressable>
 
       {/* Loyalty cards */}
       <SectionLabel className="mb-sm mt-lg">Клиентски карти</SectionLabel>
@@ -427,6 +506,28 @@ export default function VendorDetailScreen() {
         destructive
         onConfirm={onDelete}
         onCancel={() => setConfirmDelete(false)}
+      />
+
+      <CategoryPickerModal
+        visible={categoryPickerOpen}
+        categories={expenseCategories(categories)}
+        selectedId={vendor.default_category_id}
+        onSelect={(cid) => void onPickDefaultCategory(cid)}
+        clearLabel="Без категория"
+        onClear={() => void onPickDefaultCategory(null)}
+        onClose={() => setCategoryPickerOpen(false)}
+      />
+
+      <ConfirmSheet
+        visible={recategorizeCount !== null}
+        title="Приложи и за съществуващите?"
+        message={recategorizeMessage(recategorizeCount ?? 0, vendor.name)}
+        confirmLabel="Приложи"
+        confirmLoading={recategorizing}
+        cancelLabel="Само за новите"
+        cancelIcon="fiber-new"
+        onConfirm={() => void onApplyToExisting()}
+        onCancel={() => setRecategorizeCount(null)}
       />
 
       <MergeIntoVendorSheet

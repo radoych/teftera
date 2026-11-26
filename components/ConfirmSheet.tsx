@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 import { BottomSheet } from './BottomSheet';
-import { FloatingActionBar } from './FloatingActionBar';
+import { FloatingActionBar, type FloatingAction } from './FloatingActionBar';
 
 interface ConfirmSheetProps {
   visible: boolean;
@@ -8,6 +8,10 @@ interface ConfirmSheetProps {
   message?: string;
   confirmLabel: string;
   cancelLabel?: string;
+  /** Icon of the cancel pill (default `close`) — e.g. when "cancel" is a real alternative. */
+  cancelIcon?: FloatingAction['icon'];
+  /** Spinner on the confirm pill while its action runs. */
+  confirmLoading?: boolean;
   destructive?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -20,6 +24,8 @@ export function ConfirmSheet({
   message,
   confirmLabel,
   cancelLabel = 'Отказ',
+  cancelIcon = 'close',
+  confirmLoading = false,
   destructive = false,
   onConfirm,
   onCancel,
@@ -34,8 +40,14 @@ export function ConfirmSheet({
         {/* Confirm on the left, cancel on the right — side by side. */}
         <FloatingActionBar inline
           actions={[
-            { label: confirmLabel, icon: destructive ? 'delete-outline' : 'check', onPress: onConfirm, variant: destructive ? 'destructive' : 'filled' },
-            { label: cancelLabel, icon: 'close', onPress: onCancel, variant: 'ghost' },
+            {
+              label: confirmLabel,
+              icon: destructive ? 'delete-outline' : 'check',
+              onPress: onConfirm,
+              variant: destructive ? 'destructive' : 'filled',
+              loading: confirmLoading,
+            },
+            { label: cancelLabel, icon: cancelIcon, onPress: onCancel, variant: 'ghost' },
           ]}
         />
       </View>
