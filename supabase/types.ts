@@ -605,6 +605,7 @@ export type Database = {
       vendors: {
         Row: {
           created_at: string
+          default_category_id: string | null
           household_id: string
           id: string
           name: string
@@ -613,6 +614,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_category_id?: string | null
           household_id: string
           id?: string
           name: string
@@ -621,6 +623,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_category_id?: string | null
           household_id?: string
           id?: string
           name?: string
@@ -628,6 +631,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vendors_default_category_id_fkey"
+            columns: ["default_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vendors_household_id_fkey"
             columns: ["household_id"]
@@ -656,6 +666,10 @@ export type Database = {
       merge_vendors: {
         Args: { p_source: string; p_target: string }
         Returns: undefined
+      }
+      vendor_recategorize: {
+        Args: { p_dry_run: boolean; p_vendor: string }
+        Returns: number
       }
     }
     Enums: {
