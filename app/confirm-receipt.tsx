@@ -129,11 +129,16 @@ export default function ConfirmReceiptScreen() {
       Alert.alert('Грешка', 'Липсва домакинство или бележка.');
       return;
     }
-    const merchantName =
-      resolveVendor(parsed.data.merchant, getVendorIndex())?.name ?? parsed.data.merchant;
+    const resolvedVendor = resolveVendor(parsed.data.merchant, getVendorIndex());
+    const merchantName = resolvedVendor?.name ?? parsed.data.merchant;
     const resolvedCategoryId = categoryTouched
       ? categoryId
-      : resolveCategoryId(merchantName, categories);
+      : resolveCategoryId(
+          merchantName,
+          categories,
+          'expense',
+          resolvedVendor?.default_category_id ?? null,
+        );
 
     setSaving(true);
     let newId: string;

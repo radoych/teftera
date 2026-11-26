@@ -10,6 +10,7 @@ import type { ImportSummary } from '@/features/transactions/components/import/Im
 import { buildPreview, type ImportPreview } from '@/features/transactions/preview';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { refreshTransactions } from '@/features/transactions/sync';
+import { vendorDefaultCategoryFor } from '@/features/vendors/store';
 import {
   fetchBankTransactions,
   getBankConnection,
@@ -191,7 +192,12 @@ export function useImportFlow(overrides: Partial<ImportFlowDeps> = {}): ImportFl
       const { rows, summary: next } = planImport(
         preview,
         useTransactionsStore.getState().transactions,
-        { householdId: hid, userId: session?.user.id ?? null, categories },
+        {
+          householdId: hid,
+          userId: session?.user.id ?? null,
+          categories,
+          vendorDefaultFor: vendorDefaultCategoryFor,
+        },
       );
       await deps.bulkInsertImported(rows);
       await deps.refreshTransactions(hid);

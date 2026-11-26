@@ -29,8 +29,8 @@ import { expenseCategories, incomeCategories } from '@/features/transactions/kin
 import { parseManualEntry } from '@/features/transactions/schema';
 import { useTransactionsStore } from '@/features/transactions/store';
 import { VendorAutocomplete } from '@/features/vendors/components/VendorAutocomplete';
-import { resolveVendor } from '@/features/vendors/resolve';
-import { getVendorIndex } from '@/features/vendors/store';
+import { resolveVendor, vendorDefaultCategoryId } from '@/features/vendors/resolve';
+import { getVendorIndex, useVendorIndex } from '@/features/vendors/store';
 import { guessCategory, guessIncomeCategory, resolveCategoryId } from '@/lib/categories';
 import { toISODate } from '@/lib/dates';
 import { useIsOnline } from '@/lib/useIsOnline';
@@ -97,6 +97,7 @@ export default function ManualEntryScreen() {
   const [errors, setErrors] = useState<{ amount?: string; merchant?: string }>({});
   const [saving, setSaving] = useState(false);
   const online = useIsOnline();
+  const vendorIndex = useVendorIndex();
 
   // Edit mode but the transaction is gone (deleted on another device).
   if (isEdit && !existing) {
@@ -104,9 +105,17 @@ export default function ManualEntryScreen() {
   }
 
   const selectedCategory = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
+  // Auto preview: the vendor's default category (same kind) wins over the rules.
+  const vendorDefaultId =
+    !categoryTouched && merchant.trim() ? vendorDefaultCategoryId(merchant, vendorIndex) : null;
+  const vendorDefault = vendorDefaultId
+    ? categories.find((c) => c.id === vendorDefaultId && c.kind === kind)
+    : undefined;
   const categoryLabel = selectedCategory
     ? selectedCategory.name
-    : kind === 'income'
+    : vendorDefault
+      ? vendorDefault.name
+      : kind === 'income'
       ? merchant.trim() && !categoryTouched
         ? guessIncomeCategory(merchant)
         : 'Друг приход'
@@ -140,11 +149,16 @@ export default function ManualEntryScreen() {
     // A typed raw name that is a recognized name is saved as its vendor's
     // name. Purely local — creating a new vendor happens after the save
     // (runAfterSave), so vendor bookkeeping can never block saving.
-    const merchantName =
-      resolveVendor(parsed.data.merchant, getVendorIndex())?.name ?? parsed.data.merchant;
+    const resolvedVendor = resolveVendor(parsed.data.merchant, getVendorIndex());
+    const merchantName = resolvedVendor?.name ?? parsed.data.merchant;
     const resolvedCategoryId = categoryTouched
       ? categoryId
-      : resolveCategoryId(merchantName, categories, kind);
+      : resolveCategoryId(
+          merchantName,
+          categories,
+          kind,
+          resolvedVendor?.default_category_id ?? null,
+        );
 
     setSaving(true);
     let createdId: string | null = null;

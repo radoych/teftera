@@ -285,6 +285,39 @@ describe('kind-aware resolveCategoryId', () => {
   });
 });
 
+describe('resolveCategoryId with a vendor default', () => {
+  const cats = [
+    { id: 'e-gro', name: 'Groceries', kind: 'expense' as const },
+    { id: 'e-food', name: 'Food & Dining', kind: 'expense' as const },
+    { id: 'e-other', name: 'Other', kind: 'expense' as const },
+    { id: 'i-sal', name: 'Заплата', kind: 'income' as const },
+    { id: 'i-other', name: 'Друг приход', kind: 'income' as const },
+  ];
+
+  it('vendor default wins over the keyword rules', () => {
+    // Rules say Groceries for Lidl; the vendor default says Food & Dining.
+    expect(resolveCategoryId('LIDL SOFIA', cats, 'expense', 'e-food')).toBe('e-food');
+  });
+
+  it('vendor default wins over the Other fallback', () => {
+    expect(resolveCategoryId('Corner Shop 7', cats, 'expense', 'e-gro')).toBe('e-gro');
+  });
+
+  it('falls back to the rules when the default kind does not match', () => {
+    expect(resolveCategoryId('LIDL SOFIA', cats, 'expense', 'i-sal')).toBe('e-gro');
+    expect(resolveCategoryId('ЗАПЛАТА', cats, 'income', 'e-food')).toBe('i-sal');
+  });
+
+  it('falls back to the rules when the default is unknown (deleted category)', () => {
+    expect(resolveCategoryId('LIDL SOFIA', cats, 'expense', 'gone')).toBe('e-gro');
+  });
+
+  it('null / undefined default keeps the rules, then the fallback', () => {
+    expect(resolveCategoryId('LIDL SOFIA', cats, 'expense', null)).toBe('e-gro');
+    expect(resolveCategoryId('Nowhere', cats, 'expense', undefined)).toBe('e-other');
+  });
+});
+
 describe('categoryPresentation', () => {
   it('passes a known category through', () => {
     expect(

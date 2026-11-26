@@ -198,29 +198,43 @@ export function syncErrorAlert(err: unknown): SyncErrorAlert {
 export function planImport(
   preview: ImportPreview,
   fresh: Transaction[],
-  ctx: { householdId: string; userId: string | null; categories: CategoryLite[] },
+  ctx: {
+    householdId: string;
+    userId: string | null;
+    categories: CategoryLite[];
+    /** Merchant → its vendor's default category id (wins over the rules when the kind matches). */
+    vendorDefaultFor?: (merchant: string) => string | null;
+  },
 ): { rows: ImportedTransaction[]; summary: ImportSummary } {
   const candidates = previewCandidates(preview);
   const { toImport } = dedupeImport(candidates, fresh);
-  const rows: ImportedTransaction[] = toImport.map((r) => ({
-    householdId: ctx.householdId,
-    userId: ctx.userId,
-    kind: r.kind,
-    amountCents: r.amountEurCents,
-    originalAmountCents: r.originalAmountCents,
-    originalCurrency: r.originalCurrency,
-    merchant: r.merchant,
-    categoryId: resolveCategoryId(r.merchant, ctx.categories, r.kind),
-    date: r.date,
-    occurredAt: r.occurredAt,
-    note: null,
-  }));
+  let other = 0;
+  const rows: ImportedTransaction[] = toImport.map((r) => {
+    const vendorDefault = ctx.vendorDefaultFor?.(r.merchant) ?? null;
+    const categoryId = resolveCategoryId(r.merchant, ctx.categories, r.kind, vendorDefault);
+    // "Other" = the rules found nothing AND no vendor default took over.
+    const byVendor = vendorDefault !== null && categoryId === vendorDefault;
+    if (r.kind === 'expense' && r.categoryGuess === 'Other' && !byVendor) other += 1;
+    return {
+      householdId: ctx.householdId,
+      userId: ctx.userId,
+      kind: r.kind,
+      amountCents: r.amountEurCents,
+      originalAmountCents: r.originalAmountCents,
+      originalCurrency: r.originalCurrency,
+      merchant: r.merchant,
+      categoryId,
+      date: r.date,
+      occurredAt: r.occurredAt,
+      note: null,
+    };
+  });
   return {
     rows,
     summary: {
       imported: toImport.length,
       duplicates: preview.duplicates.length + (candidates.length - toImport.length),
-      other: toImport.filter((r) => r.kind === 'expense' && r.categoryGuess === 'Other').length,
+      other,
     },
   };
 }

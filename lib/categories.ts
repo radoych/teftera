@@ -123,18 +123,22 @@ export function guessIncomeCategory(merchant: string): string {
 }
 
 /**
- * Map a merchant to a household category id by name. Uses `guessCategory`
- * (or `guessIncomeCategory` for income) for the rule match, then looks the
- * resulting name up in the household's seeded categories of the matching
- * `kind`. Falls back to the household's `Other` / `Друг приход` category,
- * then null.
+ * Map a merchant to a household category id. Precedence (an explicit user pick
+ * is the caller's business and always wins before this is called):
+ * 1. `vendorDefaultId` — the default category of the vendor the merchant
+ *    resolves to — when it is one of the household's categories of `kind`;
+ * 2. the rule match: `guessCategory` (or `guessIncomeCategory` for income),
+ *    looked up by name among the household's categories of `kind`;
+ * 3. the household's `Other` / `Друг приход` category, then null.
  */
 export function resolveCategoryId(
   merchant: string,
   categories: ReadonlyArray<{ id: string; name: string; kind?: 'expense' | 'income' }>,
   kind: 'expense' | 'income' = 'expense',
+  vendorDefaultId?: string | null,
 ): string | null {
   const pool = categories.filter((c) => (c.kind ?? 'expense') === kind);
+  if (vendorDefaultId && pool.some((c) => c.id === vendorDefaultId)) return vendorDefaultId;
   const guessed = kind === 'income' ? guessIncomeCategory(merchant) : guessCategory(merchant);
   const match = pool.find((c) => c.name === guessed);
   if (match) return match.id;

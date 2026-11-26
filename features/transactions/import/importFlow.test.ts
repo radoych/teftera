@@ -277,4 +277,47 @@ describe('planImport', () => {
     // Only expenses count toward "Other"; income guessed Other does not.
     expect(summary).toEqual({ imported: 2, duplicates: 2, other: 1 });
   });
+
+  it("applies the vendor default over the rules and drops those rows from 'Other'", () => {
+    const cats: CategoryLite[] = [
+      { id: 'e-gro', name: 'Groceries', icon: 'x', color: '#fff', kind: 'expense' },
+      { id: 'e-food', name: 'Food & Dining', icon: 'x', color: '#fff', kind: 'expense' },
+      { id: 'e-other', name: 'Other', icon: 'x', color: '#fff', kind: 'expense' },
+      { id: 'i-other', name: 'Друг приход', icon: 'x', color: '#fff', kind: 'income' },
+    ];
+    const lidl = row({ merchant: 'Lidl', amountEurCents: 100, categoryGuess: 'Groceries' });
+    const corner = row({ merchant: 'Corner', amountEurCents: 200, categoryGuess: 'Other' });
+    const unknown = row({ merchant: 'Unknown', amountEurCents: 300, categoryGuess: 'Other' });
+    const refund = row({
+      kind: 'income',
+      merchant: 'Lidl',
+      amountEurCents: 50,
+      categoryGuess: 'Other',
+    });
+    const preview = buildPreview(
+      [lidl, corner, unknown, refund],
+      [],
+      'f.csv',
+      'csv',
+      false,
+      '2026-01-01',
+    );
+    const defaults: Record<string, string> = { Lidl: 'e-food', Corner: 'e-gro' };
+
+    const { rows, summary } = planImport(preview, [], {
+      householdId: 'h1',
+      userId: null,
+      categories: cats,
+      vendorDefaultFor: (m) => defaults[m] ?? null,
+    });
+
+    const categoryOf = (m: string, k: string) =>
+      rows.find((r) => r.merchant === m && r.kind === k)?.categoryId;
+    expect(categoryOf('Lidl', 'expense')).toBe('e-food');
+    expect(categoryOf('Corner', 'expense')).toBe('e-gro');
+    expect(categoryOf('Unknown', 'expense')).toBe('e-other');
+    // Kind mismatch: an expense default never lands on an income row.
+    expect(categoryOf('Lidl', 'income')).toBe('i-other');
+    expect(summary.other).toBe(1);
+  });
 });
