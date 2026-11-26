@@ -3,6 +3,8 @@ import {
   cardCountLabel,
   deleteVendorMessage,
   mergeIntoLines,
+  recategorizeMessage,
+  transactionCountLabel,
   vendorCountLabel,
   vendorMetaLine,
 } from './copy';
@@ -71,5 +73,18 @@ describe('mergeIntoLines', () => {
       'Продуктите от списъка на „Kaufland Stara“ се добавят към списъка на „Kaufland“.',
     );
     expect(mergeIntoLines({ ...base, targetHasList: true })).toHaveLength(3);
+  });
+});
+
+describe('recategorize copy', () => {
+  it('pluralizes transactions', () => {
+    expect(transactionCountLabel(1)).toBe('1 транзакция');
+    expect(transactionCountLabel(2)).toBe('2 транзакции');
+    expect(transactionCountLabel(21)).toBe('21 транзакции');
+  });
+
+  it('agrees the verb with the count', () => {
+    expect(recategorizeMessage(1, 'Lidl')).toBe('1 транзакция на Lidl е с друга категория.');
+    expect(recategorizeMessage(5, 'Lidl')).toBe('5 транзакции на Lidl са с друга категория.');
   });
 });

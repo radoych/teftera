@@ -5,7 +5,8 @@ import type { AliasSource, Vendor, VendorAlias } from './types';
 
 // Explicit column lists — never select('*'). Single literals so postgrest-js
 // can type the selected row.
-const VENDOR_COLUMNS = 'id, household_id, name, name_key, created_at, updated_at' as const;
+const VENDOR_COLUMNS =
+  'id, household_id, name, name_key, default_category_id, created_at, updated_at' as const;
 const ALIAS_COLUMNS =
   'id, household_id, vendor_id, alias, alias_key, is_primary, source, created_at' as const;
 
@@ -60,6 +61,32 @@ export async function renameVendor(id: string, name: string): Promise<void> {
     .update({ name, name_key: merchantKey(name) })
     .eq('id', id);
   if (error) throw error;
+}
+
+/** Set (or clear with `null`) the category new transactions of this vendor default to. */
+export async function setVendorDefaultCategory(
+  id: string,
+  categoryId: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('vendors')
+    .update({ default_category_id: categoryId })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+/**
+ * Existing transactions of this vendor (any recognized name, the default's
+ * kind) whose category differs from its default: counted (`dryRun`) or moved
+ * onto the default. 0 when the vendor has no default.
+ */
+export async function recategorizeVendor(id: string, dryRun: boolean): Promise<number> {
+  const { data, error } = await supabase.rpc('vendor_recategorize', {
+    p_vendor: id,
+    p_dry_run: dryRun,
+  });
+  if (error) throw error;
+  return data ?? 0;
 }
 
 /** Delete a vendor and (cascade) its recognized names. Cards / lists are set null. */

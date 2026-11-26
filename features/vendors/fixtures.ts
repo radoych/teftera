@@ -2,12 +2,13 @@
 import { merchantKey } from './key';
 import type { AliasSource, Vendor, VendorAlias } from './types';
 
-export function vendor(id: string, name: string): Vendor {
+export function vendor(id: string, name: string, defaultCategoryId: string | null = null): Vendor {
   return {
     id,
     household_id: 'h1',
     name,
     name_key: merchantKey(name),
+    default_category_id: defaultCategoryId,
     created_at: '2026-11-01T00:00:00Z',
     updated_at: '2026-11-01T00:00:00Z',
   };

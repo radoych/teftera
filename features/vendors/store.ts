@@ -1,7 +1,7 @@
 // features/vendors/store.ts — the household's vendors + recognized names.
 import { useMemo } from 'react';
 import { create } from 'zustand';
-import { buildVendorIndex } from './resolve';
+import { buildVendorIndex, vendorDefaultCategoryId } from './resolve';
 import type { Vendor, VendorAlias, VendorIndex } from './types';
 
 interface VendorsState {
@@ -43,3 +43,7 @@ export function useVendorIndex(): VendorIndex {
 /** Import-normaliser lookup: merchant key → vendor name (household knowledge). */
 export const vendorNameForKey = (key: string): string | undefined =>
   getVendorIndex().byKey.get(key)?.vendor.name;
+
+/** Import-flow lookup: merchant → its vendor's default category id (household knowledge). */
+export const vendorDefaultCategoryFor = (merchant: string): string | null =>
+  vendorDefaultCategoryId(merchant, getVendorIndex());

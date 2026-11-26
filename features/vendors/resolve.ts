@@ -50,6 +50,15 @@ export function resolveVendor(raw: string, index: VendorIndex): Vendor | null {
 }
 
 /**
+ * The default category id of the vendor `raw` resolves to (by name or any
+ * recognized name); `null` when it resolves to none or the vendor has none.
+ * Kind matching is left to `resolveCategoryId`.
+ */
+export function vendorDefaultCategoryId(raw: string, index: VendorIndex): string | null {
+  return resolveVendor(raw, index)?.default_category_id ?? null;
+}
+
+/**
  * Rank a key against a text: 0 = text starts with it, 1 = a word of the text
  * starts with it, 2 = text contains it, `null` = no match.
  */

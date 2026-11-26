@@ -1,5 +1,11 @@
 import { alias, vendor, withPrimaries } from './fixtures';
-import { buildVendorIndex, filterVendors, resolveVendor, suggestVendors } from './resolve';
+import {
+  buildVendorIndex,
+  filterVendors,
+  resolveVendor,
+  suggestVendors,
+  vendorDefaultCategoryId,
+} from './resolve';
 
 const kaufland = vendor('v1', 'Kaufland');
 const billa = vendor('v2', 'Billa');
@@ -141,5 +147,25 @@ describe('filterVendors', () => {
     expect(filterVendors('LAND', index).map((v) => v.name)).toEqual(['Billa', 'Kaufland']);
     expect(filterVendors('кауф', index).map((v) => v.name)).toEqual(['Kaufland']);
     expect(filterVendors('metro', index)).toEqual([]);
+  });
+});
+
+describe('vendorDefaultCategoryId', () => {
+  const withDefault = vendor('d1', 'Lidl', 'cat-food');
+  const noDefault = vendor('d2', 'Billa');
+  const idx = buildVendorIndex(
+    [withDefault, noDefault],
+    withPrimaries([withDefault, noDefault], [alias('d1', 'LIDL BULGARIA EOOD')]),
+  );
+
+  it("returns the vendor's default via its name or any recognized name", () => {
+    expect(vendorDefaultCategoryId('lidl', idx)).toBe('cat-food');
+    expect(vendorDefaultCategoryId('  Lidl  Bulgaria eood ', idx)).toBe('cat-food');
+  });
+
+  it('is null for a vendor without a default or an unknown merchant', () => {
+    expect(vendorDefaultCategoryId('Billa', idx)).toBeNull();
+    expect(vendorDefaultCategoryId('Kaufland', idx)).toBeNull();
+    expect(vendorDefaultCategoryId('', idx)).toBeNull();
   });
 });

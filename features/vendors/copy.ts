@@ -71,3 +71,14 @@ export function mergeIntoLines(c: MergeIntoCounts): string[] {
   lines.push('Транзакциите остават непроменени.');
   return lines;
 }
+
+/** "1 транзакция" / "4 транзакции". */
+export const transactionCountLabel = (n: number): string =>
+  n === 1 ? '1 транзакция' : `${n} транзакции`;
+
+/**
+ * Message of the "apply to existing?" confirm after a vendor's default
+ * category changes: "3 транзакции на Lidl са с друга категория."
+ */
+export const recategorizeMessage = (n: number, vendorName: string): string =>
+  `${transactionCountLabel(n)} на ${vendorName} ${n === 1 ? 'е' : 'са'} с друга категория.`;

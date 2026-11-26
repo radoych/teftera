@@ -9,6 +9,11 @@ export interface Vendor {
   household_id: string;
   name: string;
   name_key: string;
+  /**
+   * Category applied to new transactions that resolve to this vendor (when its
+   * kind matches). `null` = none — the keyword rules decide.
+   */
+  default_category_id: string | null;
   created_at: string;
   updated_at: string;
 }
